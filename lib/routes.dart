@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
 import 'package:luanvan/ui/login/forgotpw_screen.dart';
@@ -21,4 +22,5 @@ final Map<String, WidgetBuilder> routes = {
   DetaiItemScreen.routeName: (context) => const DetaiItemScreen(),
   SearchScreen.routeName: (context) => const SearchScreen(),
   SearchResultScreen.routeName: (context) => const SearchResultScreen(),
+  CartScreen.routeName: (context) => const CartScreen(),
 };

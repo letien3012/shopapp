@@ -21,6 +21,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   Color _searchBarColor = Colors.transparent;
   Color _searchIconColor = Colors.transparent;
   Color _textSearchColor = Colors.transparent;
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +57,278 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
       _searchIconColor = Colors.transparent;
       _textSearchColor = Colors.transparent;
     }
+  }
+
+  void showAddToCart(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      builder: (context) => SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey, width: 0.6)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                          width: 110,
+                          height: 110,
+                          fit: BoxFit.fill,
+                          'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  const Expanded(
+                      child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            FontAwesomeIcons.dongSign,
+                            color: Colors.red,
+                            size: 15,
+                          ),
+                          Expanded(
+                            child: Text(
+                              "500.000",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                        height: 20,
+                      ),
+                      Text(
+                        'Kho 12',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      )
+                    ],
+                  ))
+                ],
+              ),
+            ),
+            Container(
+              height: 0.5,
+              width: double.infinity,
+              color: Colors.grey[300],
+            ),
+            Container(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Text(
+                        "Màu sắc",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(10, (index) {
+                      return IntrinsicWidth(
+                        child: Container(
+                          height: 45,
+                          padding: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Colors.grey[200],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.network(
+                                'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg',
+                                width: 35,
+                                height: 35,
+                                fit: BoxFit.contain,
+                              ),
+                              Text("Tên màu ${(index + 100000000) % 15}")
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  )
+                ],
+              ),
+            ),
+            Container(
+              height: 0.5,
+              width: double.infinity,
+              color: Colors.grey[400],
+            ),
+            Container(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Text(
+                        "Size",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(10, (index) {
+                      return IntrinsicWidth(
+                        child: Container(
+                          height: 45,
+                          padding: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Colors.grey[200],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("Size ${(index + 100000000) % 15}")
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              height: 0.5,
+              width: double.infinity,
+              color: Colors.grey[400],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Số lượng",
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  Container(
+                    height: 30,
+                    width: 100,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey, width: 1),
+                        borderRadius: BorderRadius.circular(8)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {},
+                            child: Container(
+                              height: double.infinity,
+                              decoration: const BoxDecoration(
+                                  border: Border(
+                                      right: BorderSide(
+                                          color: Colors.grey, width: 1))),
+                              child: Icon(
+                                FontAwesomeIcons.minus,
+                                color: Colors.grey[700],
+                                size: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                            flex: 2,
+                            child: Container(
+                              alignment: Alignment.center,
+                              height: 20,
+                              child: TextFormField(
+                                decoration: const InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    contentPadding: EdgeInsets.zero),
+                                keyboardType: TextInputType.numberWithOptions(),
+                                textAlign: TextAlign.center,
+                                textAlignVertical: TextAlignVertical.center,
+                                cursorWidth: 1,
+                                cursorHeight: 13,
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            )),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {},
+                            child: Container(
+                              height: double.infinity,
+                              decoration: const BoxDecoration(
+                                  border: Border(
+                                      left: BorderSide(
+                                          color: Colors.grey, width: 1))),
+                              child: Icon(
+                                FontAwesomeIcons.plus,
+                                color: Colors.grey[700],
+                                size: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+            Container(
+              height: 10,
+              width: double.infinity,
+              color: Colors.grey[300],
+            ),
+            Container(
+              height: 50,
+              decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10)),
+              alignment: Alignment.center,
+              margin: EdgeInsets.all(10),
+              child: GestureDetector(
+                child: Text(
+                  "Thêm vào giỏ hàng",
+                  style: TextStyle(fontSize: 16, color: Colors.black38),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -681,6 +954,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                //Icon trở về
                 GestureDetector(
                   onTap: () {},
                   child: ClipOval(
@@ -700,6 +974,8 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                 const SizedBox(
                   width: 10,
                 ),
+
+                // Thanh tìm kiếm
                 Expanded(
                     child: GestureDetector(
                   onTap: () {
@@ -733,6 +1009,8 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                 const SizedBox(
                   width: 10,
                 ),
+
+                //Chia sẻ
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -755,27 +1033,55 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                     const SizedBox(
                       width: 10,
                     ),
+
+                    // Giỏ hàng
                     GestureDetector(
                       onTap: () {
                         Navigator.of(context).pushNamed(CartScreen.routeName);
                       },
-                      child: ClipOval(
-                        child: Container(
-                          height: 40,
-                          width: 40,
-                          alignment: Alignment.center,
-                          color: Colors.black12,
-                          child: Icon(
-                            Icons.shopping_cart_outlined,
-                            color: _logoColor,
-                            size: 30,
-                          ),
+                      child: Container(
+                        height: 50,
+                        width: 50,
+                        child: Stack(
+                          children: [
+                            ClipOval(
+                              child: Container(
+                                height: 40,
+                                width: 40,
+                                alignment: Alignment.center,
+                                color: Colors.black12,
+                                child: Icon(
+                                  Icons.shopping_cart_outlined,
+                                  color: _logoColor,
+                                  size: 30,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 15,
+                              top: 5,
+                              child: Container(
+                                height: 18,
+                                width: 30,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: Colors.red,
+                                    border: Border.all(
+                                        width: 1.5, color: Colors.white)),
+                                child: const Text(
+                                  "99+",
+                                  style: TextStyle(
+                                      fontSize: 10, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+
+                    //Thêm cài đặt
                     GestureDetector(
                       onTap: () {},
                       child: ClipOval(
@@ -814,6 +1120,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          //Chat với người bán
                           Expanded(
                             child: GestureDetector(
                               onTap: () {},
@@ -838,9 +1145,13 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                             height: 30,
                             color: Colors.black87,
                           ),
+
+                          // Thêm vào giỏ hàng
                           Expanded(
                             child: GestureDetector(
-                              onTap: () {},
+                              onTap: () {
+                                showAddToCart(context);
+                              },
                               child: const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -861,6 +1172,8 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                       ),
                     ),
                   ),
+
+                  // Mua ngay
                   Expanded(
                       child: GestureDetector(
                     onTap: () {},
@@ -876,23 +1189,23 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
               ),
             ),
           ),
-          Positioned(
-            top: 35,
-            right: 58,
-            child: Container(
-              height: 18,
-              width: 30,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.red,
-                  border: Border.all(width: 1.5, color: Colors.white)),
-              child: const Text(
-                "99+",
-                style: TextStyle(fontSize: 10, color: Colors.white),
-              ),
-            ),
-          )
+          // Positioned(
+          //   top: 35,
+          //   right: 58,
+          //   child: Container(
+          //     height: 18,
+          //     width: 30,
+          //     alignment: Alignment.center,
+          //     decoration: BoxDecoration(
+          //         borderRadius: BorderRadius.circular(8),
+          //         color: Colors.red,
+          //         border: Border.all(width: 1.5, color: Colors.white)),
+          //     child: const Text(
+          //       "99+",
+          //       style: TextStyle(fontSize: 10, color: Colors.white),
+          //     ),
+          //   ),
+          // )
         ],
       ),
     );

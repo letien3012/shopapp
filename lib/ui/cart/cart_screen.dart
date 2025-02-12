@@ -1,7 +1,6 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:icons_plus/icons_plus.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -263,8 +262,9 @@ class _CartScreenState extends State<CartScreen> {
                                                               contentPadding:
                                                                   EdgeInsets
                                                                       .zero),
-                                                      keyboardType: TextInputType
-                                                          .numberWithOptions(),
+                                                      keyboardType:
+                                                          const TextInputType
+                                                              .numberWithOptions(),
                                                       textAlign:
                                                           TextAlign.center,
                                                       textAlignVertical:
@@ -272,7 +272,7 @@ class _CartScreenState extends State<CartScreen> {
                                                               .center,
                                                       cursorWidth: 1,
                                                       cursorHeight: 13,
-                                                      style: TextStyle(
+                                                      style: const TextStyle(
                                                           fontSize: 13),
                                                     ),
                                                   )),
@@ -400,9 +400,9 @@ class _CartScreenState extends State<CartScreen> {
                             width: 40,
                             alignment: Alignment.center,
                             child: const Icon(
-                              FontAwesomeIcons.message,
+                              BoxIcons.bx_chat,
                               color: Colors.brown,
-                              size: 28,
+                              size: 30,
                             ),
                           ),
                         ),

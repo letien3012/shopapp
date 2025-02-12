@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
-import 'package:luanvan/ui/item/review_screen.dart';
-import 'package:luanvan/ui/search/search_screen.dart';
+import 'package:luanvan/ui/home/detai_item_screen.dart';
 
-class DetaiItemScreen extends StatefulWidget {
-  const DetaiItemScreen({super.key});
-  static String routeName = 'Detail_item';
+class ReviewScreen extends StatefulWidget {
+  const ReviewScreen({super.key});
+  static String routeName = "review_screen";
   @override
-  State<DetaiItemScreen> createState() => _DetaiItemScreenState();
+  State<ReviewScreen> createState() => _ReviewScreenState();
 }
 
-class _DetaiItemScreenState extends State<DetaiItemScreen> {
+class _ReviewScreenState extends State<ReviewScreen> {
   final PageController _imageController = PageController();
   int _currentImage = 0;
   bool _isExpanded = false;
   final GlobalKey _details = GlobalKey();
   ScrollController _appBarScrollController = ScrollController();
-  Color _appBarColor = Colors.transparent;
-  Color _logoColor = Colors.white;
-  Color _searchBarColor = Colors.transparent;
-  Color _searchIconColor = Colors.transparent;
-  Color _textSearchColor = Colors.transparent;
 
   @override
   void initState() {
@@ -31,33 +26,6 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
         _currentImage = _imageController.page!.round();
       });
     });
-    _appBarScrollController.addListener(onAppBarScroll);
-  }
-
-  void onAppBarScroll() {
-    if (_appBarScrollController.offset >= 200.0) {
-      setState(() {
-        _appBarColor = Colors.white;
-        _logoColor = Colors.brown;
-        _searchBarColor = Colors.grey[200]!;
-        _searchIconColor = Colors.grey[500]!;
-        _textSearchColor = Colors.grey[500]!;
-      });
-    } else if (_appBarScrollController.offset >= 100) {
-      setState(() {
-        _appBarColor = Colors.white.withOpacity(0.7);
-        _logoColor = Colors.white.withOpacity(0.7);
-        _searchBarColor = Colors.white.withOpacity(0.5);
-        _searchIconColor = Colors.grey.withOpacity(0.3);
-        _textSearchColor = Colors.grey.withOpacity(0.3);
-      });
-    } else {
-      _appBarColor = Colors.transparent;
-      _logoColor = Colors.white;
-      _searchBarColor = Colors.transparent;
-      _searchIconColor = Colors.transparent;
-      _textSearchColor = Colors.transparent;
-    }
   }
 
   void showAddToCart(BuildContext context) {
@@ -513,10 +481,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                             ],
                           ),
                           TextButton(
-                              onPressed: () {
-                                Navigator.of(context)
-                                    .pushNamed(ReviewScreen.routeName);
-                              },
+                              onPressed: () {},
                               child: const Text(
                                 'Xem tất cả >',
                                 style: TextStyle(
@@ -969,177 +934,136 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
 
           // AppBar
           Positioned(
-              child: AnimatedContainer(
-            height: 80,
-            width: MediaQuery.of(context).size.width,
-            decoration: BoxDecoration(
-              color: _appBarColor,
-              boxShadow: [
-                BoxShadow(
-                  color: _appBarColor != Colors.transparent
-                      ? Colors.grey.withOpacity(0.3)
-                      : Colors.transparent,
-                  blurRadius: 10,
-                  // spreadRadius: 0,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            padding:
-                const EdgeInsets.only(top: 30, left: 10, right: 10, bottom: 10),
-            duration: const Duration(milliseconds: 100),
-            curve: Curves.easeInOut,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                //Icon trở về
-                GestureDetector(
-                  onTap: () {},
-                  child: ClipOval(
-                    child: Container(
-                      height: 40,
-                      width: 40,
-                      alignment: Alignment.center,
-                      color: Colors.black12,
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: _logoColor,
-                        size: 30,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-
-                // Thanh tìm kiếm
-                Expanded(
-                    child: GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pushNamed(SearchScreen.routeName);
-                  },
-                  child: Container(
-                    color: _searchBarColor,
-                    height: 40,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Icon(
-                          Icons.search,
-                          color: _searchIconColor,
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          "Nội dung đề xuất",
-                          style:
-                              TextStyle(fontSize: 14, color: _textSearchColor),
-                        )
-                      ],
-                    ),
-                  ),
-                )),
-                const SizedBox(
-                  width: 10,
-                ),
-
-                //Chia sẻ
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+              child: Column(
+            children: [
+              Container(
+                height: 80,
+                padding: EdgeInsets.only(bottom: 10),
+                alignment: Alignment.bottomCenter,
+                color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    //Icon trở về
                     GestureDetector(
                       onTap: () {},
-                      child: ClipOval(
-                        child: Container(
-                          height: 40,
-                          width: 40,
-                          alignment: Alignment.center,
-                          color: Colors.black12,
-                          child: Icon(
-                            Icons.share_outlined,
-                            color: _logoColor,
-                            size: 25,
-                          ),
-                        ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.brown,
+                        size: 30,
                       ),
                     ),
                     const SizedBox(
                       width: 10,
                     ),
-
-                    // Giỏ hàng
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pushNamed(CartScreen.routeName);
-                      },
-                      child: Container(
-                        height: 50,
-                        width: 50,
-                        child: Stack(
-                          children: [
-                            ClipOval(
-                              child: Container(
-                                height: 40,
-                                width: 40,
-                                alignment: Alignment.center,
-                                color: Colors.black12,
-                                child: Icon(
+                    Expanded(
+                        child: const Text(
+                      "Đánh giá",
+                      style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500),
+                    )),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // Giỏ hàng
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context)
+                                .pushNamed(CartScreen.routeName);
+                          },
+                          child: Container(
+                            width: 50,
+                            child: Stack(
+                              children: [
+                                const Icon(
                                   Icons.shopping_cart_outlined,
-                                  color: _logoColor,
+                                  color: Colors.brown,
                                   size: 30,
                                 ),
-                              ),
-                            ),
-                            Positioned(
-                              left: 15,
-                              top: 5,
-                              child: Container(
-                                height: 18,
-                                width: 30,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: Colors.red,
-                                    border: Border.all(
-                                        width: 1.5, color: Colors.white)),
-                                child: const Text(
-                                  "99+",
-                                  style: TextStyle(
-                                      fontSize: 10, color: Colors.white),
+                                Positioned(
+                                  left: 10,
+                                  top: 0,
+                                  child: Container(
+                                    height: 18,
+                                    width: 30,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.red,
+                                        border: Border.all(
+                                            width: 1.5, color: Colors.white)),
+                                    child: const Text(
+                                      "99+",
+                                      style: TextStyle(
+                                          fontSize: 10, color: Colors.white),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
+                        ),
+
+                        //Thêm cài đặt
+                        GestureDetector(
+                          onTap: () {},
+                          child: Icon(
+                            BoxIcons.bx_chat,
+                            color: Colors.brown,
+                            size: 30,
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+              Container(
+                height: 40,
+                color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {},
+                        child: Container(
+                          height: double.infinity,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                              border: Border(
+                                  bottom: BorderSide(
+                                      width: 1, color: Colors.black))),
+                          child: const Text(
+                            "Đánh giá sản phẩm",
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ),
-
-                    //Thêm cài đặt
-                    GestureDetector(
-                      onTap: () {},
-                      child: ClipOval(
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {},
                         child: Container(
-                          height: 40,
-                          width: 40,
+                          height: double.infinity,
                           alignment: Alignment.center,
-                          color: Colors.black12,
-                          child: Icon(
-                            Icons.more_horiz_outlined,
-                            color: _logoColor,
-                            size: 30,
+                          decoration: const BoxDecoration(
+                              border: Border(
+                                  bottom: BorderSide(
+                                      width: 1, color: Colors.black))),
+                          child: const Text(
+                            "Đánh giá shop",
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
                     ),
                   ],
-                )
-              ],
-            ),
+                ),
+              ),
+            ],
           )),
 
           // Bottom AppBar
@@ -1227,6 +1151,23 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
               ),
             ),
           ),
+          // Positioned(
+          //   top: 35,
+          //   right: 58,
+          //   child: Container(
+          //     height: 18,
+          //     width: 30,
+          //     alignment: Alignment.center,
+          //     decoration: BoxDecoration(
+          //         borderRadius: BorderRadius.circular(8),
+          //         color: Colors.red,
+          //         border: Border.all(width: 1.5, color: Colors.white)),
+          //     child: const Text(
+          //       "99+",
+          //       style: TextStyle(fontSize: 10, color: Colors.white),
+          //     ),
+          //   ),
+          // )
         ],
       ),
     );

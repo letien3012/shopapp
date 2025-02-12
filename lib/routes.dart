@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
+import 'package:luanvan/ui/item/review_screen.dart';
 import 'package:luanvan/ui/login/forgotpw_screen.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
@@ -23,4 +24,5 @@ final Map<String, WidgetBuilder> routes = {
   SearchScreen.routeName: (context) => const SearchScreen(),
   SearchResultScreen.routeName: (context) => const SearchResultScreen(),
   CartScreen.routeName: (context) => const CartScreen(),
+  ReviewScreen.routeName: (context) => const ReviewScreen(),
 };

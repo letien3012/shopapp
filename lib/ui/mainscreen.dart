@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
 
 class Mainscreen extends StatefulWidget {
@@ -27,8 +28,7 @@ class _MainscreenState extends State<Mainscreen> {
               _buildNavItem(Icons.home, "Trang chủ", 0, Icons.home_filled),
               _buildNavItem(Icons.live_help_outlined, "Hỏi đáp", 1,
                   Icons.live_help_sharp),
-              _buildNavItem(
-                  Icons.message_outlined, "Tin nhắn", 2, Icons.message_rounded),
+              _buildNavItem(BoxIcons.bx_chat, "Tin nhắn", 2, BoxIcons.bx_chat),
               _buildNavItem(Icons.shopping_cart_outlined, "Giỏ hàng", 3,
                   Icons.shopping_cart_sharp),
               _buildNavItem(Icons.supervised_user_circle_outlined, "Tôi", 4,

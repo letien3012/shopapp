@@ -1082,6 +1082,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                         width: 50,
                         child: Stack(
                           children: [
+                            // Icon giỏ hàng
                             ClipOval(
                               child: Container(
                                 height: 40,

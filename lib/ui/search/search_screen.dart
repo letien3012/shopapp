@@ -25,7 +25,9 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Align(
                 alignment: const Alignment(1, 0.6),
                 child: IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
                     icon: const Icon(
                       Icons.arrow_back,
                       color: Colors.brown,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
+import 'package:luanvan/ui/checkout/check_out_screen.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
 import 'package:luanvan/ui/item/review_screen.dart';
@@ -27,4 +28,5 @@ final Map<String, WidgetBuilder> routes = {
   CartScreen.routeName: (context) => const CartScreen(),
   ReviewScreen.routeName: (context) => const ReviewScreen(),
   ChatScreen.routeName: (context) => const ChatScreen(),
+  CheckOutScreen.routeName: (context) => const CheckOutScreen(),
 };

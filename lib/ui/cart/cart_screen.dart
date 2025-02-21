@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/ui/checkout/check_out_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -21,6 +22,18 @@ class _CartScreenState extends State<CartScreen> {
   //     "price2"
   //   ],
   // };
+  List<bool> checkedShop = [];
+  Map<String, List<bool>> checkedProduct = {};
+  bool checkAllProduct = false;
+  @override
+  void initState() {
+    super.initState();
+    checkedShop = List.generate(3, (item) => false);
+
+    for (int i = 0; i <= checkedShop.length; i++) {
+      checkedProduct['Shop$i'] = List.filled(2, false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,282 +49,326 @@ class _CartScreenState extends State<CartScreen> {
                 children: [
                   // Danh sách các shop trong giỏ hàng
                   ListView.builder(
-                    padding: EdgeInsets.zero,
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: 3,
-                    itemBuilder: (context, index) => Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.only(
-                          top: 10, left: 10, right: 10, bottom: 20),
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Column(
-                        children: [
-                          Row(
+                      padding: EdgeInsets.zero,
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: 3,
+                      itemBuilder: (context, index) {
+                        String shopName = "Shop$index";
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.only(
+                              top: 10, left: 10, right: 10, bottom: 20),
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10)),
+                          child: Column(
                             children: [
-                              Checkbox(
-                                value: false,
-                                onChanged: (a) {},
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4)),
-                              ),
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    const Expanded(
-                                      child: Text(
-                                        "Đây là tên shop Đây là tên  tên shop Đây là tên",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.keyboard_arrow_right_outlined,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Align(
-                                alignment: Alignment.center,
-                                child: Text(
-                                  "Sửa",
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w300),
-                                ),
-                              )
-                            ],
-                          ),
-
-                          // Hiển thị danh sách sản phẩm của 1 shop trong giỏ hàng
-                          ListView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount: 2,
-                            padding: EdgeInsets.zero,
-                            itemBuilder: (context, index) => Padding(
-                              padding: const EdgeInsets.only(bottom: 20),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
+                              Row(
                                 children: [
-                                  Row(
+                                  Checkbox(
+                                    fillColor:
+                                        WidgetStateProperty.resolveWith<Color>(
+                                            (states) {
+                                      if (states
+                                          .contains(WidgetState.selected)) {
+                                        return Colors.brown;
+                                      }
+                                      return Colors.transparent;
+                                    }),
+                                    value: checkedShop[index],
+                                    onChanged: (bool? newValue) {
+                                      setState(() {
+                                        checkedShop[index] = newValue ?? false;
+                                        checkedProduct["Shop$index"] =
+                                            List.filled(2, newValue ?? false);
+                                      });
+                                    },
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4)),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Expanded(
+                                          child: Text(
+                                            "Đây là tên shop Đây là tên  tên shop Đây là tên",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.keyboard_arrow_right_outlined,
+                                          color: Colors.grey[500],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Align(
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      "Sửa",
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w300),
+                                    ),
+                                  )
+                                ],
+                              ),
+
+                              // Hiển thị danh sách sản phẩm của 1 shop trong giỏ hàng
+                              ListView.builder(
+                                physics: const NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                itemCount: 2,
+                                padding: EdgeInsets.zero,
+                                itemBuilder: (context, index) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 20),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
                                     children: [
-                                      Checkbox(
-                                        value: false,
-                                        onChanged: (a) {},
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(4)),
+                                      Row(
+                                        children: [
+                                          Checkbox(
+                                            fillColor: WidgetStateProperty
+                                                .resolveWith<Color>((states) {
+                                              if (states.contains(
+                                                  WidgetState.selected)) {
+                                                return Colors.brown;
+                                              }
+                                              return Colors.transparent;
+                                            }),
+                                            value: checkedProduct[shopName]![
+                                                index],
+                                            onChanged: (bool? newValue) {
+                                              setState(() {
+                                                checkedProduct[shopName]![
+                                                    index] = newValue ?? false;
+                                              });
+                                            },
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(4)),
+                                          ),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(
+                                                    color: Colors.grey,
+                                                    width: 0.6)),
+                                            child: ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: Image.network(
+                                                  width: 110,
+                                                  height: 110,
+                                                  fit: BoxFit.fill,
+                                                  'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            border: Border.all(
-                                                color: Colors.grey,
-                                                width: 0.6)),
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: Image.network(
-                                              width: 110,
-                                              height: 110,
-                                              fit: BoxFit.fill,
-                                              'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              "Đây là tên sản phẩm Đây là tên  tên sản phẩm Đây là tên",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(
+                                              height: 5,
+                                            ),
+                                            IntrinsicWidth(
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 5),
+                                                height: 30,
+                                                decoration: BoxDecoration(
+                                                    color: Colors.grey[200],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5)),
+                                                alignment: Alignment.center,
+                                                child: const Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        "Trắng quài đi taoTrắng quài đi taoTrắng quài đi taoTrắng quài đi tao",
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            color: Colors.black,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w500),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      ', XL',
+                                                      style: TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.black,
+                                                          fontWeight:
+                                                              FontWeight.w500),
+                                                    ),
+                                                    Icon(Icons
+                                                        .keyboard_arrow_down_outlined)
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              height: 30,
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Row(
+                                                  children: [
+                                                    Icon(
+                                                      FontAwesomeIcons.dongSign,
+                                                      color: Colors.red,
+                                                      size: 17,
+                                                    ),
+                                                    Text(
+                                                      "500.000",
+                                                      style: TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.red),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Container(
+                                                  height: 20,
+                                                  width: 60,
+                                                  decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                          color: Colors.grey,
+                                                          width: 1)),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Expanded(
+                                                        child: GestureDetector(
+                                                          onTap: () {},
+                                                          child: Container(
+                                                            height:
+                                                                double.infinity,
+                                                            decoration: const BoxDecoration(
+                                                                border: Border(
+                                                                    right: BorderSide(
+                                                                        color: Colors
+                                                                            .grey,
+                                                                        width:
+                                                                            1))),
+                                                            child: Icon(
+                                                              FontAwesomeIcons
+                                                                  .minus,
+                                                              color: Colors
+                                                                  .grey[700],
+                                                              size: 13,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                          child: Container(
+                                                        alignment:
+                                                            Alignment.center,
+                                                        height: 20,
+                                                        child: TextFormField(
+                                                          decoration:
+                                                              const InputDecoration(
+                                                                  border:
+                                                                      OutlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide
+                                                                            .none,
+                                                                  ),
+                                                                  contentPadding:
+                                                                      EdgeInsets
+                                                                          .zero),
+                                                          keyboardType:
+                                                              const TextInputType
+                                                                  .numberWithOptions(),
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          textAlignVertical:
+                                                              TextAlignVertical
+                                                                  .center,
+                                                          cursorWidth: 1,
+                                                          cursorHeight: 13,
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize: 13),
+                                                        ),
+                                                      )),
+                                                      Expanded(
+                                                        child: GestureDetector(
+                                                          onTap: () {},
+                                                          child: Container(
+                                                            height:
+                                                                double.infinity,
+                                                            decoration: const BoxDecoration(
+                                                                border: Border(
+                                                                    left: BorderSide(
+                                                                        color: Colors
+                                                                            .grey,
+                                                                        width:
+                                                                            1))),
+                                                            child: Icon(
+                                                              FontAwesomeIcons
+                                                                  .plus,
+                                                              color: Colors
+                                                                  .grey[700],
+                                                              size: 13,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            )
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          "Đây là tên sản phẩm Đây là tên  tên sản phẩm Đây là tên",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
-                                        IntrinsicWidth(
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 5),
-                                            height: 30,
-                                            decoration: BoxDecoration(
-                                                color: Colors.grey[200],
-                                                borderRadius:
-                                                    BorderRadius.circular(5)),
-                                            alignment: Alignment.center,
-                                            child: const Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    "Trắng quài đi taoTrắng quài đi taoTrắng quài đi taoTrắng quài đi tao",
-                                                    style: TextStyle(
-                                                        fontSize: 13,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.w500),
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  ', XL',
-                                                  style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w500),
-                                                ),
-                                                Icon(Icons
-                                                    .keyboard_arrow_down_outlined)
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 30,
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Row(
-                                              children: [
-                                                Icon(
-                                                  FontAwesomeIcons.dongSign,
-                                                  color: Colors.red,
-                                                  size: 17,
-                                                ),
-                                                Text(
-                                                  "500.000",
-                                                  style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Colors.red),
-                                                ),
-                                              ],
-                                            ),
-                                            Container(
-                                              height: 20,
-                                              width: 60,
-                                              decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                      color: Colors.grey,
-                                                      width: 1)),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Expanded(
-                                                    child: GestureDetector(
-                                                      onTap: () {},
-                                                      child: Container(
-                                                        height: double.infinity,
-                                                        decoration: const BoxDecoration(
-                                                            border: Border(
-                                                                right: BorderSide(
-                                                                    color: Colors
-                                                                        .grey,
-                                                                    width: 1))),
-                                                        child: Icon(
-                                                          FontAwesomeIcons
-                                                              .minus,
-                                                          color:
-                                                              Colors.grey[700],
-                                                          size: 13,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                      child: Container(
-                                                    alignment: Alignment.center,
-                                                    height: 20,
-                                                    child: TextFormField(
-                                                      decoration:
-                                                          const InputDecoration(
-                                                              border:
-                                                                  OutlineInputBorder(
-                                                                borderSide:
-                                                                    BorderSide
-                                                                        .none,
-                                                              ),
-                                                              contentPadding:
-                                                                  EdgeInsets
-                                                                      .zero),
-                                                      keyboardType:
-                                                          const TextInputType
-                                                              .numberWithOptions(),
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      textAlignVertical:
-                                                          TextAlignVertical
-                                                              .center,
-                                                      cursorWidth: 1,
-                                                      cursorHeight: 13,
-                                                      style: const TextStyle(
-                                                          fontSize: 13),
-                                                    ),
-                                                  )),
-                                                  Expanded(
-                                                    child: GestureDetector(
-                                                      onTap: () {},
-                                                      child: Container(
-                                                        height: double.infinity,
-                                                        decoration: const BoxDecoration(
-                                                            border: Border(
-                                                                left: BorderSide(
-                                                                    color: Colors
-                                                                        .grey,
-                                                                    width: 1))),
-                                                        child: Icon(
-                                                          FontAwesomeIcons.plus,
-                                                          color:
-                                                              Colors.grey[700],
-                                                          size: 13,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            )
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
+                        );
+                      }),
                 ],
               ),
             ),
@@ -413,8 +470,8 @@ class _CartScreenState extends State<CartScreen> {
               )),
 
           // Bottom AppBar
-          Positioned(
-            bottom: 0,
+          Align(
+            alignment: Alignment.bottomLeft,
             child: Container(
               height: 60,
               width: MediaQuery.of(context).size.width,
@@ -427,8 +484,25 @@ class _CartScreenState extends State<CartScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Checkbox(
-                          value: false,
-                          onChanged: (a) {},
+                          fillColor:
+                              WidgetStateProperty.resolveWith<Color>((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Colors.brown;
+                            }
+                            return Colors.transparent;
+                          }),
+                          value: checkAllProduct,
+                          onChanged: (newValue) {
+                            setState(() {
+                              checkAllProduct = newValue ?? false;
+                              checkedShop = List.filled(
+                                  checkedShop.length, newValue ?? false);
+                              for (int i = 0; i <= checkedShop.length; i++) {
+                                checkedProduct["Shop$i"] =
+                                    List.filled(2, newValue ?? false);
+                              }
+                            });
+                          },
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4)),
                           visualDensity: VisualDensity.compact,
@@ -475,7 +549,9 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).pushNamed(CheckOutScreen.routeName);
+                    },
                     child: Container(
                       height: 45,
                       width: 110,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
 
 class Mainscreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class _MainscreenState extends State<Mainscreen> {
     return Scaffold(
         body: IndexedStack(
           index: _currentIndex,
-          children: [HomeScreen()],
+          children: [HomeScreen(), HomeScreen(), ChatScreen()],
         ),
         bottomNavigationBar: Container(
           height: 60,

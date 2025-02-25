@@ -252,7 +252,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
                       )),
                 ),
                 onTap: () {
-                  Navigator.of(context).pushNamed(Mainscreen.routeName);
+                  Navigator.of(context).pushNamed(MainScreen.routeName);
                 },
               ),
             ),

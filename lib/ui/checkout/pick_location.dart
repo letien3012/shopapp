@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:dvhcvn/dvhcvn.dart' as dvhcvn;
 
 class PickLocation extends StatefulWidget {
   const PickLocation({super.key});
@@ -9,71 +10,33 @@ class PickLocation extends StatefulWidget {
 }
 
 class _PickLocationState extends State<PickLocation> {
-  List<String> vietnamProvinces = [
-    "An Giang",
-    "Bà Rịa - Vũng Tàu",
-    "Bắc Giang",
-    "Bắc Kạn",
-    "Bạc Liêu",
-    "Bắc Ninh",
-    "Bến Tre",
-    "Bình Định",
-    "Bình Dương",
-    "Bình Phước",
-    "Bình Thuận",
-    "Cà Mau",
-    "Cần Thơ",
-    "Cao Bằng",
-    "Đà Nẵng",
-    "Đắk Lắk",
-    "Đắk Nông",
-    "Điện Biên",
-    "Đồng Nai",
-    "Đồng Tháp",
-    "Gia Lai",
-    "Hà Giang",
-    "Hà Nam",
-    "Hà Nội",
-    "Hà Tĩnh",
-    "Hải Dương",
-    "Hải Phòng",
-    "Hậu Giang",
-    "Hòa Bình",
-    "Hưng Yên",
-    "Khánh Hòa",
-    "Kiên Giang",
-    "Kon Tum",
-    "Lai Châu",
-    "Lâm Đồng",
-    "Lạng Sơn",
-    "Lào Cai",
-    "Long An",
-    "Nam Định",
-    "Nghệ An",
-    "Ninh Bình",
-    "Ninh Thuận",
-    "Phú Thọ",
-    "Phú Yên",
-    "Quảng Bình",
-    "Quảng Nam",
-    "Quảng Ngãi",
-    "Quảng Ninh",
-    "Quảng Trị",
-    "Sóc Trăng",
-    "Sơn La",
-    "Tây Ninh",
-    "Thái Bình",
-    "Thái Nguyên",
-    "Thanh Hóa",
-    "Thừa Thiên Huế",
-    "Tiền Giang",
-    "TP Hồ Chí Minh",
-    "Trà Vinh",
-    "Tuyên Quang",
-    "Vĩnh Long",
-    "Vĩnh Phúc",
-    "Yên Bái"
-  ];
+  // Map<String, Map<String, List<String>>> vietnamProvinces = {};
+  int pickLevel = 0;
+  int stepPick = 0;
+  final List<dvhcvn.Level1> provices = dvhcvn.level1s;
+  String _lv1PickId = '';
+  String _lv2PickId = '';
+  String _lv3PickId = '';
+  String _lv1PickName = '';
+  String _lv2PickName = '';
+  String _lv3PickName = '';
+
+  Map<String, Map<String, List<String>>> data = {};
+  List<Map<String, String>> vietnamProvinces = [];
+  String _labelSelect = 'Tỉnh/Thành phố';
+  @override
+  void initState() {
+    for (int i = 0; i < provices.length; i++) {
+      vietnamProvinces.add({
+        "id": provices[i].id,
+        "name": provices[i].name.replaceAll(RegExp(r'^(Tỉnh |Thành phố )'), ""),
+      });
+    }
+    vietnamProvinces.sort((a, b) => a["name"]!.compareTo(b["name"]!));
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,34 +84,418 @@ class _PickLocationState extends State<PickLocation> {
                     ),
                   ),
                   Container(
+                    padding: _lv1PickId.isNotEmpty
+                        ? const EdgeInsets.symmetric(vertical: 10)
+                        : null,
+                    width: double.infinity,
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        //Chọn Tỉnh/Thành phố
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              stepPick = 0;
+                              pickLevel = 0;
+                              _labelSelect = "Tỉnh/Thành phố";
+                              for (int i = 0; i < provices.length; i++) {
+                                vietnamProvinces.add({
+                                  "id": provices[i].id,
+                                  "name": provices[i].name.replaceAll(
+                                      RegExp(r'^(Tỉnh |Thành phố )'), ""),
+                                });
+                              }
+                              vietnamProvinces.sort(
+                                  (a, b) => a["name"]!.compareTo(b["name"]!));
+                            });
+                          },
+                          child: AnimatedContainer(
+                            height: 50,
+                            constraints: BoxConstraints(
+                              maxHeight: _lv1PickId.isNotEmpty ? 50 : 0,
+                            ),
+                            margin: stepPick == 0
+                                ? const EdgeInsets.symmetric(horizontal: 10)
+                                : null,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: stepPick == 0
+                                  ? Border.all(width: 1, color: Colors.grey)
+                                  : null,
+                              borderRadius: stepPick == 0
+                                  ? BorderRadius.circular(10)
+                                  : null,
+                            ),
+                            alignment: Alignment.centerLeft,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.linear,
+                            child: SingleChildScrollView(
+                              child: Row(
+                                children: [
+                                  stepPick == 0
+                                      ? SizedBox(
+                                          width: 30,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Container(
+                                                height: 15,
+                                                width: 15,
+                                                decoration: const BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : SizedBox(
+                                          width: 50,
+                                          height: 50,
+                                          child: Column(
+                                            children: [
+                                              const SizedBox(
+                                                height: 20,
+                                              ),
+                                              const SizedBox(
+                                                height: 2,
+                                              ),
+                                              Container(
+                                                height: 10,
+                                                width: 10,
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.grey,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              Container(
+                                                height: 18,
+                                                width: 1,
+                                                color: Colors.grey,
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                  Text(
+                                    _lv1PickName,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: stepPick == 0
+                                          ? Colors.brown
+                                          : Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        //Chọn Quận/Huyện
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              stepPick = 1;
+                              pickLevel = 1;
+
+                              _labelSelect = "Quận/ Huyện";
+
+                              final List<dvhcvn.Level2> _lv2 =
+                                  dvhcvn.findLevel1ById(_lv1PickId)!.children;
+                              vietnamProvinces.clear();
+                              for (int i = 0; i < _lv2.length; i++) {
+                                vietnamProvinces.add({
+                                  "id": _lv2[i].id,
+                                  "name": _lv2[i].name,
+                                });
+                              }
+                            });
+                          },
+                          child: AnimatedContainer(
+                            height: 50,
+                            constraints: BoxConstraints(
+                              maxHeight: _lv1PickId.isNotEmpty ? 50 : 0,
+                            ),
+                            margin: stepPick == 1
+                                ? EdgeInsets.symmetric(horizontal: 10)
+                                : null,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: stepPick == 1
+                                  ? Border.all(width: 1, color: Colors.grey)
+                                  : null,
+                              borderRadius: stepPick == 1
+                                  ? BorderRadius.circular(10)
+                                  : null,
+                            ),
+                            alignment: Alignment.centerLeft,
+                            duration: Duration(milliseconds: 300),
+                            curve: Curves.linear,
+                            child: SingleChildScrollView(
+                              child: Row(
+                                children: [
+                                  stepPick == 1
+                                      ? SizedBox(
+                                          width: 30,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Container(
+                                                height: 15,
+                                                width: 15,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : SizedBox(
+                                          width: 50,
+                                          height: 50,
+                                          child: Column(
+                                            children: [
+                                              Container(
+                                                width: 1,
+                                                height: 20,
+                                                color: Colors.grey,
+                                              ),
+                                              const SizedBox(
+                                                height: 2,
+                                              ),
+                                              Container(
+                                                height: 10,
+                                                width: 10,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              Container(
+                                                height: 18,
+                                                width: 1,
+                                                color: Colors.grey,
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                  Text(
+                                    _lv2PickId.isNotEmpty
+                                        ? _lv2PickName
+                                        : 'Chọn Quận/Huyện',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: stepPick == 1
+                                          ? Colors.brown
+                                          : Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        //Chọn Phường/Xã
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              stepPick = 2;
+                              pickLevel = 2;
+                              _labelSelect = "Phường/ Xã";
+                              final List<dvhcvn.Level3> _lv3 = dvhcvn
+                                  .findLevel1ById(_lv1PickId)!
+                                  .findLevel2ById(_lv2PickId)!
+                                  .children;
+                              vietnamProvinces.clear();
+                              for (int i = 0; i < _lv3.length; i++) {
+                                vietnamProvinces.add({
+                                  "id": _lv3[i].id,
+                                  "name": _lv3[i].name,
+                                });
+                              }
+                            });
+                          },
+                          child: AnimatedContainer(
+                            height: 50,
+                            constraints: BoxConstraints(
+                              maxHeight: _lv2PickId.isNotEmpty ? 50 : 0,
+                            ),
+                            margin: stepPick == 2
+                                ? const EdgeInsets.symmetric(horizontal: 10)
+                                : null,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: stepPick == 2
+                                  ? Border.all(width: 1, color: Colors.grey)
+                                  : null,
+                              borderRadius: stepPick == 2
+                                  ? BorderRadius.circular(10)
+                                  : null,
+                            ),
+                            alignment: Alignment.centerLeft,
+                            duration: Duration(milliseconds: 300),
+                            curve: Curves.linear,
+                            child: SingleChildScrollView(
+                              child: Row(
+                                children: [
+                                  stepPick == 2
+                                      ? SizedBox(
+                                          width: 30,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Container(
+                                                height: 15,
+                                                width: 15,
+                                                decoration: const BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : SizedBox(
+                                          width: 50,
+                                          height: 50,
+                                          child: Column(
+                                            children: [
+                                              Container(
+                                                width: 1,
+                                                height: 20,
+                                                color: Colors.grey,
+                                              ),
+                                              const SizedBox(
+                                                height: 2,
+                                              ),
+                                              Container(
+                                                height: 10,
+                                                width: 10,
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.grey,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 18,
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                  Text(
+                                    _lv3PickId.isNotEmpty
+                                        ? _lv3PickName
+                                        : 'Chọn Phường/Xã',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: stepPick == 2
+                                          ? Colors.brown
+                                          : Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
-                    margin: const EdgeInsets.only(bottom: 10),
+                    margin: const EdgeInsets.only(top: 10, bottom: 10),
                     alignment: Alignment.centerLeft,
                     color: Colors.grey[200],
                     height: 20,
-                    child: const Text(
-                      "Tỉnh/ Thành phố",
-                      style: TextStyle(
+                    child: Text(
+                      _labelSelect,
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
                   // Địa chỉ
+
                   ListView.builder(
                       padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       itemCount: vietnamProvinces.length,
                       itemBuilder: (context, index) {
+                        // final List<dvhcvn.Level2> ab = dvhcvn
+                        //     .findLevel1ById(vietnamProvinces[0]["id"]!)!
+                        //     .children;
+                        // print(ab[0].name);
                         String lastLabel;
                         index > 0
-                            ? lastLabel =
-                                vietnamProvinces[index - 1][0].toUpperCase()
+                            ? lastLabel = vietnamProvinces[index - 1]
+                                    ["name"]![0]
+                                .toUpperCase()
                             : lastLabel = '';
-                        String label = vietnamProvinces[index][0].toUpperCase();
+                        String label =
+                            vietnamProvinces[index]["name"]![0].toUpperCase();
                         return GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            setState(
+                              () {
+                                pickLevel++;
+                                stepPick++;
+                                if (pickLevel == 1) {
+                                  _labelSelect = "Quận/ Huyện";
+                                  _lv1PickId = vietnamProvinces[index]["id"]!;
+                                  _lv1PickName =
+                                      vietnamProvinces[index]["name"]!;
+                                  final List<dvhcvn.Level2> _lv2 = dvhcvn
+                                      .findLevel1ById(
+                                          vietnamProvinces[index]["id"]!)!
+                                      .children;
+                                  vietnamProvinces.clear();
+                                  for (int i = 0; i < _lv2.length; i++) {
+                                    vietnamProvinces.add({
+                                      "id": _lv2[i].id,
+                                      "name": _lv2[i].name,
+                                    });
+                                  }
+                                }
+                                if (pickLevel == 2) {
+                                  _labelSelect = "Phường/ Xã";
+                                  _lv2PickId = vietnamProvinces[index]["id"]!;
+                                  _lv2PickName =
+                                      vietnamProvinces[index]["name"]!;
+                                  final List<dvhcvn.Level3> _lv3 = dvhcvn
+                                      .findLevel1ById(_lv1PickId)!
+                                      .findLevel2ById(_lv2PickId)!
+                                      .children;
+                                  vietnamProvinces.clear();
+
+                                  for (int i = 0; i < _lv3.length; i++) {
+                                    vietnamProvinces.add({
+                                      "id": _lv3[i].id,
+                                      "name": _lv3[i].name,
+                                    });
+                                  }
+                                }
+                                if (pickLevel == 3) {
+                                  _lv3PickId = vietnamProvinces[index]["id"]!;
+                                  _lv3PickName =
+                                      vietnamProvinces[index]["name"]!;
+                                }
+                              },
+                            );
+                          },
                           child: Container(
                             alignment: Alignment.centerLeft,
                             height: 50,
@@ -166,7 +513,7 @@ class _PickLocationState extends State<PickLocation> {
                               children: [
                                 Container(
                                   alignment: Alignment.center,
-                                  width: 40,
+                                  width: 50,
                                   child: (lastLabel != label)
                                       ? Text(
                                           label,
@@ -177,10 +524,16 @@ class _PickLocationState extends State<PickLocation> {
                                       : null,
                                 ),
                                 Text(
-                                  vietnamProvinces[index],
-                                  style: const TextStyle(
+                                  vietnamProvinces[index]["name"]!,
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.black,
+                                    color: [
+                                      _lv1PickId,
+                                      _lv2PickId,
+                                      _lv3PickId
+                                    ].contains(vietnamProvinces[index]["id"])
+                                        ? Colors.brown
+                                        : Colors.black,
                                     fontWeight: FontWeight.w500,
                                   ),
                                   maxLines: 1,

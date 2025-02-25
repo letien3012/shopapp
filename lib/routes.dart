@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
+import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/check_out_screen.dart';
@@ -16,6 +17,7 @@ import 'package:luanvan/ui/mainscreen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:luanvan/ui/splashscreen.dart';
+import 'package:luanvan/ui/user/user_screen.dart';
 
 final Map<String, WidgetBuilder> routes = {
   SplashScreen.routeName: (context) => const SplashScreen(),
@@ -23,7 +25,7 @@ final Map<String, WidgetBuilder> routes = {
   SingupScreen.routeName: (context) => const SingupScreen(),
   ForgotpwScreen.routeName: (context) => const ForgotpwScreen(),
   VerifyScreen.routeName: (context) => const VerifyScreen(),
-  Mainscreen.routeName: (context) => const Mainscreen(),
+  MainScreen.routeName: (context) => const MainScreen(),
   HomeScreen.routeName: (context) => const HomeScreen(),
   DetaiItemScreen.routeName: (context) => const DetaiItemScreen(),
   SearchScreen.routeName: (context) => const SearchScreen(),
@@ -31,8 +33,10 @@ final Map<String, WidgetBuilder> routes = {
   CartScreen.routeName: (context) => const CartScreen(),
   ReviewScreen.routeName: (context) => const ReviewScreen(),
   ChatScreen.routeName: (context) => const ChatScreen(),
+  ChatDetailScreen.routeName: (context) => const ChatDetailScreen(),
   CheckOutScreen.routeName: (context) => const CheckOutScreen(),
   LocationScreen.routeName: (context) => const LocationScreen(),
   AddLocationScreen.routeName: (context) => const AddLocationScreen(),
   PickLocation.routeName: (context) => const PickLocation(),
+  UserScreen.routeName: (context) => const UserScreen(),
 };

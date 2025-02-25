@@ -116,8 +116,10 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.of(context)
-                                .pushNamed(PickLocation.routeName);
+                            showModalBottomSheet(
+                                context: context,
+                                builder: (context) => PickLocation(),
+                                isScrollControlled: true);
                           },
                           child: Container(
                             height: 60,
@@ -243,6 +245,34 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              height: 70,
+              width: double.infinity,
+              color: Colors.white,
+              child: GestureDetector(
+                onTap: () {},
+                child: Container(
+                  margin: const EdgeInsets.all(10),
+                  height: 50,
+                  width: double.infinity,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    "HOÀN THÀNH",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          )
         ],
       ),
     );

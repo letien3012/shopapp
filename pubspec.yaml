@@ -9,12 +9,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^0.13.5
 
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^10.8.0
   icons_plus: ^5.0.0
   flutter_staggered_grid_view: ^0.7.0
   carousel_slider: ^5.0.0
+  dvhcvn: ^2.1.20250301
 
 dev_dependencies:
   flutter_test:

@@ -385,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Image.network(
                               width: double.infinity,
                               height: 200,
-                              fit: BoxFit.contain,
+                              fit: BoxFit.cover,
                               'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
                           Container(
                             padding: const EdgeInsets.all(6),

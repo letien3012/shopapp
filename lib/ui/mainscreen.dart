@@ -2,22 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
+import 'package:luanvan/ui/user/user_screen.dart';
 
-class Mainscreen extends StatefulWidget {
-  const Mainscreen({super.key});
-  static String routeName = 'main-screen';
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+  static String routeName = 'main_screen';
   @override
-  State<Mainscreen> createState() => _MainscreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainscreenState extends State<Mainscreen> {
+class _MainScreenState extends State<MainScreen> {
   var _currentIndex = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: IndexedStack(
           index: _currentIndex,
-          children: [HomeScreen(), HomeScreen(), ChatScreen()],
+          children: const [
+            HomeScreen(),
+            HomeScreen(),
+            ChatScreen(),
+            HomeScreen(),
+            UserScreen(),
+          ],
         ),
         bottomNavigationBar: Container(
           height: 60,
@@ -32,8 +39,7 @@ class _MainscreenState extends State<Mainscreen> {
               _buildNavItem(BoxIcons.bx_chat, "Tin nhắn", 2, BoxIcons.bx_chat),
               _buildNavItem(Icons.shopping_cart_outlined, "Giỏ hàng", 3,
                   Icons.shopping_cart_sharp),
-              _buildNavItem(Icons.supervised_user_circle_outlined, "Tôi", 4,
-                  Icons.supervised_user_circle_sharp)
+              _buildNavItem(HeroIcons.user, "Tôi", 4, HeroIcons.user)
             ],
           ),
         ));

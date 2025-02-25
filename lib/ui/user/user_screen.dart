@@ -20,7 +20,7 @@ class _UserScreenState extends State<UserScreen> {
               child: Column(
                 children: [
                   const SizedBox(
-                    height: 20,
+                    height: 30,
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -65,17 +65,17 @@ class _UserScreenState extends State<UserScreen> {
                       ),
                       Row(
                         children: [
-                          GestureDetector(
-                            onTap: () {},
-                            child: const Icon(
-                              HeroIcons.cog_8_tooth,
-                              size: 30,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
+                          // GestureDetector(
+                          //   onTap: () {},
+                          //   child: const Icon(
+                          //     HeroIcons.cog_8_tooth,
+                          //     size: 30,
+                          //     color: Colors.white,
+                          //   ),
+                          // ),
+                          // const SizedBox(
+                          //   width: 10,
+                          // ),
                           SizedBox(
                             height: 40,
                             width: 50,
@@ -138,23 +138,45 @@ class _UserScreenState extends State<UserScreen> {
                         const SizedBox(
                           width: 10,
                         ),
-                        ClipOval(
-                          child: Image.network(
-                            width: 55,
-                            height: 55,
-                            fit: BoxFit.cover,
-                            'https://img.freepik.com/premium-vector/luxury-lch-logo-design-elegant-letter-lch-monogram-logo-minimalist-polygon-lch-logo-design-template_1101554-79801.jpg',
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Text(
-                              "lỗi",
-                              style: TextStyle(
-                                fontSize: 15,
+                        Container(
+                          height: 55,
+                          width: 70,
+                          child: Stack(
+                            children: [
+                              ClipOval(
+                                child: Image.network(
+                                  width: 55,
+                                  height: 55,
+                                  fit: BoxFit.cover,
+                                  'https://img.freepik.com/premium-vector/luxury-lch-logo-design-elegant-letter-lch-monogram-logo-minimalist-polygon-lch-logo-design-template_1101554-79801.jpg',
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Text(
+                                    "lỗi",
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                              Positioned(
+                                bottom: 0,
+                                left: 35,
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black45,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  height: 25,
+                                  width: 25,
+                                  child: const Icon(
+                                    FontAwesome.pen_solid,
+                                    size: 13,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            ],
                           ),
-                        ),
-                        const SizedBox(
-                          width: 10,
                         ),
                         const SizedBox(
                           height: 50,
@@ -232,11 +254,14 @@ class _UserScreenState extends State<UserScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       GestureDetector(
-                        child: Column(
+                        child: const Column(
                           children: [
                             Icon(
                               FontAwesome.wallet_solid,
                               size: 35,
+                            ),
+                            const SizedBox(
+                              height: 5,
                             ),
                             Text("Chờ xác nhận",
                                 style: TextStyle(fontSize: 12)),
@@ -244,11 +269,14 @@ class _UserScreenState extends State<UserScreen> {
                         ),
                       ),
                       GestureDetector(
-                        child: Column(
+                        child: const Column(
                           children: [
                             Icon(
                               HeroIcons.inbox_stack,
                               size: 35,
+                            ),
+                            const SizedBox(
+                              height: 5,
                             ),
                             Text("Chờ lấy hàng",
                                 style: TextStyle(fontSize: 12)),
@@ -256,31 +284,207 @@ class _UserScreenState extends State<UserScreen> {
                         ),
                       ),
                       GestureDetector(
-                        child: Column(
+                        child: const Column(
                           children: [
                             Icon(
                               FontAwesome.truck_solid,
                               size: 35,
                             ),
-                            Text("Đang giao hàng",
-                                style: TextStyle(fontSize: 12)),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              "Đang giao hàng",
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ],
                         ),
                       ),
                       GestureDetector(
-                        child: Column(
+                        child: const Column(
                           children: [
                             Icon(
                               Icons.stars_outlined,
                               size: 35,
                             ),
-                            Text("Đánh giá", style: TextStyle(fontSize: 12)),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Text(
+                              "Đánh giá",
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ],
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              height: 8,
+              width: double.infinity,
+              color: Colors.grey[200],
+            ),
+            Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(width: 1, color: Colors.grey[200]!),
+                  )),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Tài khoản và bảo mật",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 20,
                   )
                 ],
+              ),
+            ),
+            Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(width: 1, color: Colors.grey[200]!),
+                  )),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Địa chỉ",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 20,
+                  )
+                ],
+              ),
+            ),
+            Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(width: 1, color: Colors.grey[200]!),
+                  )),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Tiêu chuẩn cộng đồng",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 20,
+                  )
+                ],
+              ),
+            ),
+            Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(width: 1, color: Colors.grey[200]!),
+                  )),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Sản phẩm đã thích",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 20,
+                  )
+                ],
+              ),
+            ),
+            Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(width: 1, color: Colors.grey[200]!),
+                  )),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Yêu cầu xóa tài khoản",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 20,
+                  )
+                ],
+              ),
+            ),
+            Container(
+              height: 70,
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              color: Colors.grey[200],
+              child: GestureDetector(
+                onTap: () {},
+                child: Container(
+                  height: 50,
+                  width: double.infinity,
+                  margin: EdgeInsets.symmetric(horizontal: 20),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      border: Border.all(width: 1, color: Colors.black)),
+                  child: const Text(
+                    "Đăng xuất",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               ),
             )
           ],

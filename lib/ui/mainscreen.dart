@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
 import 'package:luanvan/ui/user/user_screen.dart';
@@ -22,7 +23,6 @@ class _MainScreenState extends State<MainScreen> {
             HomeScreen(),
             HomeScreen(),
             ChatScreen(),
-            HomeScreen(),
             UserScreen(),
           ],
         ),
@@ -37,9 +37,7 @@ class _MainScreenState extends State<MainScreen> {
               _buildNavItem(Icons.live_help_outlined, "Hỏi đáp", 1,
                   Icons.live_help_sharp),
               _buildNavItem(BoxIcons.bx_chat, "Tin nhắn", 2, BoxIcons.bx_chat),
-              _buildNavItem(Icons.shopping_cart_outlined, "Giỏ hàng", 3,
-                  Icons.shopping_cart_sharp),
-              _buildNavItem(HeroIcons.user, "Tôi", 4, HeroIcons.user)
+              _buildNavItem(HeroIcons.user, "Tôi", 3, HeroIcons.user)
             ],
           ),
         ));

@@ -1,0 +1,45 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:luanvan/blocs/user/user_event.dart';
+import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/models/user_info_model.dart';
+import 'package:luanvan/services/user_service.dart';
+
+class UserBloc extends Bloc<UserEvent, UserState> {
+  final UserService _userService;
+  // final UserService _userService = getIt<UserService>();
+  // final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  UserBloc(this._userService) : super(UserInitial()) {
+    on<FetchUserEvent>(_onFetchUser);
+    on<UpdateBasicInfoUserEvent>(_onUpdateBasicInfoUser);
+    on<UpdateUserEvent>(_onUpdateUser);
+  }
+  Future<void> _onFetchUser(
+      FetchUserEvent event, Emitter<UserState> emit) async {
+    emit(UserLoading());
+    try {
+      final UserInfoModel user = await _userService.fetchUserInfo(event.userId);
+      emit(UserLoaded(user));
+    } catch (e) {
+      emit(UserError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateBasicInfoUser(
+      UpdateBasicInfoUserEvent event, Emitter<UserState> emit) async {
+    emit(UserLoading());
+    try {
+      await _userService.updateBasicUserInfo(event.user);
+      emit(UserLoaded(event.user));
+    } catch (e) {
+      emit(UserError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateUser(
+      UpdateUserEvent event, Emitter<UserState> emit) async {
+    emit(UserLoading());
+    try {} catch (e) {
+      emit(UserError(e.toString()));
+    }
+  }
+}

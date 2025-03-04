@@ -387,296 +387,295 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       ),
       // Drawer bên phải khi mở bộ lọc
       endDrawer: Drawer(
-          width: 350,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  color: Colors.grey[200],
-                  height: 80,
-                  width: double.infinity,
-                  padding: const EdgeInsets.only(top: 50, left: 10),
-                  child: const Text(
-                    "Bộ lọc tìm kiếm",
-                    style: TextStyle(fontSize: 18),
-                  ),
+        width: 350,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                color: Colors.grey[200],
+                height: 80,
+                width: double.infinity,
+                padding: const EdgeInsets.only(top: 50, left: 10),
+                child: const Text(
+                  "Bộ lọc tìm kiếm",
+                  style: TextStyle(fontSize: 18),
                 ),
-                //Nơi bán
+              ),
+              //Nơi bán
 
-                Column(
-                  children: [
-                    Container(
-                      padding:
-                          const EdgeInsets.only(top: 15, left: 10, right: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Nơi bán",
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          GridView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount:
-                                isPlaceSellingExpand ? placeSelling.length : 4,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    mainAxisSpacing: 7,
-                                    crossAxisSpacing: 7,
-                                    mainAxisExtent: 40),
-                            itemBuilder: (context, index) {
-                              bool isSelected =
-                                  selectedFiltersPlace.contains(index);
+              Column(
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.only(top: 15, left: 10, right: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Nơi bán",
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount:
+                              isPlaceSellingExpand ? placeSelling.length : 4,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 7,
+                                  crossAxisSpacing: 7,
+                                  mainAxisExtent: 40),
+                          itemBuilder: (context, index) {
+                            bool isSelected =
+                                selectedFiltersPlace.contains(index);
 
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    if (isSelected) {
-                                      selectedFiltersPlace.remove(index);
-                                    } else {
-                                      selectedFiltersPlace.add(index);
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey[200],
-                                      border: Border.all(
-                                          color: isSelected
-                                              ? Colors.brown
-                                              : Colors.transparent,
-                                          width: 2),
-                                      borderRadius: BorderRadius.circular(8)),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    placeSelling[index],
-                                    style: TextStyle(
-                                        fontSize: 14,
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  if (isSelected) {
+                                    selectedFiltersPlace.remove(index);
+                                  } else {
+                                    selectedFiltersPlace.add(index);
+                                  }
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    border: Border.all(
                                         color: isSelected
                                             ? Colors.brown
-                                            : Colors.black),
-                                  ),
+                                            : Colors.transparent,
+                                        width: 2),
+                                    borderRadius: BorderRadius.circular(8)),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  placeSelling[index],
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: isSelected
+                                          ? Colors.brown
+                                          : Colors.black),
                                 ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isPlaceSellingExpand = !isPlaceSellingExpand;
-                        });
-                      },
-                      child: Container(
-                        height: 50,
-                        decoration: const BoxDecoration(
-                            border: Border(
-                                bottom: BorderSide(
-                          width: 1,
-                          color: Colors.grey,
-                        ))),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(isPlaceSellingExpand
-                                  ? "Thu gọn"
-                                  : "Xem thêm"),
-                              Icon(isPlaceSellingExpand
-                                  ? Icons.keyboard_arrow_up_outlined
-                                  : Icons.keyboard_arrow_down_outlined)
-                            ]),
-                      ),
-                    )
-                  ],
-                ),
-                //Lọc theo khoảng giá
-                Container(
-                  padding: const EdgeInsets.only(top: 15, left: 10, right: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Khoảng giá (đ)",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        color: Colors.grey[200],
-                        height: 80,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        isPlaceSellingExpand = !isPlaceSellingExpand;
+                      });
+                    },
+                    child: Container(
+                      height: 50,
+                      decoration: const BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(
+                        width: 1,
+                        color: Colors.grey,
+                      ))),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              height: 45,
-                              width: 130,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(color: Colors.grey[50]),
-                              child: TextField(
-                                decoration: const InputDecoration(
+                            Text(isPlaceSellingExpand ? "Thu gọn" : "Xem thêm"),
+                            Icon(isPlaceSellingExpand
+                                ? Icons.keyboard_arrow_up_outlined
+                                : Icons.keyboard_arrow_down_outlined)
+                          ]),
+                    ),
+                  )
+                ],
+              ),
+              //Lọc theo khoảng giá
+              Container(
+                padding: const EdgeInsets.only(top: 15, left: 10, right: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Khoảng giá (đ)",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                      padding: EdgeInsets.all(10),
+                      color: Colors.grey[200],
+                      height: 80,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            height: 45,
+                            width: 130,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(color: Colors.grey[50]),
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                hintText: "Tối thiểu",
+                                hintStyle:
+                                    TextStyle(fontSize: 14, color: Colors.grey),
+                              ),
+                              textAlign: TextAlign.center,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(),
+                              onTapOutside: (event) {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                              },
+                            ),
+                          ),
+                          Container(
+                            width: 30,
+                            height: 3,
+                            color: Colors.grey[500],
+                          ),
+                          Container(
+                            height: 45,
+                            width: 130,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(color: Colors.grey[50]),
+                            child: TextField(
+                              decoration: const InputDecoration(
                                   border: InputBorder.none,
                                   enabledBorder: InputBorder.none,
                                   focusedBorder: InputBorder.none,
                                   contentPadding: EdgeInsets.zero,
-                                  hintText: "Tối thiểu",
+                                  hintText: "Tối đa",
                                   hintStyle: TextStyle(
-                                      fontSize: 14, color: Colors.grey),
-                                ),
-                                textAlign: TextAlign.center,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(),
-                                onTapOutside: (event) {
-                                  FocusManager.instance.primaryFocus?.unfocus();
-                                },
-                              ),
+                                      fontSize: 14, color: Colors.grey)),
+                              textAlign: TextAlign.center,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(),
+                              onTapOutside: (event) {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                              },
                             ),
-                            Container(
-                              width: 30,
-                              height: 3,
-                              color: Colors.grey[500],
-                            ),
-                            Container(
-                              height: 45,
-                              width: 130,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(color: Colors.grey[50]),
-                              child: TextField(
-                                decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
-                                    hintText: "Tối đa",
-                                    hintStyle: TextStyle(
-                                        fontSize: 14, color: Colors.grey)),
-                                textAlign: TextAlign.center,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(),
-                                onTapOutside: (event) {
-                                  FocusManager.instance.primaryFocus?.unfocus();
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: SizedBox(
-                          child: GridView.builder(
-                            padding: EdgeInsets.zero,
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount: 3,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    crossAxisSpacing: 7,
-                                    mainAxisExtent: 40),
-                            itemBuilder: (context, index) {
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    selectedPrice == index
-                                        ? selectedPrice = -1
-                                        : selectedPrice = index;
-                                  });
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey[200],
-                                      border: Border.all(
-                                          color: index == selectedPrice
-                                              ? Colors.brown
-                                              : Colors.transparent,
-                                          width: 2),
-                                      borderRadius: BorderRadius.circular(8)),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    price[index],
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: index == selectedPrice
-                                          ? Colors.brown
-                                          : Colors.black,
-                                    ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: SizedBox(
+                        child: GridView.builder(
+                          padding: EdgeInsets.zero,
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: 3,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 7,
+                                  mainAxisExtent: 40),
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedPrice == index
+                                      ? selectedPrice = -1
+                                      : selectedPrice = index;
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    border: Border.all(
+                                        color: index == selectedPrice
+                                            ? Colors.brown
+                                            : Colors.transparent,
+                                        width: 2),
+                                    borderRadius: BorderRadius.circular(8)),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  price[index],
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: index == selectedPrice
+                                        ? Colors.brown
+                                        : Colors.black,
                                   ),
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
 
-                const Divider(),
-                // Lọc theo đánh giá shop
-                Container(
-                  padding: const EdgeInsets.only(top: 15, left: 10, right: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Đánh giá",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      GridView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: 5,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 7,
-                                crossAxisSpacing: 7,
-                                mainAxisExtent: 40),
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedRating == index
-                                    ? selectedRating = -1
-                                    : selectedRating = index;
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.grey[200],
-                                  border: Border.all(
-                                      color: index == selectedRating
-                                          ? Colors.brown
-                                          : Colors.transparent,
-                                      width: 2),
-                                  borderRadius: BorderRadius.circular(8)),
-                              alignment: Alignment.center,
-                              child: Text(
-                                rating[index],
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: index == selectedRating
-                                      ? Colors.brown
-                                      : Colors.black,
-                                ),
+              const Divider(),
+              // Lọc theo đánh giá shop
+              Container(
+                padding: const EdgeInsets.only(top: 15, left: 10, right: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Đánh giá",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: 5,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 7,
+                              crossAxisSpacing: 7,
+                              mainAxisExtent: 40),
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedRating == index
+                                  ? selectedRating = -1
+                                  : selectedRating = index;
+                            });
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                border: Border.all(
+                                    color: index == selectedRating
+                                        ? Colors.brown
+                                        : Colors.transparent,
+                                    width: 2),
+                                borderRadius: BorderRadius.circular(8)),
+                            alignment: Alignment.center,
+                            child: Text(
+                              rating[index],
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: index == selectedRating
+                                    ? Colors.brown
+                                    : Colors.black,
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          )),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

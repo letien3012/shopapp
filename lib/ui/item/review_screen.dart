@@ -3,7 +3,6 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
-import 'package:luanvan/ui/home/detai_item_screen.dart';
 
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key});
@@ -13,9 +12,9 @@ class ReviewScreen extends StatefulWidget {
 }
 
 class _ReviewScreenState extends State<ReviewScreen> {
-  bool _isExpanded = false;
-  final GlobalKey _details = GlobalKey();
-  Map<String, List<String>> _reviews = {};
+  // bool _isExpanded = false;
+  // final GlobalKey _details = GlobalKey();
+  // Map<String, List<String>> _reviews = {};
   int soLuongAnh = 5;
   @override
   void initState() {

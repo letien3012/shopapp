@@ -628,14 +628,16 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         )
                       : Expanded(
-                          child: Column(
-                            children: [
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              GestureDetector(
-                                onTap: () {},
-                                child: const Row(
+                          child: GestureDetector(
+                            onTap: () {},
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                const Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
@@ -643,22 +645,29 @@ class _CartScreenState extends State<CartScreen> {
                                       style: TextStyle(
                                           color: Colors.black, fontSize: 13),
                                     ),
-                                    Icon(
-                                      FontAwesomeIcons.dongSign,
-                                      color: Colors.red,
-                                      size: 15,
-                                    ),
-                                    Text(
-                                      "500.000",
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.red),
-                                    ),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          FontAwesomeIcons.dongSign,
+                                          color: Colors.red,
+                                          size: 15,
+                                        ),
+                                        Text(
+                                          "500.000",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red,
+                                          ),
+                                          // maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    )
                                   ],
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                   editProduct

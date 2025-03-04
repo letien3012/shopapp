@@ -17,6 +17,9 @@ import 'package:luanvan/ui/mainscreen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:luanvan/ui/splashscreen.dart';
+import 'package:luanvan/ui/user/change_account_info.dart';
+import 'package:luanvan/ui/user/change_info/change_name.dart';
+import 'package:luanvan/ui/user/change_infomation_user.dart';
 import 'package:luanvan/ui/user/user_screen.dart';
 
 final Map<String, WidgetBuilder> routes = {
@@ -38,5 +41,8 @@ final Map<String, WidgetBuilder> routes = {
   LocationScreen.routeName: (context) => const LocationScreen(),
   AddLocationScreen.routeName: (context) => const AddLocationScreen(),
   PickLocation.routeName: (context) => const PickLocation(),
-  UserScreen.routeName: (context) => const UserScreen(),
+  UserScreen.routeName: (context) => UserScreen(),
+  ChangeInfomationUser.routeName: (context) => ChangeInfomationUser(),
+  ChangeAccountInfo.routeName: (context) => ChangeAccountInfo(),
+  ChangeName.routeName: (context) => ChangeName(),
 };

@@ -4,6 +4,7 @@ import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/ui/user/change_info/change_username.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
 
 class ChangeAccountInfo extends StatefulWidget {
@@ -15,6 +16,78 @@ class ChangeAccountInfo extends StatefulWidget {
 }
 
 class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
+  TextEditingController _userNameController = TextEditingController();
+  Future<bool> _showUserNameChangeConfirmationDialog() async {
+    return await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              actionsPadding: EdgeInsets.zero,
+              titlePadding: EdgeInsets.symmetric(horizontal: 10, vertical: 25),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(0),
+              ),
+              title: const Text(
+                  "Bạn chỉ có thể thay đổi tên đăng nhập một lần. Hãy chắc chắn trước khi chọn tên mới"),
+              titleTextStyle: TextStyle(fontSize: 14, color: Colors.black),
+              actions: [
+                Row(
+                  children: [
+                    Expanded(
+                        child: Container(
+                      alignment: Alignment.center,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        border: Border(
+                            top: BorderSide(width: 0.3, color: Colors.grey),
+                            right: BorderSide(width: 0.3, color: Colors.grey)),
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop(false);
+                        },
+                        child: Text(
+                          "Hủy",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    )),
+                    Expanded(
+                        child: Container(
+                      alignment: Alignment.center,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(width: 0.3, color: Colors.grey),
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop(true);
+                        },
+                        child: Text(
+                          "Tiếp theo",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.brown,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    )),
+                  ],
+                )
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,6 +99,9 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
                 if (userState is UserLoading) {
                   return _buildLoading();
                 } else if (userState is UserLoaded) {
+                  _userNameController.text.isEmpty
+                      ? _userNameController.text = userState.user.userName!
+                      : null;
                   return _buildContent(context, userState);
                 } else if (userState is UserError) {
                   return _buildError(userState.message);
@@ -87,9 +163,10 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
               onTap: () => Navigator.of(context)
                   .pushNamed(ChangeInfomationUser.routeName),
             ),
-            _buildAccountItem(
+            _buildUserNameItem(
               "Tên người dùng",
-              trailingText: userState.user.userName ?? "Chưa có tên người dùng",
+              userName: _userNameController.text,
+              showArrow: true,
             ),
             _buildAccountItem(
               "Điện thoại",
@@ -122,6 +199,72 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
     );
   }
 
+  Widget _buildUserNameItem(
+    String title, {
+    String? userName,
+    bool showArrow = false,
+  }) {
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        splashColor: Colors.grey.withOpacity(0.3),
+        highlightColor: Colors.grey.withOpacity(0.1),
+        onTap: () async {
+          if (await _showUserNameChangeConfirmationDialog()) {
+            final newName = await Navigator.pushNamed(
+              context,
+              ChangeUsername.routeName,
+              arguments: userName,
+            );
+
+            if (newName != null) {
+              setState(() {
+                _userNameController.text = newName as String;
+              });
+            }
+          }
+        },
+        child: Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(width: 0.2, color: Colors.grey),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              Row(
+                children: [
+                  if (userName != null)
+                    Text(
+                      userName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: userName == "Thiết lập ngay"
+                            ? Colors.grey
+                            : Colors.black,
+                      ),
+                    ),
+                  if (showArrow) ...[
+                    const SizedBox(width: 5),
+                    const Icon(Icons.arrow_forward_ios, size: 16),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // Mục thông tin tài khoản
   Widget _buildAccountItem(
     String title, {
@@ -129,39 +272,48 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
     VoidCallback? onTap,
     bool showArrow = false,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 50,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            bottom: BorderSide(width: 0.2, color: Colors.grey),
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        splashColor: Colors.grey.withOpacity(0.3),
+        highlightColor: Colors.grey.withOpacity(0.1),
+        onTap: onTap,
+        child: Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(width: 0.2, color: Colors.grey),
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-            Row(
-              children: [
-                if (trailingText != null)
-                  Text(
-                    trailingText,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                if (showArrow) ...[
-                  const SizedBox(width: 5),
-                  const Icon(Icons.arrow_forward_ios, size: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              Row(
+                children: [
+                  if (trailingText != null)
+                    Text(
+                      trailingText,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: trailingText == "Thiết lập ngay"
+                            ? Colors.grey
+                            : Colors.black,
+                      ),
+                    ),
+                  if (showArrow) ...[
+                    const SizedBox(width: 5),
+                    const Icon(Icons.arrow_forward_ios, size: 16),
+                  ],
                 ],
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -211,7 +363,7 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
   // Hàm ẩn số điện thoại
   String _maskPhoneNumber(String phone) {
     if (phone.isEmpty || phone.length < 2) {
-      return "Không có số điện thoại";
+      return "Thiết lập ngay";
     }
     return '********${phone.substring(phone.length - 2)}';
   }
@@ -219,7 +371,7 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
   // Hàm ẩn email
   String _maskEmail(String email) {
     if (email.isEmpty || !email.contains('@')) {
-      return "Không có email";
+      return "Thiết lập ngay";
     }
     return '${email[0]}****${email[email.indexOf('@') - 1]}@gmail.com';
   }

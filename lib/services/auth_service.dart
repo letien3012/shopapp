@@ -1,4 +1,6 @@
 // lib/services/auth_service.dart
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
@@ -9,6 +11,22 @@ class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  String generateRandomUsername() {
+    final random = Random();
+    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    return 'user_' +
+        List.generate(8, (_) => characters[random.nextInt(characters.length)])
+            .join();
+  }
+
+  Future<bool> checkUSerNameExits(String userName) async {
+    QuerySnapshot query = await _firestore
+        .collection('users')
+        .where('userName', isEqualTo: userName)
+        .limit(1)
+        .get();
+    return query.docs.isNotEmpty;
+  }
 
   // Đăng ký bằng số điện thoại (gửi mã OTP)
   Future<void> signUpWithPhone(
@@ -92,41 +110,77 @@ class AuthService {
     }
   }
 
-  // Đăng nhập bằng Google
   Future<UserCredential> signInWithGoogle() async {
-    final GoogleSignInAccount? googleSignInAccount =
-        await _googleSignIn.signIn();
-    if (googleSignInAccount == null) {
-      throw Exception("Kết nối Google thất bại");
-    }
-    final GoogleSignInAuthentication googleSignInAuthentication =
-        await googleSignInAccount.authentication;
-    final OAuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleSignInAuthentication.accessToken,
-      idToken: googleSignInAuthentication.idToken,
-    );
-    UserCredential userCredential =
-        await _firebaseAuth.signInWithCredential(credential);
-    User? firebaseUser = userCredential.user;
+    try {
+      final GoogleSignInAccount? googleSignInAccount =
+          await _googleSignIn.signIn();
 
-    if (firebaseUser != null) {
-      UserInfoModel user = UserInfoModel(
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName,
-        email: firebaseUser.email,
-        phone: firebaseUser.phoneNumber,
-        avataUrl: firebaseUser.photoURL,
-        gender: null,
-        date: null,
-        userName: null,
+      if (googleSignInAccount == null) {
+        throw Exception("Kết nối Google thất bại");
+      }
+
+      final GoogleSignInAuthentication googleSignInAuthentication =
+          await googleSignInAccount.authentication;
+
+      // Kiểm tra token
+      if (googleSignInAuthentication.accessToken == null ||
+          googleSignInAuthentication.idToken == null) {
+        throw Exception("Thiếu thông tin xác thực");
+      }
+
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleSignInAuthentication.accessToken!,
+        idToken: googleSignInAuthentication.idToken!,
       );
-      print('Saving to Firestore: ${user.toMap()}');
+
+      UserCredential userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
+
+      User? firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        throw Exception("Không thể lấy thông tin người dùng");
+      }
+
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('users')
+          .where('id', isEqualTo: firebaseUser.uid)
+          .limit(1)
+          .get();
+
+      late UserInfoModel user;
+      if (querySnapshot.docs.isEmpty) {
+        String username = generateRandomUsername();
+        bool isUsernameTaken = await checkUSerNameExits(username);
+
+        while (isUsernameTaken) {
+          username = generateRandomUsername();
+          isUsernameTaken = await checkUSerNameExits(username);
+        }
+        user = UserInfoModel(
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName ?? "Người dùng Google",
+          email: firebaseUser.email,
+          phone: firebaseUser.phoneNumber,
+          avataUrl: firebaseUser.photoURL,
+          gender: null,
+          date: null,
+          userName: username,
+        );
+      } else {
+        user = UserInfoModel.fromFirestore(
+            querySnapshot.docs.first.data() as Map<String, dynamic>);
+      }
+
       await _firestore
           .collection('users')
           .doc(user.id)
           .set(user.toMap(), SetOptions(merge: true));
+
+      return userCredential;
+    } catch (e) {
+      print('Lỗi đăng nhập Google: $e');
+      rethrow;
     }
-    return userCredential;
   }
 
   // Đăng xuất

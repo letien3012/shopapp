@@ -19,6 +19,7 @@ import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_info/change_name.dart';
+import 'package:luanvan/ui/user/change_info/change_username.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
 import 'package:luanvan/ui/user/user_screen.dart';
 
@@ -45,4 +46,5 @@ final Map<String, WidgetBuilder> routes = {
   ChangeInfomationUser.routeName: (context) => ChangeInfomationUser(),
   ChangeAccountInfo.routeName: (context) => ChangeAccountInfo(),
   ChangeName.routeName: (context) => ChangeName(),
+  ChangeUsername.routeName: (context) => ChangeUsername(),
 };

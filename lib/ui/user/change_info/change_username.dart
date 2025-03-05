@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
@@ -8,31 +9,32 @@ import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/user_info_model.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
 
-class ChangeName extends StatefulWidget {
-  const ChangeName({super.key});
-  static String routeName = "change_name";
+class ChangeUsername extends StatefulWidget {
+  const ChangeUsername({super.key});
+  static String routeName = "change_username";
 
   @override
-  State<ChangeName> createState() => _ChangeNameState();
+  State<ChangeUsername> createState() => _ChangeUsernameState();
 }
 
-class _ChangeNameState extends State<ChangeName> {
-  TextEditingController _nameController = TextEditingController();
+class _ChangeUsernameState extends State<ChangeUsername> {
+  TextEditingController _usernameController = TextEditingController();
   bool _isChange = false;
-  String name = '';
+  String username = '';
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        name = ModalRoute.of(context)!.settings.arguments as String;
-        _nameController.text = name;
+        username = ModalRoute.of(context)!.settings.arguments as String;
+        _usernameController.text = username;
       });
     });
-    _nameController.addListener(() {
+    _usernameController.addListener(() {
       setState(() {
-        _isChange = _nameController.text != name;
+        _isChange = _usernameController.text != username;
       });
     });
   }
@@ -195,7 +197,7 @@ class _ChangeNameState extends State<ChangeName> {
               child: GestureDetector(
                 onTap: () {},
                 child: TextFormField(
-                  controller: _nameController,
+                  controller: _usernameController,
                   textAlignVertical: TextAlignVertical.center,
                   autofocus: true,
                   maxLength: 100,
@@ -208,11 +210,22 @@ class _ChangeNameState extends State<ChangeName> {
                     counterText: '',
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                    prefixIconConstraints:
+                        BoxConstraints(maxHeight: 35, maxWidth: 35),
+                    prefixIcon: Container(
+                      padding: EdgeInsets.all(5),
+                      height: 35,
+                      width: 35,
+                      child: SvgPicture.asset(
+                        IconHelper.userOutlineIcon,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                     suffixIcon: GestureDetector(
                       onTap: () {
-                        _nameController.clear();
+                        _usernameController.clear();
                       },
-                      child: _nameController.text.isNotEmpty
+                      child: _usernameController.text.isNotEmpty
                           ? Icon(
                               Icons.cancel,
                               size: 20,
@@ -281,14 +294,14 @@ class _ChangeNameState extends State<ChangeName> {
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
-                "Sửa hồ sơ",
+                "Tên đăng nhập",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
               ),
             ),
             GestureDetector(
               onTap: () {
                 if (_isChange) {
-                  Navigator.of(context).pop(_nameController.text);
+                  Navigator.of(context).pop(_usernameController.text);
                 }
               },
               child: Container(

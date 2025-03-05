@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -20,9 +23,8 @@ class ChangeInfomationUser extends StatefulWidget {
 }
 
 class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
-  final StorageService storageService = StorageService();
+  final StorageService _storageService = StorageService();
   final ImagePicker _imagePicker = ImagePicker();
-  String? _imageUrl;
   Gender _selectedGender = Gender.unknown;
   String _selectedDate = '';
   final GlobalKey<PopupMenuButtonState<Gender>> _popupMenuKey =
@@ -30,7 +32,27 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
   TextEditingController _nameController = TextEditingController();
   TextEditingController _genderController = TextEditingController();
   TextEditingController _dateController = TextEditingController();
+  TextEditingController _avatarUrlController = TextEditingController();
   bool _isInfoChange = false;
+
+  Future<void> _uploadAvatar(String userId, XFile image) async {
+    try {
+      File imageFile = File(image.path);
+      String? downloadUrl = await _storageService.uploadFile(
+          imageFile, 'image', 'avatar', userId);
+      if (downloadUrl != null) {
+        _avatarUrlController.text = downloadUrl;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tải ảnh lên thành công')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tải ảnh: $e')),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -58,9 +80,14 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
                   userState.user.date != null
                       ? _selectedDate = userState.user.date!
                       : null;
+                  _avatarUrlController.text.isEmpty
+                      ? _avatarUrlController.text = userState.user.avataUrl!
+                      : null;
+
                   _nameController.text.isEmpty
                       ? _nameController.text = userState.user.name!
                       : null;
+
                   _dateController.text = _selectedDate;
                   _genderController.text = _selectedGender.name;
                   return _buildContent(context, userState);
@@ -142,37 +169,57 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
       width: double.infinity,
       alignment: Alignment.center,
       color: Colors.brown[500],
-      child: Stack(
-        children: [
-          ClipOval(
-            child: Image.network(
-              width: 70,
-              height: 70,
-              fit: BoxFit.cover,
-              userState.user.avataUrl ?? "https://via.placeholder.com/70",
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.person, size: 70),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            child: Container(
-              width: 70,
-              height: 35,
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(35),
+      child: GestureDetector(
+        onTap: () async {
+          final XFile? image =
+              await _imagePicker.pickImage(source: ImageSource.gallery);
+          if (image != null) {
+            setState(() {
+              _avatarUrlController.text = image.path;
+              _isInfoChange = true;
+            });
+          }
+        },
+        child: Stack(
+          children: [
+            ClipOval(
+                child: _avatarUrlController.text.startsWith('http')
+                    ? Image.network(
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                        _avatarUrlController.text,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.person, size: 70),
+                      )
+                    : Image.file(
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                        File(_avatarUrlController.text),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.person, size: 70),
+                      )),
+            Positioned(
+              bottom: 0,
+              child: Container(
+                width: 70,
+                height: 30,
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(35),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  "Sửa",
+                  style: TextStyle(fontSize: 13, color: Colors.white),
                 ),
               ),
-              alignment: Alignment.center,
-              child: const Text(
-                "Sửa",
-                style: TextStyle(fontSize: 13, color: Colors.white),
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -205,47 +252,6 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
               }
             });
           }
-        },
-        child: Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(width: 0.2, color: Colors.grey)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              Row(
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(width: 5),
-                  const Icon(Icons.arrow_forward_ios, size: 16),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Mục thông tin người dùng thông thường
-  Widget _buildInfoItem(String title, String value) {
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        splashColor: Colors.grey.withOpacity(0.3),
-        highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: () {
-          Navigator.of(context).pushNamed(ChangeName.routeName);
         },
         child: Container(
           height: 50,
@@ -585,14 +591,18 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
               ),
             ),
             GestureDetector(
-              onTap: () {
+              onTap: () async {
                 if (_isInfoChange) {
+                  if (!_avatarUrlController.text.startsWith('http')) {
+                    await _uploadAvatar(
+                        user.id, XFile(_avatarUrlController.text));
+                  }
                   UserInfoModel userUpdate = UserInfoModel(
                     id: user.id,
                     name: _nameController.text,
                     email: user.email,
                     phone: user.phone,
-                    avataUrl: user.avataUrl,
+                    avataUrl: _avatarUrlController.text,
                     gender: Gender.values.firstWhere(
                       (g) =>
                           g.toString().split('.').last ==
@@ -605,6 +615,7 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
                   context
                       .read<UserBloc>()
                       .add(UpdateBasicInfoUserEvent(userUpdate));
+                  Navigator.of(context).pop();
                 }
               },
               child: Container(

@@ -15,6 +15,7 @@ import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
+import 'package:luanvan/ui/shop/start_shop.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
 
@@ -213,40 +214,49 @@ class _UserScreenState extends State<UserScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: isAuthen ? Colors.white : null,
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-            ),
-          ),
-          height: 30,
-          width: 130,
-          child: isAuthen
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      IconHelper.store,
-                      height: 25,
-                      width: 25,
+        isAuthen
+            ? ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                child: Material(
+                  color: Colors.white,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pushNamed(StartShop.routeName);
+                    },
+                    splashColor: Colors.transparent.withOpacity(0.2),
+                    highlightColor: Colors.transparent.withOpacity(0.1),
+                    child: SizedBox(
+                      height: 30,
+                      width: 130,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SvgPicture.asset(
+                            IconHelper.store,
+                            height: 25,
+                            width: 25,
+                          ),
+                          const SizedBox(width: 5),
+                          const Text(
+                            "Bắt đầu bán",
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w500),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(width: 5),
+                          const Icon(Icons.arrow_forward_ios, size: 15),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 5),
-                    const Text(
-                      "Bắt đầu bán",
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(width: 5),
-                    const Icon(Icons.arrow_forward_ios, size: 15),
-                  ],
-                )
-              : null,
-        ),
+                  ),
+                ),
+              )
+            : SizedBox(),
         Row(
           children: [
             SizedBox(

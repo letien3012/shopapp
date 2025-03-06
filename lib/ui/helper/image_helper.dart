@@ -3,6 +3,5 @@ class ImageHelper {
 
   static const String facebook_logo = "${imagePath}facebook_logo.png";
   static const String google_logo = "${imagePath}google_logo.png";
-
-  static const String chatIcon = "${imagePath}chat.svg";
+  static const String start_shop_background = "${imagePath}start_shop.jpg";
 }

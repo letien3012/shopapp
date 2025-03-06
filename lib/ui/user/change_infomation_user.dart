@@ -610,7 +610,7 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
                       orElse: () => Gender.unknown,
                     ),
                     date: _dateController.text,
-                    userName: null,
+                    userName: user.userName,
                   );
                   context
                       .read<UserBloc>()

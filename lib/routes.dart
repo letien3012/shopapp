@@ -16,6 +16,8 @@ import 'package:luanvan/ui/login/verify_screen.dart';
 import 'package:luanvan/ui/mainscreen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop.dart';
+import 'package:luanvan/ui/shop/start_shop.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_info/change_name.dart';
@@ -47,4 +49,6 @@ final Map<String, WidgetBuilder> routes = {
   ChangeAccountInfo.routeName: (context) => ChangeAccountInfo(),
   ChangeName.routeName: (context) => ChangeName(),
   ChangeUsername.routeName: (context) => ChangeUsername(),
+  StartShop.routeName: (context) => StartShop(),
+  SignShop.routeName: (context) => SignShop(),
 };

@@ -12,6 +12,12 @@ class UpdateBasicInfoUserEvent extends UserEvent {
   UpdateBasicInfoUserEvent(this.user);
 }
 
+class UpdateUserNameEvent extends UserEvent {
+  final String userName;
+  final String userId;
+  UpdateUserNameEvent(this.userName, this.userId);
+}
+
 class UpdateUserEvent extends UserEvent {
   final UserInfoModel user;
   UpdateUserEvent(this.user);

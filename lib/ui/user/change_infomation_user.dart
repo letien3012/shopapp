@@ -611,6 +611,7 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
                     ),
                     date: _dateController.text,
                     userName: user.userName,
+                    role: user.role,
                   );
                   context
                       .read<UserBloc>()

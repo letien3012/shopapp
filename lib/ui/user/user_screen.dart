@@ -401,7 +401,7 @@ class _UserScreenState extends State<UserScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          user!.userName!,
+                          user!.userName!.replaceFirst("(changed)", ''),
                           style: const TextStyle(
                               fontSize: 18, color: Colors.white),
                           maxLines: 1,

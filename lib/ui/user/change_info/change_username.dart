@@ -194,45 +194,42 @@ class _ChangeUsernameState extends State<ChangeUsername> {
               height: 50,
               color: Colors.white,
               alignment: Alignment.centerLeft,
-              child: GestureDetector(
-                onTap: () {},
-                child: TextFormField(
-                  controller: _usernameController,
-                  textAlignVertical: TextAlignVertical.center,
-                  autofocus: true,
-                  maxLength: 100,
-                  maxLengthEnforcement: MaxLengthEnforcement.none,
-                  showCursor: true,
-                  style: TextStyle(
-                    fontSize: 13,
+              child: TextFormField(
+                controller: _usernameController,
+                textAlignVertical: TextAlignVertical.center,
+                autofocus: true,
+                maxLength: 100,
+                maxLengthEnforcement: MaxLengthEnforcement.none,
+                showCursor: true,
+                style: TextStyle(
+                  fontSize: 13,
+                ),
+                decoration: InputDecoration(
+                  counterText: '',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                  prefixIconConstraints:
+                      BoxConstraints(maxHeight: 35, maxWidth: 35),
+                  prefixIcon: Container(
+                    padding: EdgeInsets.all(5),
+                    height: 35,
+                    width: 35,
+                    child: SvgPicture.asset(
+                      IconHelper.userOutlineIcon,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                    prefixIconConstraints:
-                        BoxConstraints(maxHeight: 35, maxWidth: 35),
-                    prefixIcon: Container(
-                      padding: EdgeInsets.all(5),
-                      height: 35,
-                      width: 35,
-                      child: SvgPicture.asset(
-                        IconHelper.userOutlineIcon,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    suffixIcon: GestureDetector(
-                      onTap: () {
-                        _usernameController.clear();
-                      },
-                      child: _usernameController.text.isNotEmpty
-                          ? Icon(
-                              Icons.cancel,
-                              size: 20,
-                              color: Colors.grey,
-                            )
-                          : Text(''),
-                    ),
+                  suffixIcon: GestureDetector(
+                    onTap: () {
+                      _usernameController.clear();
+                    },
+                    child: _usernameController.text.isNotEmpty
+                        ? Icon(
+                            Icons.cancel,
+                            size: 20,
+                            color: Colors.grey,
+                          )
+                        : Text(''),
                   ),
                 ),
               ),
@@ -247,7 +244,36 @@ class _ChangeUsernameState extends State<ChangeUsername> {
                   color: Colors.black54,
                 ),
               ),
-            )
+            ),
+            Container(
+              height: 45,
+              margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              child: Material(
+                color: Colors.brown,
+                child: InkWell(
+                  splashColor: Colors.transparent.withOpacity(0.2),
+                  highlightColor: Colors.transparent.withOpacity(0.1),
+                  onTap: () {
+                    if (_isChange) {
+                      context.read<UserBloc>().add(UpdateUserNameEvent(
+                          _usernameController.text, userState.user.id));
+                    }
+                    Navigator.of(context).pop(_usernameController.text);
+                  },
+                  child: Center(
+                    child: Text(
+                      "Lưu",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight:
+                            _isChange ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -296,26 +322,6 @@ class _ChangeUsernameState extends State<ChangeUsername> {
               child: Text(
                 "Tên đăng nhập",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                if (_isChange) {
-                  Navigator.of(context).pop(_usernameController.text);
-                }
-              },
-              child: Container(
-                height: 40,
-                width: 40,
-                alignment: Alignment.center,
-                child: Text(
-                  "Lưu",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: _isChange ? Colors.brown : Colors.grey,
-                    fontWeight: _isChange ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
               ),
             ),
           ],

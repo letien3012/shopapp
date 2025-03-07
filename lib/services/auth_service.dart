@@ -165,6 +165,7 @@ class AuthService {
           gender: null,
           date: null,
           userName: username,
+          role: 0,
         );
       } else {
         user = UserInfoModel.fromFirestore(

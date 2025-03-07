@@ -12,4 +12,6 @@ class IconHelper {
   static const String questionFilledIcon = "${imagePath}question_filled.svg";
   static const String store = "${imagePath}store.svg";
   static const String user = "${imagePath}user.svg";
+  static const String phone = "${imagePath}phone.svg";
+  static const String mail = "${imagePath}mail.svg";
 }

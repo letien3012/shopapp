@@ -12,7 +12,7 @@ class UserInfoModel {
   Gender? gender;
   String? date;
   String? userName;
-
+  int role;
   UserInfoModel({
     required this.id, // Chỉ id là required
     this.name,
@@ -22,6 +22,7 @@ class UserInfoModel {
     this.gender,
     this.date,
     this.userName,
+    required this.role,
   });
 
   UserInfoModel copyWith({
@@ -33,6 +34,7 @@ class UserInfoModel {
     Gender? gender,
     String? date,
     String? userName,
+    required int role,
   }) {
     return UserInfoModel(
       id: id ?? this.id,
@@ -43,6 +45,7 @@ class UserInfoModel {
       gender: gender ?? this.gender,
       date: date ?? this.date,
       userName: userName ?? this.userName,
+      role: role,
     );
   }
 
@@ -56,6 +59,7 @@ class UserInfoModel {
       'gender': gender?.toString().split('.').last,
       'date': date,
       'userName': userName,
+      'role': role
     };
   }
 
@@ -74,6 +78,7 @@ class UserInfoModel {
           : null,
       date: map['date'] != null ? map['date'] as String : null,
       userName: map['userName'] != null ? map['userName'] as String : null,
+      role: map['role'] as int? ?? 0,
     );
   }
 
@@ -88,6 +93,7 @@ class UserInfoModel {
       gender: Gender.unknown,
       date: null,
       userName: null,
+      role: 0,
     );
   }
 
@@ -106,6 +112,7 @@ class UserInfoModel {
             )
           : Gender.unknown,
       userName: data['userName'],
+      role: data['role'],
     );
   }
 
@@ -116,6 +123,6 @@ class UserInfoModel {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName)';
+    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role)';
   }
 }

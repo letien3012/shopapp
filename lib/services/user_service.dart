@@ -27,4 +27,11 @@ class UserService {
         .doc(user.id)
         .set(user.toMap(), SetOptions(merge: true));
   }
+
+  Future<void> updateUserName(String userName, String userId) async {
+    await firebaseFirestore
+        .collection('users')
+        .doc(userId)
+        .update({'userName': '(changed)$userName'});
+  }
 }

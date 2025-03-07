@@ -3,13 +3,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
+import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/user_info_model.dart';
+import 'package:luanvan/ui/checkout/add_location_screen.dart';
+import 'package:luanvan/ui/checkout/pick_location.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
+import 'package:luanvan/ui/shop/add_location_shop_screen.dart';
+import 'package:luanvan/ui/shop/ship_setting_screen.dart';
+import 'package:luanvan/ui/user/change_info/change_email.dart';
+import 'package:luanvan/ui/user/change_info/change_phone.dart';
 
 class SignShop extends StatefulWidget {
   const SignShop({super.key});
   static String routeName = 'sign_shop';
+
   @override
   State<SignShop> createState() => _SignShopState();
 }
@@ -23,6 +31,12 @@ class _SignShopState extends State<SignShop> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _shopNameController = TextEditingController();
+
+  // Quản lý hai tham số vận chuyển
+  bool isFastEnabled = false;
+  bool isEconomyEnabled = false;
+  bool isCompleted = false; // Trạng thái hoàn thành
+
   Future<bool> _showExitConfirmationDialog() async {
     return await showDialog(
           context: context,
@@ -95,6 +109,45 @@ class _SignShopState extends State<SignShop> {
 
   void _nextStep() {
     if (_formKey.currentState!.validate()) {
+      // Kiểm tra Trang 0
+      if (_currentStep == 0) {
+        if (_shopNameController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Vui lòng nhập tên shop")),
+          );
+          return;
+        }
+        if (_addressController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Vui lòng nhập địa chỉ lấy hàng")),
+          );
+          return;
+        }
+        if (_emailController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Vui lòng nhập email")),
+          );
+          return;
+        }
+        if (_phoneController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Vui lòng nhập số điện thoại")),
+          );
+          return;
+        }
+      }
+
+      // Kiểm tra Trang 1
+      if (_currentStep == 1 && !isCompleted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text("Vui lòng kích hoạt ít nhất 01 phương thức vận chuyển"),
+          ),
+        );
+        return;
+      }
+
       if (_currentStep < 2) {
         setState(() => _currentStep++);
         _pageController.nextPage(
@@ -115,31 +168,50 @@ class _SignShopState extends State<SignShop> {
 
   void _submitForm() {
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("Form đã gửi!")));
+        .showSnackBar(const SnackBar(content: Text("Form đã gửi!")));
   }
 
-  bool isCompleted = false; // Trạng thái của card
+  @override
+  void initState() {
+    super.initState();
+    isCompleted = isFastEnabled || isEconomyEnabled;
+    final userBloc = BlocProvider.of<UserBloc>(context, listen: false);
+    if (userBloc.state is UserLoaded) {
+      final user = (userBloc.state as UserLoaded).user;
+      _shopNameController.text = user.userName!.replaceFirst("(changed)", "");
+      _phoneController.text = user.phone ?? '';
+      _emailController.text = user.email ?? '';
+    }
+    isCompleted = isFastEnabled || isEconomyEnabled;
+  }
 
-  void toggleState() {
-    setState(() {
-      isCompleted = !isCompleted; // Đổi trạng thái khi nhấn
-    });
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _shopNameController.dispose();
+    _addressController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<UserBloc, UserState>(
-      builder: (context, userState) {
-        if (userState is UserLoading) {
-          return _buildLoading();
-        } else if (userState is UserLoaded) {
-          return _buildContent(context, userState.user);
-        } else if (userState is UserError) {
-          return _buildError(userState.message);
-        }
-        return _buildInitializing();
-      },
-    ));
+    return WillPopScope(
+      onWillPop: _showExitConfirmationDialog,
+      child: BlocBuilder<UserBloc, UserState>(
+        builder: (context, userState) {
+          if (userState is UserLoading) {
+            return _buildLoading();
+          } else if (userState is UserLoaded) {
+            return _buildContent(context, userState.user);
+          } else if (userState is UserError) {
+            return _buildError(userState.message);
+          }
+          return _buildInitializing();
+        },
+      ),
+    );
   }
 
   // Trạng thái đang tải
@@ -158,350 +230,395 @@ class _SignShopState extends State<SignShop> {
   }
 
   Widget _buildContent(BuildContext context, UserInfoModel user) {
-    _shopNameController.text.isEmpty
-        ? _shopNameController.text = user.userName!
-        : null;
     user.phone != null ? _phoneController.text = user.phone! : null;
     user.email != null ? _emailController.text = user.email! : null;
-    return Stack(
-      children: [
-        SingleChildScrollView(
-          child: Container(
-            color: Colors.white,
-            padding: const EdgeInsets.only(top: 90, bottom: 60),
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height,
-              minWidth: MediaQuery.of(context).size.width,
-            ),
-            child: Column(
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height - 90,
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            physics: NeverScrollableScrollPhysics(),
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.only(top: 90, bottom: 60),
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height,
+                minWidth: MediaQuery.of(context).size.width,
+              ),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height - 90,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
                             child: SizedBox(
-                              height: 60,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Đường gạch ngang với 2 màu
-                                  Positioned(
-                                    top: 10,
-                                    left: 20,
-                                    right: 20,
-                                    child: Row(
-                                      children: List.generate(1, (index) {
-                                        return Expanded(
-                                          child: Container(
-                                            margin: EdgeInsets.only(bottom: 10),
-                                            height: 2,
-                                            color: _currentStep > index
-                                                ? Colors.brown
-                                                : Colors.grey,
-                                          ),
-                                        );
-                                      }),
-                                    ),
-                                  ),
-
-                                  // Các bước (Start - Center - End)
-                                  Align(
-                                    alignment: Alignment.topCenter,
-                                    child: Row(
-                                      children: [
-                                        const SizedBox(
-                                          width: 20,
-                                        ),
-                                        Expanded(
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: List.generate(2, (index) {
-                                              bool isCompleted =
-                                                  _currentStep > index;
-                                              bool isActive =
-                                                  _currentStep == index;
-
-                                              return CircleAvatar(
-                                                radius: 12,
-                                                backgroundColor:
-                                                    (isActive || isCompleted)
-                                                        ? Colors.brown
-                                                        : Colors.grey,
-                                                child: CircleAvatar(
-                                                  radius: 10,
-                                                  backgroundColor: isCompleted
-                                                      ? Colors.brown
-                                                      : Colors.white,
-                                                  child: isCompleted
-                                                      ? Icon(Icons.check,
-                                                          color: Colors.white,
-                                                          size: 15)
-                                                      : null,
-                                                ),
-                                              );
-                                            }),
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          width: 20,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    children: [
-                                      const SizedBox(
-                                        height: 30,
+                              width: MediaQuery.of(context).size.width,
+                              child: SizedBox(
+                                height: 60,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Đường gạch ngang với 2 màu
+                                    Positioned(
+                                      top: 10,
+                                      left: 20,
+                                      right: 20,
+                                      child: Row(
+                                        children: List.generate(1, (index) {
+                                          return Expanded(
+                                            child: Container(
+                                              margin:
+                                                  EdgeInsets.only(bottom: 10),
+                                              height: 2,
+                                              color: _currentStep > index
+                                                  ? Colors.brown
+                                                  : Colors.grey,
+                                            ),
+                                          );
+                                        }),
                                       ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
+                                    ),
+
+                                    // Các bước (Start - Center - End)
+                                    Align(
+                                      alignment: Alignment.topCenter,
+                                      child: Row(
                                         children: [
-                                          Text(
-                                            "Thông tin shop",
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.brown,
+                                          const SizedBox(
+                                            width: 20,
+                                          ),
+                                          Expanded(
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children:
+                                                  List.generate(2, (index) {
+                                                bool isCompleted =
+                                                    _currentStep > index;
+                                                bool isActive =
+                                                    _currentStep == index;
+
+                                                return CircleAvatar(
+                                                  radius: 12,
+                                                  backgroundColor:
+                                                      (isActive || isCompleted)
+                                                          ? Colors.brown
+                                                          : Colors.grey,
+                                                  child: CircleAvatar(
+                                                    radius: 10,
+                                                    backgroundColor: isCompleted
+                                                        ? Colors.brown
+                                                        : Colors.white,
+                                                    child: isCompleted
+                                                        ? Icon(Icons.check,
+                                                            color: Colors.white,
+                                                            size: 15)
+                                                        : null,
+                                                  ),
+                                                );
+                                              }),
                                             ),
                                           ),
-                                          Text(
-                                            "Cài đặt vận chuyển",
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.brown,
-                                            ),
+                                          const SizedBox(
+                                            width: 20,
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  )
-                                ],
+                                    ),
+                                    Column(
+                                      children: [
+                                        const SizedBox(
+                                          height: 30,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Thông tin shop",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.brown,
+                                              ),
+                                            ),
+                                            Text(
+                                              "Cài đặt vận chuyển",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.brown,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
 
-                        // Nội dung từng bước
-                        Expanded(
-                          child: PageView(
-                            controller: _pageController,
-                            physics: NeverScrollableScrollPhysics(),
-                            children: [
-                              Container(
-                                color: Colors.grey[200],
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    Container(
-                                      color: Colors.white,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Text("Tên Shop",
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              Text(" *",
-                                                  style: TextStyle(
-                                                      color: Colors.red)),
-                                              Spacer(),
-                                              Text(
-                                                  "${_shopNameController.text.length}/30",
-                                                  style: TextStyle(
-                                                      color: Colors.grey)),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            height: 40,
-                                            child: TextField(
-                                              controller: _shopNameController,
-                                              onChanged: (value) {
-                                                setState(() {});
-                                              },
-                                              maxLength: 30,
-                                              maxLengthEnforcement:
-                                                  MaxLengthEnforcement.none,
-                                              decoration: InputDecoration(
-                                                counterText: '',
-                                                border: InputBorder.none,
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                        vertical: 8),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                          // Nội dung từng bước
+                          Expanded(
+                            child: PageView(
+                              controller: _pageController,
+                              physics: NeverScrollableScrollPhysics(),
+                              children: [
+                                Container(
+                                  color: Colors.grey[200],
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        height: 10,
                                       ),
-                                    ),
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    _buildInfoShopItem("Địa chỉ lấy hàng",
-                                        _addressController.text),
-                                    _buildInfoShopItem(
-                                        "Email", _emailController.text),
-                                    _buildInfoShopItem(
-                                        "Số điện thoại", _phoneController.text),
-                                    Expanded(
-                                        child: Container(
-                                      color: Colors.grey[200],
-                                    ))
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                height: double.infinity,
-                                color: Colors.grey[200],
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      color: Colors.white,
-                                      margin: EdgeInsets.all(8),
-                                      padding: EdgeInsets.all(10),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const SizedBox(
-                                            height: 10,
-                                          ),
-                                          // Tiêu đề
-                                          Text(
-                                            "Cài đặt vận chuyển",
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          SizedBox(height: 8),
-
-                                          // Nội dung mô tả
-                                          Text(
-                                            "Vui lòng kích hoạt ít nhất 01 Phương thức vận chuyển",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                          SizedBox(height: 16),
-
-                                          // Nút bấm thay đổi trạng thái
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              // Icon trạng thái
-                                              Icon(
-                                                isCompleted
-                                                    ? Icons.check_circle
-                                                    : Icons.access_time,
-                                                color: isCompleted
-                                                    ? Colors.green
-                                                    : Colors.grey,
-                                              ),
-                                              GestureDetector(
-                                                onTap: toggleState,
-                                                child: Container(
-                                                  height: 35,
-                                                  width: 120,
-                                                  alignment: Alignment.center,
-                                                  decoration: BoxDecoration(
-                                                      color: isCompleted
-                                                          ? Colors.white
-                                                          : Colors.brown,
-                                                      border: isCompleted
-                                                          ? Border.all(
-                                                              width: 1,
-                                                              color:
-                                                                  Colors.brown)
-                                                          : null),
-                                                  child: Text(
-                                                    !isCompleted
-                                                        ? "Đang thực hiện"
-                                                        : "Xem chi tiết",
+                                      Container(
+                                        color: Colors.white,
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 8),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text("Tên Shop",
                                                     style: TextStyle(
-                                                        color: isCompleted
-                                                            ? Colors.brown
-                                                            : Colors.white),
-                                                  ),
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                                Text(" *",
+                                                    style: TextStyle(
+                                                        color: Colors.red)),
+                                                Spacer(),
+                                                Text(
+                                                    "${_shopNameController.text.length}/30",
+                                                    style: TextStyle(
+                                                        color: Colors.grey)),
+                                              ],
+                                            ),
+                                            SizedBox(
+                                              height: 40,
+                                              child: TextFormField(
+                                                controller: _shopNameController,
+                                                onChanged: (value) {
+                                                  setState(() {});
+                                                },
+                                                validator: (value) {
+                                                  if (value == null ||
+                                                      value.isEmpty) {
+                                                    return 'Vui lòng nhập tên shop';
+                                                  }
+                                                  return null;
+                                                },
+                                                maxLength: 30,
+                                                maxLengthEnforcement:
+                                                    MaxLengthEnforcement.none,
+                                                decoration: InputDecoration(
+                                                  counterText: '',
+                                                  border: InputBorder.none,
+                                                  contentPadding:
+                                                      EdgeInsets.symmetric(
+                                                          vertical: 8),
+                                                  errorStyle: TextStyle(
+                                                      color: Colors.red),
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    Expanded(
-                                        child: Container(
-                                      color: Colors.grey[200],
-                                    ))
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border(
-                                        top: BorderSide(
-                                      width: 5,
-                                      color: Colors.grey[200]!,
-                                    )),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      _buildAddressItem("Địa chỉ lấy hàng",
+                                          _addressController.text),
+                                      _buildEmailItem(
+                                          "Email", _emailController.text),
+                                      _buildPhoneItem("Số điện thoại",
+                                          _phoneController.text),
+                                      Expanded(
+                                          child: Container(
+                                        color: Colors.grey[200],
+                                      ))
+                                    ],
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 10, bottom: 10, left: 10),
-                                    child: Material(
+                                ),
+                                Container(
+                                  height: double.infinity,
+                                  color: Colors.grey[200],
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        color: Colors.white,
+                                        margin: EdgeInsets.all(8),
+                                        padding: EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(
+                                              height: 10,
+                                            ),
+                                            // Tiêu đề
+                                            Text(
+                                              "Cài đặt vận chuyển",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(height: 8),
+
+                                            // Nội dung mô tả
+                                            Text(
+                                              "Vui lòng kích hoạt ít nhất 01 Phương thức vận chuyển",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            SizedBox(height: 16),
+
+                                            // Nút bấm thay đổi trạng thái
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                // Icon trạng thái
+                                                Icon(
+                                                  isCompleted
+                                                      ? Icons.check_circle
+                                                      : Icons.access_time,
+                                                  color: isCompleted
+                                                      ? Colors.green
+                                                      : Colors.grey,
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () async {
+                                                    final result =
+                                                        await Navigator
+                                                            .pushNamed(
+                                                      context,
+                                                      ShipSettingScreen
+                                                          .routeName,
+                                                      arguments: {
+                                                        'isFastEnabled':
+                                                            isFastEnabled,
+                                                        'isEconomyEnabled':
+                                                            isEconomyEnabled,
+                                                      },
+                                                    );
+                                                    if (result != null &&
+                                                        result is Map) {
+                                                      setState(() {
+                                                        isFastEnabled = result[
+                                                                'isFastEnabled'] ??
+                                                            false;
+                                                        isEconomyEnabled = result[
+                                                                'isEconomyEnabled'] ??
+                                                            false;
+                                                        isCompleted =
+                                                            isFastEnabled ||
+                                                                isEconomyEnabled;
+                                                      });
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    height: 35,
+                                                    width: 120,
+                                                    alignment: Alignment.center,
+                                                    decoration: BoxDecoration(
+                                                        color: isCompleted
+                                                            ? Colors.white
+                                                            : Colors.brown,
+                                                        border: isCompleted
+                                                            ? Border.all(
+                                                                width: 1,
+                                                                color: Colors
+                                                                    .brown)
+                                                            : null),
+                                                    child: Text(
+                                                      !isCompleted
+                                                          ? "Đang thực hiện"
+                                                          : "Xem chi tiết",
+                                                      style: TextStyle(
+                                                          color: isCompleted
+                                                              ? Colors.brown
+                                                              : Colors.white),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(
+                                          child: Container(
+                                        color: Colors.grey[200],
+                                      ))
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
                                       color: Colors.white,
-                                      child: InkWell(
-                                        onTap: () {
-                                          if (_currentStep > 0) _previousStep();
-                                        },
-                                        highlightColor:
-                                            Colors.transparent.withOpacity(0.1),
-                                        splashColor:
-                                            Colors.transparent.withOpacity(0.2),
-                                        child: Container(
-                                          height: 40,
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                              width: 1,
-                                              color: _currentStep == 0
-                                                  ? Colors.grey
-                                                  : Colors.brown,
+                                      border: Border(
+                                          top: BorderSide(
+                                        width: 5,
+                                        color: Colors.grey[200]!,
+                                      )),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 10, bottom: 10, left: 10),
+                                      child: Material(
+                                        color: Colors.white,
+                                        child: InkWell(
+                                          onTap: () {
+                                            if (_currentStep > 0)
+                                              _previousStep();
+                                          },
+                                          highlightColor: Colors.transparent
+                                              .withOpacity(0.1),
+                                          splashColor: Colors.transparent
+                                              .withOpacity(0.2),
+                                          child: Container(
+                                            height: 40,
+                                            width: MediaQuery.of(context)
+                                                .size
+                                                .width,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                width: 1,
+                                                color: _currentStep == 0
+                                                    ? Colors.grey
+                                                    : Colors.brown,
+                                              ),
                                             ),
-                                          ),
-                                          padding: EdgeInsets.all(10),
-                                          child: Text(
-                                            "Quay lại",
-                                            style: TextStyle(
-                                              color: Colors.brown,
+                                            padding: EdgeInsets.all(10),
+                                            child: Text(
+                                              "Quay lại",
+                                              style: TextStyle(
+                                                color: Colors.brown,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -509,43 +626,43 @@ class _SignShopState extends State<SignShop> {
                                     ),
                                   ),
                                 ),
-                              ),
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border(
-                                        top: BorderSide(
-                                      width: 5,
-                                      color: Colors.grey[200]!,
-                                    )),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 10,
-                                        bottom: 10,
-                                        left: 10,
-                                        right: 10),
-                                    child: Material(
-                                      color: Colors.brown,
-                                      child: InkWell(
-                                        onTap: () {
-                                          if (_currentStep < 3) _nextStep();
-                                        },
-                                        highlightColor:
-                                            Colors.transparent.withOpacity(0.1),
-                                        splashColor:
-                                            Colors.transparent.withOpacity(0.2),
-                                        child: Container(
-                                          height: 20,
-                                          alignment: Alignment.center,
-                                          margin: EdgeInsets.all(10),
-                                          child: Text(
-                                            _currentStep >= 1
-                                                ? "Hoàn thành"
-                                                : "Tiếp theo",
-                                            style: TextStyle(
-                                              color: Colors.white,
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border(
+                                          top: BorderSide(
+                                        width: 5,
+                                        color: Colors.grey[200]!,
+                                      )),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 10,
+                                          bottom: 10,
+                                          left: 10,
+                                          right: 10),
+                                      child: Material(
+                                        color: Colors.brown,
+                                        child: InkWell(
+                                          onTap: () {
+                                            if (_currentStep < 3) _nextStep();
+                                          },
+                                          highlightColor: Colors.transparent
+                                              .withOpacity(0.1),
+                                          splashColor: Colors.transparent
+                                              .withOpacity(0.2),
+                                          child: Container(
+                                            height: 20,
+                                            alignment: Alignment.center,
+                                            margin: EdgeInsets.all(10),
+                                            child: Text(
+                                              _currentStep >= 1
+                                                  ? "Hoàn thành"
+                                                  : "Tiếp theo",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -553,84 +670,199 @@ class _SignShopState extends State<SignShop> {
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // AppBar
+          Align(
+            alignment: Alignment.topCenter,
+            child: Column(
+              children: [
+                Container(
+                  height: 90,
+                  width: MediaQuery.of(context).size.width,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  padding: const EdgeInsets.only(
+                      top: 30, left: 10, right: 10, bottom: 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      //Icon trở về
+                      GestureDetector(
+                        onTap: () async {
+                          if (await _showExitConfirmationDialog()) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: Container(
+                          height: 40,
+                          width: 40,
+                          alignment: Alignment.center,
+                          margin: EdgeInsets.only(bottom: 5),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.brown,
+                            size: 30,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      SizedBox(
+                        height: 40,
+                        child: Text(
+                          _currentStep == 0
+                              ? "Thông tin shop"
+                              : "Cài đặt vận chuyển",
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ),
-        // AppBar
-        Align(
-          alignment: Alignment.topCenter,
-          child: Column(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressItem(String title, String value) {
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        splashColor: Colors.grey.withOpacity(0.3),
+        highlightColor: Colors.grey.withOpacity(0.1),
+        onTap: () async {
+          final newAddress = await Navigator.of(context)
+              .pushNamed(AddLocationShopScreen.routeName);
+          if (newAddress != null && mounted) {
+            setState(() {
+              _addressController.text = newAddress as String;
+            });
+          }
+        },
+        child: Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(width: 0.2, color: Colors.grey)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                height: 90,
-                width: MediaQuery.of(context).size.width,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                ),
-                padding: const EdgeInsets.only(
-                    top: 30, left: 10, right: 10, bottom: 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    //Icon trở về
-                    GestureDetector(
-                      onTap: () async {
-                        if (await _showExitConfirmationDialog()) {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: Container(
-                        height: 40,
-                        width: 40,
-                        alignment: Alignment.center,
-                        margin: EdgeInsets.only(bottom: 5),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.brown,
-                          size: 30,
-                        ),
-                      ),
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  Text(" *", style: TextStyle(color: Colors.red)),
+                ],
+              ),
+              Row(
+                children: [
+                  Text(
+                    value.isNotEmpty ? value : "Thiết lập ngay",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: value.isEmpty ? Colors.grey : Colors.black,
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    SizedBox(
-                      height: 40,
-                      child: Text(
-                        _currentStep == 0
-                            ? "Thông tin shop"
-                            : "Cài đặt vận chuyển",
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Icon(Icons.arrow_forward_ios, size: 16),
+                ],
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildInfoShopItem(String title, String value) {
+  Widget _buildEmailItem(String title, String value) {
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        splashColor: Colors.grey.withOpacity(0.3),
+        highlightColor: Colors.grey.withOpacity(0.1),
+        onTap: () async {
+          final newName = await Navigator.pushNamed(
+            context,
+            ChangeEmail.routeName,
+            arguments: value,
+          );
+
+          if (newName != null) {
+            setState(() {
+              _emailController.text = newName as String;
+              if (_emailController.text != value) {
+                setState(() {});
+              }
+            });
+          }
+        },
+        child: Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(width: 0.2, color: Colors.grey)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  Text(" *", style: TextStyle(color: Colors.red)),
+                ],
+              ),
+              Row(
+                children: [
+                  Text(
+                    value.isNotEmpty ? value : "Thiết lập ngay",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: value.isEmpty ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Icon(Icons.arrow_forward_ios, size: 16),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhoneItem(String title, String value) {
     return Material(
       color: Colors.white,
       child: InkWell(
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
         onTap: () {
-          // Navigator.of(context).pushNamed(ChangeName.routeName);
+          Navigator.of(context).pushNamed(ChangePhone.routeName);
         },
         child: Container(
           height: 50,

@@ -10,18 +10,6 @@ import 'package:luanvan/ui/user/user_screen.dart';
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
   static String routeName = 'main_screen';
-
-  static var user = UserInfoModel(
-    id: "1",
-    name: "Lê Minh Tiền",
-    email: "leminhtien3012@gmail.com",
-    phone: "0817124418",
-    avataUrl:
-        "https://img.freepik.com/premium-vector/luxury-lch-logo-design-elegant-letter-lch-monogram-logo-minimalist-polygon-lch-logo-design-template_1101554-79801.jpg",
-    gender: Gender.male,
-    date: "30/12/2003",
-    userName: "letien3012",
-  );
   @override
   State<MainScreen> createState() => _MainScreenState();
 }

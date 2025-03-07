@@ -11,6 +11,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   UserBloc(this._userService) : super(UserInitial()) {
     on<FetchUserEvent>(_onFetchUser);
     on<UpdateBasicInfoUserEvent>(_onUpdateBasicInfoUser);
+    on<UpdateUserNameEvent>(_onUpdateUserName);
     on<UpdateUserEvent>(_onUpdateUser);
   }
   Future<void> _onFetchUser(
@@ -30,6 +31,18 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     try {
       await _userService.updateBasicUserInfo(event.user);
       emit(UserLoaded(event.user));
+    } catch (e) {
+      emit(UserError(e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateUserName(
+      UpdateUserNameEvent event, Emitter<UserState> emit) async {
+    emit(UserLoading());
+    try {
+      await _userService.updateUserName(event.userName, event.userId);
+      final UserInfoModel user = await _userService.fetchUserInfo(event.userId);
+      emit(UserLoaded(user));
     } catch (e) {
       emit(UserError(e.toString()));
     }

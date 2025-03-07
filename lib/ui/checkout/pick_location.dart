@@ -5,15 +5,15 @@ import 'package:dvhcvn/dvhcvn.dart' as dvhcvn;
 class PickLocation extends StatefulWidget {
   const PickLocation({super.key});
   static String routeName = "pick_location";
+
   @override
   State<PickLocation> createState() => _PickLocationState();
 }
 
 class _PickLocationState extends State<PickLocation> {
-  // Map<String, Map<String, List<String>>> vietnamProvinces = {};
   int pickLevel = 0;
   int stepPick = 0;
-  final List<dvhcvn.Level1> provices = dvhcvn.level1s;
+  final List<dvhcvn.Level1> provinces = dvhcvn.level1s;
   String _lv1PickId = '';
   String _lv2PickId = '';
   String _lv3PickId = '';
@@ -21,20 +21,150 @@ class _PickLocationState extends State<PickLocation> {
   String _lv2PickName = '';
   String _lv3PickName = '';
 
-  Map<String, Map<String, List<String>>> data = {};
   List<Map<String, String>> vietnamProvinces = [];
+  List<Map<String, String>> filteredProvinces = [];
   String _labelSelect = 'Tỉnh/Thành phố';
+  final TextEditingController _searchController = TextEditingController();
+
+  // Nhận dữ liệu từ AddLocationShopScreen
+  String? preSelectedLocation;
+  String _province = '';
+  String _district = '';
+  String _ward = '';
+
   @override
   void initState() {
-    for (int i = 0; i < provices.length; i++) {
+    super.initState();
+    _loadProvinces(); // Tải danh sách tỉnh mặc định
+    filteredProvinces = List.from(vietnamProvinces);
+    _searchController.addListener(_filterLocations);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Lấy dữ liệu pre-selected từ arguments sau khi context sẵn sàng
+    final args = ModalRoute.of(context)?.settings.arguments as String?;
+    if (args != null &&
+        args != "Tỉnh/Thành phố, Quận/Huyện, Phường/Xã" &&
+        preSelectedLocation == null) {
+      preSelectedLocation = args;
+      _parsePreSelectedLocation();
+    }
+  }
+
+  void _loadProvinces() {
+    vietnamProvinces.clear();
+    for (int i = 0; i < provinces.length; i++) {
       vietnamProvinces.add({
-        "id": provices[i].id,
-        "name": provices[i].name.replaceAll(RegExp(r'^(Tỉnh |Thành phố )'), ""),
+        "id": provinces[i].id,
+        "name":
+            provinces[i].name.replaceAll(RegExp(r'^(Tỉnh |Thành phố )'), ""),
       });
     }
     vietnamProvinces.sort((a, b) => a["name"]!.compareTo(b["name"]!));
+  }
 
-    super.initState();
+  // Phân tích dữ liệu pre-selected để pre-select
+  void _parsePreSelectedLocation() {
+    if (preSelectedLocation != null) {
+      final parts = preSelectedLocation!.split(', ');
+      if (parts.length == 3) {
+        _ward = parts[0].trim();
+        _district = parts[1].trim();
+        _province = parts[2].trim();
+
+        // Tìm và set ID tương ứng
+        final provinceData = provinces.firstWhere(
+          (p) =>
+              p.name.replaceAll(RegExp(r'^(Tỉnh |Thành phố )'), "") ==
+              _province,
+          orElse: () => provinces[0],
+        );
+        _lv1PickId = provinceData.id;
+        _lv1PickName = _province;
+
+        if (_district.isNotEmpty) {
+          final districtData = provinceData.children.firstWhere(
+            (d) => d.name == _district,
+            orElse: () => provinceData.children[0],
+          );
+          _lv2PickId = districtData.id;
+          _lv2PickName = _district;
+
+          if (_ward.isNotEmpty) {
+            final wardData = districtData.children.firstWhere(
+              (w) => w.name == _ward,
+              orElse: () => districtData.children[0],
+            );
+            _lv3PickId = wardData.id;
+            _lv3PickName = _ward;
+            pickLevel = 2; // Đặt level là 2 (phường/xã)
+            stepPick = 2; // Hiển thị cấp phường/xã
+            _labelSelect = "Phường/Xã";
+            // Tải danh sách phường/xã
+            vietnamProvinces.clear();
+            for (var ward in districtData.children) {
+              vietnamProvinces.add({
+                "id": ward.id,
+                "name": ward.name,
+              });
+            }
+          } else {
+            pickLevel = 1; // Đặt level 1 nếu chỉ có district
+            stepPick = 1; // Hiển thị cấp quận/huyện
+            _labelSelect = "Quận/Huyện";
+            // Tải danh sách quận/huyện
+            vietnamProvinces.clear();
+            for (var district in provinceData.children) {
+              vietnamProvinces.add({
+                "id": district.id,
+                "name": district.name,
+              });
+            }
+          }
+        } else {
+          pickLevel = 0; // Đặt level 0 nếu chỉ có province
+          stepPick = 0; // Hiển thị cấp tỉnh/thành phố
+          _labelSelect = "Tỉnh/Thành phố";
+          _loadProvinces(); // Tải danh sách tỉnh
+        }
+        setState(() {
+          filteredProvinces = List.from(vietnamProvinces); // Cập nhật giao diện
+        });
+      }
+    }
+  }
+
+  void _filterLocations() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        filteredProvinces = List.from(vietnamProvinces);
+      } else {
+        filteredProvinces = vietnamProvinces
+            .where(
+                (location) => location["name"]!.toLowerCase().contains(query))
+            .toList();
+      }
+    });
+  }
+
+  void _completeSelection() {
+    if (_lv3PickId.isNotEmpty) {
+      final selectedLocation = {
+        'province': _lv1PickName,
+        'district': _lv2PickName,
+        'ward': _lv3PickName,
+      };
+      Navigator.pop(context, selectedLocation);
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -69,9 +199,7 @@ class _PickLocationState extends State<PickLocation> {
                             size: 25,
                             color: Colors.brown,
                           ),
-                          const SizedBox(
-                            width: 5,
-                          ),
+                          SizedBox(width: 5),
                           Text(
                             "Sử dụng vị trí hiện tại của tôi",
                             style: TextStyle(
@@ -91,22 +219,19 @@ class _PickLocationState extends State<PickLocation> {
                     color: Colors.white,
                     child: Column(
                       children: [
-                        //Chọn Tỉnh/Thành phố
                         GestureDetector(
                           onTap: () {
                             setState(() {
                               stepPick = 0;
                               pickLevel = 0;
                               _labelSelect = "Tỉnh/Thành phố";
-                              for (int i = 0; i < provices.length; i++) {
-                                vietnamProvinces.add({
-                                  "id": provices[i].id,
-                                  "name": provices[i].name.replaceAll(
-                                      RegExp(r'^(Tỉnh |Thành phố )'), ""),
-                                });
-                              }
-                              vietnamProvinces.sort(
-                                  (a, b) => a["name"]!.compareTo(b["name"]!));
+                              // Khi chọn lại tỉnh, xóa quận/huyện và phường/xã
+                              _lv2PickId = '';
+                              _lv2PickName = '';
+                              _lv3PickId = '';
+                              _lv3PickName = '';
+                              _loadProvinces();
+                              _filterLocations();
                             });
                           },
                           child: AnimatedContainer(
@@ -155,12 +280,8 @@ class _PickLocationState extends State<PickLocation> {
                                           height: 50,
                                           child: Column(
                                             children: [
-                                              const SizedBox(
-                                                height: 20,
-                                              ),
-                                              const SizedBox(
-                                                height: 2,
-                                              ),
+                                              const SizedBox(height: 20),
+                                              const SizedBox(height: 2),
                                               Container(
                                                 height: 10,
                                                 width: 10,
@@ -178,7 +299,9 @@ class _PickLocationState extends State<PickLocation> {
                                           ),
                                         ),
                                   Text(
-                                    _lv1PickName,
+                                    _lv1PickName.isNotEmpty
+                                        ? _lv1PickName
+                                        : 'Chọn Tỉnh/Thành phố',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: stepPick == 0
@@ -194,25 +317,28 @@ class _PickLocationState extends State<PickLocation> {
                             ),
                           ),
                         ),
-                        //Chọn Quận/Huyện
                         GestureDetector(
                           onTap: () {
-                            setState(() {
-                              stepPick = 1;
-                              pickLevel = 1;
-
-                              _labelSelect = "Quận/ Huyện";
-
-                              final List<dvhcvn.Level2> _lv2 =
-                                  dvhcvn.findLevel1ById(_lv1PickId)!.children;
-                              vietnamProvinces.clear();
-                              for (int i = 0; i < _lv2.length; i++) {
-                                vietnamProvinces.add({
-                                  "id": _lv2[i].id,
-                                  "name": _lv2[i].name,
-                                });
-                              }
-                            });
+                            if (_lv1PickId.isNotEmpty) {
+                              setState(() {
+                                stepPick = 1;
+                                pickLevel = 1;
+                                _labelSelect = "Quận/Huyện";
+                                // Khi chọn lại quận/huyện, xóa phường/xã
+                                _lv3PickId = '';
+                                _lv3PickName = '';
+                                final List<dvhcvn.Level2> _lv2 =
+                                    dvhcvn.findLevel1ById(_lv1PickId)!.children;
+                                vietnamProvinces.clear();
+                                for (int i = 0; i < _lv2.length; i++) {
+                                  vietnamProvinces.add({
+                                    "id": _lv2[i].id,
+                                    "name": _lv2[i].name,
+                                  });
+                                }
+                                _filterLocations();
+                              });
+                            }
                           },
                           child: AnimatedContainer(
                             height: 50,
@@ -220,7 +346,7 @@ class _PickLocationState extends State<PickLocation> {
                               maxHeight: _lv1PickId.isNotEmpty ? 50 : 0,
                             ),
                             margin: stepPick == 1
-                                ? EdgeInsets.symmetric(horizontal: 10)
+                                ? const EdgeInsets.symmetric(horizontal: 10)
                                 : null,
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -232,7 +358,7 @@ class _PickLocationState extends State<PickLocation> {
                                   : null,
                             ),
                             alignment: Alignment.centerLeft,
-                            duration: Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 300),
                             curve: Curves.linear,
                             child: SingleChildScrollView(
                               child: Row(
@@ -247,7 +373,7 @@ class _PickLocationState extends State<PickLocation> {
                                               Container(
                                                 height: 15,
                                                 width: 15,
-                                                decoration: BoxDecoration(
+                                                decoration: const BoxDecoration(
                                                   shape: BoxShape.circle,
                                                   color: Colors.brown,
                                                 ),
@@ -265,13 +391,11 @@ class _PickLocationState extends State<PickLocation> {
                                                 height: 20,
                                                 color: Colors.grey,
                                               ),
-                                              const SizedBox(
-                                                height: 2,
-                                              ),
+                                              const SizedBox(height: 2),
                                               Container(
                                                 height: 10,
                                                 width: 10,
-                                                decoration: BoxDecoration(
+                                                decoration: const BoxDecoration(
                                                   color: Colors.grey,
                                                   shape: BoxShape.circle,
                                                 ),
@@ -303,25 +427,27 @@ class _PickLocationState extends State<PickLocation> {
                             ),
                           ),
                         ),
-                        //Chọn Phường/Xã
                         GestureDetector(
                           onTap: () {
-                            setState(() {
-                              stepPick = 2;
-                              pickLevel = 2;
-                              _labelSelect = "Phường/ Xã";
-                              final List<dvhcvn.Level3> _lv3 = dvhcvn
-                                  .findLevel1ById(_lv1PickId)!
-                                  .findLevel2ById(_lv2PickId)!
-                                  .children;
-                              vietnamProvinces.clear();
-                              for (int i = 0; i < _lv3.length; i++) {
-                                vietnamProvinces.add({
-                                  "id": _lv3[i].id,
-                                  "name": _lv3[i].name,
-                                });
-                              }
-                            });
+                            if (_lv2PickId.isNotEmpty) {
+                              setState(() {
+                                stepPick = 2;
+                                pickLevel = 2;
+                                _labelSelect = "Phường/Xã";
+                                final List<dvhcvn.Level3> _lv3 = dvhcvn
+                                    .findLevel1ById(_lv1PickId)!
+                                    .findLevel2ById(_lv2PickId)!
+                                    .children;
+                                vietnamProvinces.clear();
+                                for (int i = 0; i < _lv3.length; i++) {
+                                  vietnamProvinces.add({
+                                    "id": _lv3[i].id,
+                                    "name": _lv3[i].name,
+                                  });
+                                }
+                                _filterLocations();
+                              });
+                            }
                           },
                           child: AnimatedContainer(
                             height: 50,
@@ -341,7 +467,7 @@ class _PickLocationState extends State<PickLocation> {
                                   : null,
                             ),
                             alignment: Alignment.centerLeft,
-                            duration: Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 300),
                             curve: Curves.linear,
                             child: SingleChildScrollView(
                               child: Row(
@@ -374,9 +500,7 @@ class _PickLocationState extends State<PickLocation> {
                                                 height: 20,
                                                 color: Colors.grey,
                                               ),
-                                              const SizedBox(
-                                                height: 2,
-                                              ),
+                                              const SizedBox(height: 2),
                                               Container(
                                                 height: 10,
                                                 width: 10,
@@ -385,9 +509,7 @@ class _PickLocationState extends State<PickLocation> {
                                                   shape: BoxShape.circle,
                                                 ),
                                               ),
-                                              const SizedBox(
-                                                height: 18,
-                                              )
+                                              const SizedBox(height: 18),
                                             ],
                                           ),
                                         ),
@@ -427,128 +549,123 @@ class _PickLocationState extends State<PickLocation> {
                       ),
                     ),
                   ),
-                  // Địa chỉ
-
                   ListView.builder(
-                      padding: EdgeInsets.zero,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: vietnamProvinces.length,
-                      itemBuilder: (context, index) {
-                        // final List<dvhcvn.Level2> ab = dvhcvn
-                        //     .findLevel1ById(vietnamProvinces[0]["id"]!)!
-                        //     .children;
-                        // print(ab[0].name);
-                        String lastLabel;
-                        index > 0
-                            ? lastLabel = vietnamProvinces[index - 1]
-                                    ["name"]![0]
-                                .toUpperCase()
-                            : lastLabel = '';
-                        String label =
-                            vietnamProvinces[index]["name"]![0].toUpperCase();
-                        return GestureDetector(
-                          onTap: () {
-                            setState(
-                              () {
-                                pickLevel++;
-                                stepPick++;
-                                if (pickLevel == 1) {
-                                  _labelSelect = "Quận/ Huyện";
-                                  _lv1PickId = vietnamProvinces[index]["id"]!;
-                                  _lv1PickName =
-                                      vietnamProvinces[index]["name"]!;
-                                  final List<dvhcvn.Level2> _lv2 = dvhcvn
-                                      .findLevel1ById(
-                                          vietnamProvinces[index]["id"]!)!
-                                      .children;
-                                  vietnamProvinces.clear();
-                                  for (int i = 0; i < _lv2.length; i++) {
-                                    vietnamProvinces.add({
-                                      "id": _lv2[i].id,
-                                      "name": _lv2[i].name,
-                                    });
-                                  }
-                                }
-                                if (pickLevel == 2) {
-                                  _labelSelect = "Phường/ Xã";
-                                  _lv2PickId = vietnamProvinces[index]["id"]!;
-                                  _lv2PickName =
-                                      vietnamProvinces[index]["name"]!;
-                                  final List<dvhcvn.Level3> _lv3 = dvhcvn
-                                      .findLevel1ById(_lv1PickId)!
-                                      .findLevel2ById(_lv2PickId)!
-                                      .children;
-                                  vietnamProvinces.clear();
-
-                                  for (int i = 0; i < _lv3.length; i++) {
-                                    vietnamProvinces.add({
-                                      "id": _lv3[i].id,
-                                      "name": _lv3[i].name,
-                                    });
-                                  }
-                                }
-                                if (pickLevel == 3) {
-                                  _lv3PickId = vietnamProvinces[index]["id"]!;
-                                  _lv3PickName =
-                                      vietnamProvinces[index]["name"]!;
-                                }
-                              },
-                            );
-                          },
-                          child: Container(
-                            alignment: Alignment.centerLeft,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                    width: 1, color: Colors.grey[200]!),
-                                top: BorderSide(
-                                    width: 1, color: Colors.grey[200]!),
-                              ),
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
+                    padding: EdgeInsets.zero,
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: filteredProvinces.length,
+                    itemBuilder: (context, index) {
+                      String lastLabel = index > 0
+                          ? filteredProvinces[index - 1]["name"]![0]
+                              .toUpperCase()
+                          : '';
+                      String label =
+                          filteredProvinces[index]["name"]![0].toUpperCase();
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (pickLevel == 0) {
+                              _lv1PickId = filteredProvinces[index]["id"]!;
+                              _lv1PickName = filteredProvinces[index]["name"]!;
+                              // Khi chọn tỉnh mới, xóa quận/huyện và phường/xã
+                              _lv2PickId = '';
+                              _lv2PickName = '';
+                              _lv3PickId = '';
+                              _lv3PickName = '';
+                              final List<dvhcvn.Level2> _lv2 =
+                                  dvhcvn.findLevel1ById(_lv1PickId)!.children;
+                              vietnamProvinces.clear();
+                              for (int i = 0; i < _lv2.length; i++) {
+                                vietnamProvinces.add({
+                                  "id": _lv2[i].id,
+                                  "name": _lv2[i].name,
+                                });
+                              }
+                              _labelSelect = "Quận/Huyện";
+                              pickLevel = 1;
+                              stepPick = 1;
+                            } else if (pickLevel == 1) {
+                              _lv2PickId = filteredProvinces[index]["id"]!;
+                              _lv2PickName = filteredProvinces[index]["name"]!;
+                              // Khi chọn quận/huyện mới, xóa phường/xã
+                              _lv3PickId = '';
+                              _lv3PickName = '';
+                              final List<dvhcvn.Level3> _lv3 = dvhcvn
+                                  .findLevel1ById(_lv1PickId)!
+                                  .findLevel2ById(_lv2PickId)!
+                                  .children;
+                              vietnamProvinces.clear();
+                              for (int i = 0; i < _lv3.length; i++) {
+                                vietnamProvinces.add({
+                                  "id": _lv3[i].id,
+                                  "name": _lv3[i].name,
+                                });
+                              }
+                              _labelSelect = "Phường/Xã";
+                              pickLevel = 2;
+                              stepPick = 2;
+                            } else if (pickLevel == 2) {
+                              _lv3PickId = filteredProvinces[index]["id"]!;
+                              _lv3PickName = filteredProvinces[index]["name"]!;
+                              _completeSelection(); // Hoàn tất chọn phường/xã
+                            }
+                            _searchController.clear();
+                            _filterLocations();
+                          });
+                        },
+                        child: Container(
+                          alignment: Alignment.centerLeft,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                  width: 1, color: Colors.grey[200]!),
+                              top: BorderSide(
+                                  width: 1, color: Colors.grey[200]!),
                             ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  alignment: Alignment.center,
-                                  width: 50,
-                                  child: (lastLabel != label)
-                                      ? Text(
-                                          label,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w300,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                                Text(
-                                  vietnamProvinces[index]["name"]!,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: [
-                                      _lv1PickId,
-                                      _lv2PickId,
-                                      _lv3PickId
-                                    ].contains(vietnamProvinces[index]["id"])
-                                        ? Colors.brown
-                                        : Colors.black,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        );
-                      }),
+                          child: Row(
+                            children: [
+                              Container(
+                                alignment: Alignment.center,
+                                width: 50,
+                                child: (lastLabel != label)
+                                    ? Text(
+                                        label,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w300,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              Text(
+                                filteredProvinces[index]["name"]!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: [
+                                    _lv1PickId,
+                                    _lv2PickId,
+                                    _lv3PickId
+                                  ].contains(filteredProvinces[index]["id"])
+                                      ? Colors.brown
+                                      : Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
           ),
-          // Appbar
           Align(
             alignment: Alignment.topLeft,
             child: Container(
@@ -561,7 +678,6 @@ class _PickLocationState extends State<PickLocation> {
                   top: 30, left: 10, right: 10, bottom: 10),
               child: Row(
                 children: [
-                  //Icon trở về
                   GestureDetector(
                     onTap: () {
                       Navigator.of(context).pop();
@@ -577,24 +693,18 @@ class _PickLocationState extends State<PickLocation> {
                       ),
                     ),
                   ),
-                  const SizedBox(
-                    width: 5,
-                  ),
+                  const SizedBox(width: 5),
                   Expanded(
                     child: Container(
-                      // alignment: Alignment.centerLeft,
                       height: 40,
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
-                        border: Border.all(
-                          width: 0.1,
-                          color: Colors.grey,
-                        ),
+                        border: Border.all(width: 0.1, color: Colors.grey),
                       ),
-                      child: const Row(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Padding(
+                          const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 5),
                             child: Icon(
                               Icons.search,
@@ -604,9 +714,10 @@ class _PickLocationState extends State<PickLocation> {
                           ),
                           Expanded(
                             child: TextField(
+                              controller: _searchController,
                               cursorHeight: 20,
                               textAlignVertical: TextAlignVertical.center,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 contentPadding: EdgeInsets.only(bottom: 11),
                                 border: InputBorder.none,
                                 hintText: 'Tìm kiếm Quận/Huyện, Phường/Xã',
@@ -622,9 +733,7 @@ class _PickLocationState extends State<PickLocation> {
                       ),
                     ),
                   ),
-                  const SizedBox(
-                    width: 5,
-                  ),
+                  const SizedBox(width: 5),
                 ],
               ),
             ),

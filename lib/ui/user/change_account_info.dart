@@ -4,6 +4,7 @@ import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/ui/user/change_info/change_phone.dart';
 import 'package:luanvan/ui/user/change_info/change_username.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
 
@@ -166,7 +167,9 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
             _buildUserNameItem(
               "Tên người dùng",
               userName: _userNameController.text,
-              showArrow: true,
+              showArrow: _userNameController.text.startsWith("(changed)")
+                  ? false
+                  : true,
             ),
             _buildAccountItem(
               "Điện thoại",
@@ -210,17 +213,19 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
         onTap: () async {
-          if (await _showUserNameChangeConfirmationDialog()) {
-            final newName = await Navigator.pushNamed(
-              context,
-              ChangeUsername.routeName,
-              arguments: userName,
-            );
+          if (showArrow) {
+            if (await _showUserNameChangeConfirmationDialog()) {
+              final newName = await Navigator.pushNamed(
+                context,
+                ChangeUsername.routeName,
+                arguments: userName,
+              );
 
-            if (newName != null) {
-              setState(() {
-                _userNameController.text = newName as String;
-              });
+              if (newName != null) {
+                setState(() {
+                  _userNameController.text = newName as String;
+                });
+              }
             }
           }
         },
@@ -244,7 +249,7 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
                 children: [
                   if (userName != null)
                     Text(
-                      userName,
+                      userName.replaceFirst('(changed)', ''),
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: userName == "Thiết lập ngay"
@@ -255,7 +260,9 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
                   if (showArrow) ...[
                     const SizedBox(width: 5),
                     const Icon(Icons.arrow_forward_ios, size: 16),
-                  ],
+                  ] else ...[
+                    const SizedBox(width: 20),
+                  ]
                 ],
               ),
             ],
@@ -277,7 +284,21 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
       child: InkWell(
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: onTap,
+        onTap: () async {
+          if (showArrow) {
+            final newName = await Navigator.pushNamed(
+              context,
+              ChangePhone.routeName,
+              arguments: trailingText,
+            );
+
+            if (newName != null) {
+              setState(() {
+                _userNameController.text = newName as String;
+              });
+            }
+          }
+        },
         child: Container(
           height: 50,
           padding: const EdgeInsets.symmetric(horizontal: 10),

@@ -1,11 +1,12 @@
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Để sử dụng Timestamp
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luanvan/models/address.dart';
 
 class SellerRegistration {
-  final String registrationId;
+  final String? registrationId;
   final String userId;
   final String name;
-  final String address;
+  final Address address;
   final String phoneNumber;
   final String status;
   final DateTime submittedAt;
@@ -14,7 +15,7 @@ class SellerRegistration {
   final String? rejectionReason;
 
   SellerRegistration({
-    required this.registrationId,
+    this.registrationId,
     required this.userId,
     required this.name,
     required this.address,
@@ -30,7 +31,7 @@ class SellerRegistration {
     String? registrationId,
     String? userId,
     String? name,
-    String? address,
+    Address? address,
     String? taxId,
     String? phoneNumber,
     String? status,
@@ -58,7 +59,7 @@ class SellerRegistration {
       registrationId: map['registrationId'] as String,
       userId: map['userId'] as String,
       name: map['name'] as String,
-      address: map['address'] as String,
+      address: Address.fromMap(map['address'] as Map<String, dynamic>),
       phoneNumber: map['phoneNumber'] as String,
       status: map['status'] as String,
       submittedAt: (map['submittedAt'] is Timestamp)
@@ -81,7 +82,7 @@ class SellerRegistration {
       registrationId: doc.id,
       userId: data['userId'] as String,
       name: data['name'] as String,
-      address: data['address'] as String,
+      address: Address.fromMap(data['address'] as Map<String, dynamic>),
       phoneNumber: data['phoneNumber'] as String,
       status: data['status'] as String,
       submittedAt: (data['submittedAt'] as Timestamp).toDate(),
@@ -93,13 +94,12 @@ class SellerRegistration {
     );
   }
 
-  // Chuyển đổi từ đối tượng SellerRegistration sang Map
   Map<String, dynamic> toMap() {
     return {
       'registrationId': registrationId,
       'userId': userId,
       'name': name,
-      'address': address,
+      // 'address': address.toMap(),
       'phoneNumber': phoneNumber,
       'status': status,
       'submittedAt': Timestamp.fromDate(submittedAt),

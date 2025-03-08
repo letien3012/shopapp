@@ -35,7 +35,7 @@ class _PickLocationState extends State<PickLocation> {
   @override
   void initState() {
     super.initState();
-    _loadProvinces(); // Tải danh sách tỉnh mặc định
+    _loadProvinces();
     filteredProvinces = List.from(vietnamProvinces);
     _searchController.addListener(_filterLocations);
   }
@@ -43,7 +43,7 @@ class _PickLocationState extends State<PickLocation> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Lấy dữ liệu pre-selected từ arguments sau khi context sẵn sàng
+
     final args = ModalRoute.of(context)?.settings.arguments as String?;
     if (args != null &&
         args != "Tỉnh/Thành phố, Quận/Huyện, Phường/Xã" &&

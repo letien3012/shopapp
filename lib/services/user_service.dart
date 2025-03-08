@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luanvan/models/seller_registration.dart';
 import 'package:luanvan/models/user_info_model.dart';
 
 class UserService {
@@ -33,5 +34,19 @@ class UserService {
         .collection('users')
         .doc(userId)
         .update({'userName': '(changed)$userName'});
+  }
+
+  Future<void> registrationSeller(SellerRegistration sellerRegistration) async {
+    await firebaseFirestore
+        .collection('registrationsellers')
+        .add(sellerRegistration.toMap());
+
+    await firebaseFirestore
+        .collection('users')
+        .doc(sellerRegistration.userId)
+        .update({
+      'addressSeleer': sellerRegistration.address.toMap(),
+      'role': 1,
+    });
   }
 }

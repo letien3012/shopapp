@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/models/address.dart';
+import 'package:luanvan/models/seller_registration.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/shop/add_location_shop_screen.dart';
+import 'package:luanvan/ui/shop/my_shop_screen.dart';
 import 'package:luanvan/ui/shop/ship_setting_screen.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
 import 'package:luanvan/ui/user/change_info/change_phone.dart';
@@ -26,7 +31,17 @@ class _SignShopState extends State<SignShop> {
   final PageController _pageController = PageController();
   final _formKey = GlobalKey<FormState>();
   int _currentStep = 0;
-
+  String userId = '';
+  late Address address = Address(
+    addressLine: '',
+    id: '',
+    city: '',
+    district: '',
+    ward: '',
+    isDefault: true,
+    receiverName: '',
+    receiverPhone: '',
+  );
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -36,7 +51,7 @@ class _SignShopState extends State<SignShop> {
   bool isFastEnabled = false;
   bool isEconomyEnabled = false;
   bool isCompleted = false; // Trạng thái hoàn thành
-
+  bool isRegisCompelete = false;
   Future<bool> _showExitConfirmationDialog() async {
     return await showDialog(
           context: context,
@@ -166,9 +181,21 @@ class _SignShopState extends State<SignShop> {
     }
   }
 
-  void _submitForm() {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Form đã gửi!")));
+  void _submitForm() async {
+    final SellerRegistration sellerRegistrationModel = SellerRegistration(
+        userId: userId,
+        name: _shopNameController.text,
+        address: address,
+        phoneNumber: _phoneController.text,
+        status: '',
+        submittedAt: DateTime.now());
+    context
+        .read<UserBloc>()
+        .add(RegistrationSellerEvent(sellerRegistrationModel));
+    Navigator.pop(context);
+    setState(() {
+      isRegisCompelete = true;
+    });
   }
 
   @override
@@ -181,6 +208,7 @@ class _SignShopState extends State<SignShop> {
       _shopNameController.text = user.userName!.replaceFirst("(changed)", "");
       _phoneController.text = user.phone ?? '';
       _emailController.text = user.email ?? '';
+      userId = user.id;
     }
     isCompleted = isFastEnabled || isEconomyEnabled;
   }
@@ -198,13 +226,15 @@ class _SignShopState extends State<SignShop> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: _showExitConfirmationDialog,
+      onWillPop: isRegisCompelete ? null : _showExitConfirmationDialog,
       child: BlocBuilder<UserBloc, UserState>(
         builder: (context, userState) {
           if (userState is UserLoading) {
             return _buildLoading();
           } else if (userState is UserLoaded) {
-            return _buildContent(context, userState.user);
+            return isRegisCompelete
+                ? _buidRegisSuccess()
+                : _buildContent(context, userState.user);
           } else if (userState is UserError) {
             return _buildError(userState.message);
           }
@@ -227,6 +257,132 @@ class _SignShopState extends State<SignShop> {
   // Trạng thái khởi tạo
   Widget _buildInitializing() {
     return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  Widget _buidRegisSuccess() {
+    return Scaffold(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            physics: NeverScrollableScrollPhysics(),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+              ),
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height,
+                minWidth: MediaQuery.of(context).size.width,
+              ),
+              padding: const EdgeInsets.only(top: 90, bottom: 60),
+              child: Column(
+                children: [
+                  Container(
+                    height: 5,
+                    color: Colors.grey[200],
+                  ),
+                  SizedBox(
+                    height: 160,
+                  ),
+                  SvgPicture.asset(
+                    IconHelper.check,
+                    height: 80,
+                    width: 80,
+                    color: Colors.green[600],
+                  ),
+                  Text(
+                    "Đăng ký thành công",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Container(
+                    width: 220,
+                    child: Text(
+                      "Hãy đăng bán sản phẩm đầu tiên để khởi động hành trình",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pushNamed(MyShopScreen.routeName);
+                    },
+                    child: Container(
+                      margin: EdgeInsets.all(10),
+                      height: 50,
+                      width: 250,
+                      color: Colors.brown,
+                      alignment: Alignment.center,
+                      child: Text(
+                        "Đến shop của tôi",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+          // AppBar
+          Align(
+            alignment: Alignment.topCenter,
+            child: Column(
+              children: [
+                Container(
+                  height: 90,
+                  width: MediaQuery.of(context).size.width,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                  ),
+                  padding: const EdgeInsets.only(
+                      top: 30, left: 10, right: 10, bottom: 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      //Icon trở về
+                      GestureDetector(
+                        onTap: () async {
+                          Navigator.of(context).pop();
+                        },
+                        child: Container(
+                          height: 40,
+                          width: 40,
+                          alignment: Alignment.center,
+                          margin: EdgeInsets.only(bottom: 5),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.brown,
+                            size: 30,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      SizedBox(
+                        height: 40,
+                        child: Text(
+                          "Đăng ký trở thành người bán",
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildContent(BuildContext context, UserInfoModel user) {
@@ -747,11 +903,14 @@ class _SignShopState extends State<SignShop> {
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
         onTap: () async {
-          final newAddress = await Navigator.of(context)
-              .pushNamed(AddLocationShopScreen.routeName);
-          if (newAddress != null && mounted) {
+          final result = await Navigator.of(context).pushNamed(
+              AddLocationShopScreen.routeName,
+              arguments: address) as Address;
+          if (mounted) {
             setState(() {
-              _addressController.text = newAddress as String;
+              address = result;
+              _addressController.text =
+                  "${result.addressLine}, ${result.ward}, ${result.district}, ${result.city}";
             });
           }
         },
@@ -774,18 +933,31 @@ class _SignShopState extends State<SignShop> {
                   Text(" *", style: TextStyle(color: Colors.red)),
                 ],
               ),
-              Row(
-                children: [
-                  Text(
-                    value.isNotEmpty ? value : "Thiết lập ngay",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: value.isEmpty ? Colors.grey : Colors.black,
+              value.isEmpty
+                  ? SizedBox()
+                  : const SizedBox(
+                      width: 20,
                     ),
-                  ),
-                  const SizedBox(width: 5),
-                  const Icon(Icons.arrow_forward_ios, size: 16),
-                ],
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        textAlign: TextAlign.end,
+                        value.isNotEmpty ? value : "Thiết lập ngay",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: value.isEmpty ? Colors.grey : Colors.black,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const Icon(Icons.arrow_forward_ios, size: 16),
+                  ],
+                ),
               ),
             ],
           ),

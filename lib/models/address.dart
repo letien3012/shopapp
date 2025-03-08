@@ -1,12 +1,12 @@
 class Address {
-  final String id;
-  final String addressLine;
-  final String city;
-  final String district;
-  final String ward;
-  final bool isDefault;
-  final String receiverName;
-  final String receiverPhone;
+  String id;
+  late String addressLine;
+  String city;
+  String district;
+  String ward;
+  bool isDefault;
+  String receiverName;
+  String receiverPhone;
   Address({
     required this.id,
     required this.addressLine,

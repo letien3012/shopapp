@@ -15,6 +15,7 @@ import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
+import 'package:luanvan/ui/shop/my_shop_screen.dart';
 import 'package:luanvan/ui/shop/start_shop.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
@@ -202,7 +203,7 @@ class _UserScreenState extends State<UserScreen> {
       padding: const EdgeInsets.only(top: 45, bottom: 10),
       child: Column(
         children: [
-          _buildTopBar(isAuthen),
+          _buildTopBar(isAuthen, user),
           _buildUserProfile(context, user, isAuthen: isAuthen),
         ],
       ),
@@ -210,7 +211,7 @@ class _UserScreenState extends State<UserScreen> {
   }
 
   // Thanh trên cùng với nút bán hàng và biểu tượng
-  Widget _buildTopBar(bool isAuthen) {
+  Widget _buildTopBar(bool isAuthen, UserInfoModel? user) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -224,13 +225,17 @@ class _UserScreenState extends State<UserScreen> {
                   color: Colors.white,
                   child: InkWell(
                     onTap: () {
-                      Navigator.of(context).pushNamed(StartShop.routeName);
+                      user.role == 1
+                          ? Navigator.of(context)
+                              .pushNamed(MyShopScreen.routeName)
+                          : Navigator.of(context)
+                              .pushNamed(StartShop.routeName);
                     },
                     splashColor: Colors.transparent.withOpacity(0.2),
                     highlightColor: Colors.transparent.withOpacity(0.1),
                     child: SizedBox(
                       height: 30,
-                      width: 130,
+                      width: 140,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -241,8 +246,8 @@ class _UserScreenState extends State<UserScreen> {
                             width: 25,
                           ),
                           const SizedBox(width: 5),
-                          const Text(
-                            "Bắt đầu bán",
+                          Text(
+                            user!.role == 1 ? "Shop của tôi" : "Bắt đầu bán",
                             style: TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w500),
                             maxLines: 1,

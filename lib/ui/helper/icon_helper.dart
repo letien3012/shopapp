@@ -13,5 +13,14 @@ class IconHelper {
   static const String store = "${imagePath}store.svg";
   static const String user = "${imagePath}user.svg";
   static const String phone = "${imagePath}phone.svg";
+  static const String check = "${imagePath}check.svg";
   static const String mail = "${imagePath}mail.svg";
+  static const String plus = "${imagePath}plus.svg";
+  static const String box = "${imagePath}box.svg";
+  static const String truck = "${imagePath}truck.svg";
+  static const String wallet = "${imagePath}wallet.svg";
+  static const String chart = "${imagePath}chart.svg";
+  static const String pricetag = "${imagePath}pricetag.svg";
+  static const String cube = "${imagePath}cube.svg";
+  static const String minus = "${imagePath}minus.svg";
 }

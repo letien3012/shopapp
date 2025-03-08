@@ -1,8 +1,5 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
-
 import 'package:luanvan/models/product_variant.dart';
 
 class Product {
@@ -13,7 +10,10 @@ class Product {
   String description;
   double averageRating;
   final List<ProductVariant> variants;
-  String imageUrl;
+  List<String> imageUrl;
+  String category;
+  String videoUrl;
+
   Product({
     required this.id,
     required this.name,
@@ -22,7 +22,9 @@ class Product {
     required this.description,
     required this.averageRating,
     required this.variants,
-    required this.imageUrl,
+    this.imageUrl = const [],
+    this.category = '',
+    this.videoUrl = '',
   });
 
   Product copyWith({
@@ -33,7 +35,9 @@ class Product {
     String? description,
     double? averageRating,
     List<ProductVariant>? variants,
-    String? imageUrl,
+    List<String>? imageUrl,
+    String? category,
+    String? videoUrl,
   }) {
     return Product(
       id: id ?? this.id,
@@ -44,6 +48,8 @@ class Product {
       averageRating: averageRating ?? this.averageRating,
       variants: variants ?? this.variants,
       imageUrl: imageUrl ?? this.imageUrl,
+      category: category ?? this.category,
+      videoUrl: videoUrl ?? this.videoUrl,
     );
   }
 
@@ -57,6 +63,8 @@ class Product {
       'averageRating': averageRating,
       'variants': variants.map((x) => x.toMap()).toList(),
       'imageUrl': imageUrl,
+      'category': category,
+      'videoUrl': videoUrl,
     };
   }
 
@@ -73,7 +81,9 @@ class Product {
           (x) => ProductVariant.fromMap(x as Map<String, dynamic>),
         ),
       ),
-      imageUrl: map['imageUrl'] as String,
+      imageUrl: List<String>.from(map['imageUrl'] as List<dynamic>? ?? []),
+      category: map['category'] as String? ?? '',
+      videoUrl: map['videoUrl'] as String? ?? '',
     );
   }
 
@@ -84,7 +94,7 @@ class Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl)';
+    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl)';
   }
 
   @override
@@ -98,7 +108,9 @@ class Product {
         other.description == description &&
         other.averageRating == averageRating &&
         listEquals(other.variants, variants) &&
-        other.imageUrl == imageUrl;
+        listEquals(other.imageUrl, imageUrl) &&
+        other.category == category &&
+        other.videoUrl == videoUrl;
   }
 
   @override
@@ -110,6 +122,8 @@ class Product {
         description.hashCode ^
         averageRating.hashCode ^
         variants.hashCode ^
-        imageUrl.hashCode;
+        imageUrl.hashCode ^
+        category.hashCode ^
+        videoUrl.hashCode;
   }
 }

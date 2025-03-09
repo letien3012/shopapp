@@ -91,6 +91,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    selectedCategory = ModalRoute.of(context)!.settings.arguments as String;
     return Scaffold(
       body: Stack(
         children: [
@@ -139,6 +140,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                             onTap: () {
                               setState(() {
                                 selectedCategory = categories[index];
+                                Navigator.pop(context, selectedCategory);
                               });
                             },
                             contentPadding: const EdgeInsets.symmetric(

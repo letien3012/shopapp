@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:luanvan/models/product_variant.dart';
 
 class Product {
@@ -13,6 +12,7 @@ class Product {
   List<String> imageUrl;
   String category;
   String videoUrl;
+  String shopId;
 
   Product({
     required this.id,
@@ -25,6 +25,7 @@ class Product {
     this.imageUrl = const [],
     this.category = '',
     this.videoUrl = '',
+    required this.shopId,
   });
 
   Product copyWith({
@@ -38,6 +39,7 @@ class Product {
     List<String>? imageUrl,
     String? category,
     String? videoUrl,
+    String? shopId,
   }) {
     return Product(
       id: id ?? this.id,
@@ -50,6 +52,7 @@ class Product {
       imageUrl: imageUrl ?? this.imageUrl,
       category: category ?? this.category,
       videoUrl: videoUrl ?? this.videoUrl,
+      shopId: shopId ?? this.shopId,
     );
   }
 
@@ -65,6 +68,7 @@ class Product {
       'imageUrl': imageUrl,
       'category': category,
       'videoUrl': videoUrl,
+      'shopId': shopId,
     };
   }
 
@@ -77,13 +81,14 @@ class Product {
       description: map['description'] as String,
       averageRating: map['averageRating'] as double,
       variants: List<ProductVariant>.from(
-        (map['variants'] as List<int>).map<ProductVariant>(
+        (map['variants'] as List<dynamic>).map<ProductVariant>(
           (x) => ProductVariant.fromMap(x as Map<String, dynamic>),
         ),
       ),
       imageUrl: List<String>.from(map['imageUrl'] as List<dynamic>? ?? []),
       category: map['category'] as String? ?? '',
       videoUrl: map['videoUrl'] as String? ?? '',
+      shopId: map['shopId'] as String,
     );
   }
 
@@ -94,36 +99,6 @@ class Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl)';
-  }
-
-  @override
-  bool operator ==(covariant Product other) {
-    if (identical(this, other)) return true;
-
-    return other.id == id &&
-        other.name == name &&
-        other.quantity == quantity &&
-        other.quantitySold == quantitySold &&
-        other.description == description &&
-        other.averageRating == averageRating &&
-        listEquals(other.variants, variants) &&
-        listEquals(other.imageUrl, imageUrl) &&
-        other.category == category &&
-        other.videoUrl == videoUrl;
-  }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^
-        name.hashCode ^
-        quantity.hashCode ^
-        quantitySold.hashCode ^
-        description.hashCode ^
-        averageRating.hashCode ^
-        variants.hashCode ^
-        imageUrl.hashCode ^
-        category.hashCode ^
-        videoUrl.hashCode;
+    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId)';
   }
 }

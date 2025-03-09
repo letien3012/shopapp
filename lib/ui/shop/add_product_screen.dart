@@ -1,13 +1,20 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/models/product.dart';
+import 'package:luanvan/models/product_option.dart';
+import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/add_category_screen.dart';
 import 'package:luanvan/ui/shop/add_variant_screen.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -18,15 +25,17 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
+  late List<ProductOption> productOption;
+  late List<ProductVariant> productVariant;
+  late Product product;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _stockController = TextEditingController();
-  bool _hasDiscount = false;
+  List<XFile> _imageFiles = [];
   String _product_variant = "Thiết lập màu sắc kích thước";
   String _category = "Chọn ngành hàng";
-  String _shippingInfo = "Cân nặng/Kích thước";
   void showImagePickMethod(BuildContext context) {
     showDialog(
       context: context,
@@ -50,14 +59,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
             children: [
               ListTile(
                 title: Text('Chụp ảnh'),
-                onTap: () {
-                  Navigator.of(context).pop();
+                onTap: () async {
+                  final pickedImage =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
+                  if (pickedImage != null) {
+                    _imageFiles.insert(0, pickedImage);
+                    setState(() {});
+                  }
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
                 title: Text('Thư viện hình ảnh'),
-                onTap: () {
-                  Navigator.of(context).pop();
+                onTap: () async {
+                  final pickedImages =
+                      await ImagePicker().pickMultiImage(limit: 10);
+                  if (pickedImages.isNotEmpty) {
+                    _imageFiles.addAll(pickedImages);
+                    setState(() {});
+                  }
+                  Navigator.pop(context);
                 },
               ),
             ],
@@ -156,29 +177,84 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             Text(
                               "*",
                               style: TextStyle(color: Colors.red),
-                            )
+                            ),
+                            Spacer(),
+                            Text("Tỉ lệ hình ảnh 1:1")
                           ],
                         ),
                         const SizedBox(height: 10),
-                        GestureDetector(
-                          onTap: () {
-                            showImagePickMethod(context);
+                        ReorderableGridView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _imageFiles.length + 1,
+                          itemBuilder: (context, index) {
+                            return index != _imageFiles.length
+                                ? Stack(
+                                    key: ValueKey(index),
+                                    children: [
+                                      Positioned.fill(
+                                        child: Image.file(
+                                          File(
+                                            _imageFiles[index].path,
+                                          ),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Align(
+                                        alignment: Alignment.topRight,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _imageFiles.removeAt(index);
+                                            });
+                                          },
+                                          child: Icon(
+                                            Icons.cancel,
+                                            color: Colors.red[700],
+                                            size: 15,
+                                          ),
+                                        ),
+                                      )
+                                    ],
+                                  )
+                                : GestureDetector(
+                                    key: ValueKey(index),
+                                    onTap: () {
+                                      showImagePickMethod(context);
+                                    },
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                            width: 0.5,
+                                            color: Colors.red,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8)),
+                                      child: Text(
+                                        "Thêm ảnh",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  );
                           },
-                          child: Container(
-                            height: 80,
-                            width: 80,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                  width: 0.5,
-                                  color: Colors.red,
-                                ),
-                                borderRadius: BorderRadius.circular(8)),
-                            child: Text(
-                              "Thêm ảnh",
-                              style: TextStyle(color: Colors.red),
-                            ),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                            childAspectRatio: 1,
                           ),
+                          onReorder: (int oldIndex, int newIndex) {
+                            if (oldIndex == _imageFiles.length ||
+                                newIndex == _imageFiles.length)
+                              return; // Không cho kéo phần tử cuối
+                            setState(() {
+                              final item = _imageFiles.removeAt(oldIndex);
+                              _imageFiles.insert(newIndex, item);
+                            });
+                          },
                         ),
                       ],
                     ),
@@ -291,9 +367,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   const SizedBox(height: 10),
                   // Ngành hàng
                   GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, AddCategoryScreen.routeName);
-                      setState(() {});
+                    onTap: () async {
+                      final result = await Navigator.pushNamed(
+                          context, AddCategoryScreen.routeName,
+                          arguments: _category) as String;
+                      if (result.isNotEmpty) {
+                        setState(() {
+                          _category = result;
+                        });
+                      }
                     },
                     child: Container(
                       color: Colors.white,

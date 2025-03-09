@@ -187,12 +187,12 @@ class _SignShopState extends State<SignShop> {
         name: _shopNameController.text,
         address: address,
         phoneNumber: _phoneController.text,
-        status: '',
+        email: _emailController.text,
         submittedAt: DateTime.now());
     context
         .read<UserBloc>()
         .add(RegistrationSellerEvent(sellerRegistrationModel));
-    Navigator.pop(context);
+
     setState(() {
       isRegisCompelete = true;
     });

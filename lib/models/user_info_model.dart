@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/models/address.dart';
 
 enum Gender { male, female, other, unknown }
 
@@ -13,8 +13,10 @@ class UserInfoModel {
   String? date;
   String? userName;
   int role;
+  List<Address> addresses;
+
   UserInfoModel({
-    required this.id, // Chỉ id là required
+    required this.id,
     this.name,
     this.email,
     this.phone,
@@ -23,7 +25,34 @@ class UserInfoModel {
     this.date,
     this.userName,
     required this.role,
-  });
+    List<Address>? addresses,
+  }) : addresses = _processAddresses(addresses ?? []);
+
+  // Hàm xử lý danh sách địa chỉ: đặt địa chỉ mặc định lên đầu và đảm bảo chỉ 1 địa chỉ mặc định
+  static List<Address> _processAddresses(List<Address> inputAddresses) {
+    List<Address> processedList = List.from(inputAddresses);
+
+    // Tìm địa chỉ mặc định
+    int defaultIndex = processedList.indexWhere((address) => address.isDefault);
+
+    // Nếu có địa chỉ mặc định, đưa nó lên đầu
+    if (defaultIndex != -1) {
+      Address defaultAddress = processedList.removeAt(defaultIndex);
+      processedList.insert(0, defaultAddress);
+    }
+
+    // Đảm bảo chỉ có 1 địa chỉ mặc định, các địa chỉ còn lại đặt isDefault = false
+    bool hasDefault = false;
+    for (int i = 0; i < processedList.length; i++) {
+      if (processedList[i].isDefault && !hasDefault) {
+        hasDefault = true;
+      } else if (processedList[i].isDefault && hasDefault) {
+        processedList[i] = processedList[i].copyWith(isDefault: false);
+      }
+    }
+
+    return processedList;
+  }
 
   UserInfoModel copyWith({
     String? id,
@@ -34,7 +63,8 @@ class UserInfoModel {
     Gender? gender,
     String? date,
     String? userName,
-    required int role,
+    int? role,
+    List<Address>? addresses,
   }) {
     return UserInfoModel(
       id: id ?? this.id,
@@ -45,12 +75,13 @@ class UserInfoModel {
       gender: gender ?? this.gender,
       date: date ?? this.date,
       userName: userName ?? this.userName,
-      role: role,
+      role: role ?? this.role,
+      addresses: addresses ?? this.addresses,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return <String, dynamic>{
+    return {
       'id': id,
       'name': name,
       'email': email,
@@ -59,41 +90,31 @@ class UserInfoModel {
       'gender': gender?.toString().split('.').last,
       'date': date,
       'userName': userName,
-      'role': role
+      'role': role,
+      'addresses': addresses.map((address) => address.toMap()).toList(),
     };
   }
 
   factory UserInfoModel.fromMap(Map<String, dynamic> map) {
     return UserInfoModel(
       id: map['id'] as String,
-      name: map['name'] != null ? map['name'] as String : null,
-      email: map['email'] != null ? map['email'] as String : null,
-      phone: map['phone'] != null ? map['phone'] as String : null,
-      avataUrl: map['avataUrl'] != null ? map['avataUrl'] as String : null,
+      name: map['name'],
+      email: map['email'],
+      phone: map['phone'],
+      avataUrl: map['avataUrl'],
       gender: map['gender'] != null
           ? Gender.values.firstWhere(
               (g) => g.toString().split('.').last == map['gender'],
-              orElse: () => Gender.unknown, // Giá trị mặc định nếu không khớp
+              orElse: () => Gender.unknown,
             )
           : null,
-      date: map['date'] != null ? map['date'] as String : null,
-      userName: map['userName'] != null ? map['userName'] as String : null,
+      date: map['date'],
+      userName: map['userName'],
       role: map['role'] as int? ?? 0,
-    );
-  }
-
-  factory UserInfoModel.fromAuthState(AuthAuthenticated state) {
-    final user = state.user;
-    return UserInfoModel(
-      id: user.uid,
-      name: user.displayName,
-      email: user.email,
-      phone: user.phoneNumber,
-      avataUrl: user.photoURL,
-      gender: Gender.unknown,
-      date: null,
-      userName: null,
-      role: 0,
+      addresses: map['addresses'] != null
+          ? List<Address>.from(
+              (map['addresses'] as List).map((x) => Address.fromMap(x)))
+          : [],
     );
   }
 
@@ -104,15 +125,19 @@ class UserInfoModel {
       email: data['email'],
       phone: data['phone'],
       avataUrl: data['avataUrl'],
-      date: data['date'],
       gender: data['gender'] != null
           ? Gender.values.firstWhere(
               (g) => g.toString().split('.').last == data['gender'],
               orElse: () => Gender.unknown,
             )
           : Gender.unknown,
+      date: data['date'],
       userName: data['userName'],
       role: data['role'],
+      addresses: data['addresses'] != null
+          ? List<Address>.from(
+              (data['addresses'] as List).map((x) => Address.fromMap(x)))
+          : [],
     );
   }
 
@@ -123,6 +148,6 @@ class UserInfoModel {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role)';
+    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role, addresses: $addresses)';
   }
 }

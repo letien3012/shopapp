@@ -18,7 +18,27 @@ class Address {
     required this.receiverPhone,
   });
 
-  // Thêm các phương thức toMap, fromMap, copyWith tương tự như UserInfoModel
+  Address copyWith({
+    String? id,
+    String? addressLine,
+    String? city,
+    String? district,
+    String? ward,
+    bool? isDefault,
+    String? receiverName,
+    String? receiverPhone,
+  }) {
+    return Address(
+      id: id ?? this.id,
+      addressLine: addressLine ?? this.addressLine,
+      city: city ?? this.city,
+      district: district ?? this.district,
+      ward: ward ?? this.ward,
+      isDefault: isDefault ?? this.isDefault,
+      receiverName: receiverName ?? this.receiverName,
+      receiverPhone: receiverPhone ?? this.receiverPhone,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {

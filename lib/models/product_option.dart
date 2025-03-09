@@ -1,47 +1,48 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
 class ProductOption {
-  final String id;
-  final String productId;
-  final double price;
-  final int stock;
+  double price;
+  int stock;
+  String name;
+  String? imageUrl;
+
   ProductOption({
-    required this.id,
-    required this.productId,
     required this.price,
     required this.stock,
+    required this.name,
+    this.imageUrl,
   });
 
   ProductOption copyWith({
-    String? id,
     String? productId,
     double? price,
     int? stock,
+    String? name,
+    String? imageUrl,
   }) {
     return ProductOption(
-      id: id ?? this.id,
-      productId: productId ?? this.productId,
       price: price ?? this.price,
       stock: stock ?? this.stock,
+      name: name ?? this.name,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'id': id,
-      'productId': productId,
       'price': price,
       'stock': stock,
+      'name': name,
+      'imageUrl': imageUrl,
     };
   }
 
   factory ProductOption.fromMap(Map<String, dynamic> map) {
     return ProductOption(
-      id: map['id'] as String,
-      productId: map['productId'] as String,
       price: map['price'] as double,
       stock: map['stock'] as int,
+      name: map['name'] as String,
+      imageUrl: map['imageUrl'] as String?,
     );
   }
 
@@ -52,21 +53,6 @@ class ProductOption {
 
   @override
   String toString() {
-    return 'ProductOption(id: $id, productId: $productId, price: $price, stock: $stock)';
-  }
-
-  @override
-  bool operator ==(covariant ProductOption other) {
-    if (identical(this, other)) return true;
-
-    return other.id == id &&
-        other.productId == productId &&
-        other.price == price &&
-        other.stock == stock;
-  }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^ productId.hashCode ^ price.hashCode ^ stock.hashCode;
+    return 'ProductOption(price: $price, stock: $stock, name: $name, imageUrl: $imageUrl)';
   }
 }

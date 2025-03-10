@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get_it/get_it.dart';
+import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_option.dart';
 import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -17,311 +18,236 @@ class AddVariantScreen extends StatefulWidget {
 
 class _AddVariantScreenState extends State<AddVariantScreen> {
   List<ProductVariant> _variants = [];
-  List<ProductOption> _optionsVariant1 = [];
-  List<ProductOption> _optionsVariant2 = [];
-  late List<TextEditingController> _labelOptionControllers1;
-  late List<TextEditingController> _priceOptionControllers1;
-  late List<TextEditingController> _stockOptionControllers1;
-  late List<TextEditingController> _labelOptionControllers2;
-  late List<TextEditingController> _priceOptionControllers2;
-  late List<TextEditingController> _stockOptionControllers2;
-  late List<FocusNode> _labelFocusNodes1;
-  late List<FocusNode> _priceFocusNodes1;
-  late List<FocusNode> _stockFocusNodes1;
-  late List<FocusNode> _labelFocusNodes2;
-  late List<FocusNode> _priceFocusNodes2;
-  late List<FocusNode> _stockFocusNodes2;
-  List<String> variantValues1 = ["Trắng", "Đen"];
-  List<String> variantValues2 = ["S", "M", "L"];
-  String variantLabel1 = "Màu sắc";
-  String variantLabel2 = "Kích cỡ";
+  List<List<ProductOption>> _options = [];
+  late List<List<TextEditingController>> _labelOptionControllers;
+  late List<List<TextEditingController>> _priceOptionControllers;
+  late List<List<TextEditingController>> _stockOptionControllers;
+  late List<List<FocusNode>> _labelFocusNodes;
+  late List<List<FocusNode>> _priceFocusNodes;
+  late List<List<FocusNode>> _stockFocusNodes;
   bool enableImageForVariant = false;
 
-  final TextEditingController _valueController1 = TextEditingController();
-  final TextEditingController _valueController2 = TextEditingController();
-  final TextEditingController _labelController1 =
-      TextEditingController(text: "Màu sắc");
-  final TextEditingController _labelController2 =
-      TextEditingController(text: "Kích cỡ");
+  final List<TextEditingController> _valueControllers = [
+    TextEditingController(),
+    TextEditingController()
+  ];
+  List<TextEditingController> _labelControllers = [];
 
-  // Biến lưu trữ lỗi cho từng TextField
-  String? _labelError1;
-  String? _labelError2;
-  List<String?> _labelOptionErrors1 = [];
-  List<String?> _priceOptionErrors1 = [];
-  List<String?> _stockOptionErrors1 = [];
-  List<String?> _labelOptionErrors2 = [];
-  List<String?> _priceOptionErrors2 = [];
-  List<String?> _stockOptionErrors2 = [];
+  // Biến lưu trữ lỗi
+  List<String?> _labelErrors = [];
+  late List<List<String?>> _labelOptionErrors;
+  late List<List<String?>> _priceOptionErrors;
+  late List<List<String?>> _stockOptionErrors;
+  late Product product;
 
   @override
   void initState() {
     super.initState();
-    _initializeVariantsAndControllers();
+    Future.microtask(() {
+      product = ModalRoute.of(context)!.settings.arguments as Product;
+      setState(() {
+        _variants.addAll(product.variants);
+        _labelControllers = product.variants
+            .map((val) => TextEditingController(text: val.label))
+            .toList();
+        _options = product.variants
+            .map((variant) => List<ProductOption>.from(variant.options))
+            .toList();
+        _labelErrors = List<String?>.filled(_variants.length, null,
+            growable: true); // Sửa thành growable
+        _initializeVariantsAndControllers();
+      });
+    });
   }
 
   void _initializeVariantsAndControllers() {
-    for (int i = 0; i < variantValues1.length; i++) {
-      _optionsVariant1
-          .add(ProductOption(price: 0, stock: 0, name: variantValues1[i]));
-    }
-    for (int i = 0; i < variantValues2.length; i++) {
-      _optionsVariant2
-          .add(ProductOption(price: 0, stock: 0, name: variantValues2[i]));
-    }
-    _variants.add(ProductVariant(
-        label: _labelController1.text, options: _optionsVariant1));
-    _variants.add(ProductVariant(
-        label: _labelController2.text, options: _optionsVariant2));
-    _labelOptionControllers1 = _optionsVariant1
-        .map((option) => TextEditingController(text: option.name))
+    _labelOptionControllers = _options
+        .map((optionList) => optionList
+            .map((option) => TextEditingController(text: option.name))
+            .toList())
         .toList();
-    _priceOptionControllers1 = _optionsVariant1
-        .map((option) => TextEditingController(text: option.price.toString()))
+    _priceOptionControllers = _options
+        .map((optionList) => optionList
+            .map((option) =>
+                TextEditingController(text: option.price.toString()))
+            .toList())
         .toList();
-    _stockOptionControllers1 = _optionsVariant1
-        .map((option) => TextEditingController(text: option.stock.toString()))
-        .toList();
-    _labelOptionControllers2 = _optionsVariant2
-        .map((option) => TextEditingController(text: option.name))
-        .toList();
-    _priceOptionControllers2 = _optionsVariant2
-        .map((option) => TextEditingController(text: option.price.toString()))
-        .toList();
-    _stockOptionControllers2 = _optionsVariant2
-        .map((option) => TextEditingController(text: option.stock.toString()))
+    _stockOptionControllers = _options
+        .map((optionList) => optionList
+            .map((option) =>
+                TextEditingController(text: option.stock.toString()))
+            .toList())
         .toList();
 
-    _labelFocusNodes1 = _optionsVariant1.map((_) => FocusNode()).toList();
-    _priceFocusNodes1 = _optionsVariant1.map((_) => FocusNode()).toList();
-    _stockFocusNodes1 = _optionsVariant1.map((_) => FocusNode()).toList();
-    _labelFocusNodes2 = _optionsVariant2.map((_) => FocusNode()).toList();
-    _priceFocusNodes2 = _optionsVariant2.map((_) => FocusNode()).toList();
-    _stockFocusNodes2 = _optionsVariant2.map((_) => FocusNode()).toList();
+    _labelFocusNodes = _options
+        .map((optionList) => optionList.map((_) => FocusNode()).toList())
+        .toList();
+    _priceFocusNodes = _options
+        .map((optionList) => optionList.map((_) => FocusNode()).toList())
+        .toList();
+    _stockFocusNodes = _options
+        .map((optionList) => optionList.map((_) => FocusNode()).toList())
+        .toList();
 
-    // Khởi tạo danh sách lỗi động
-    _labelOptionErrors1 =
-        List<String?>.generate(_optionsVariant1.length, (_) => null);
-    _priceOptionErrors1 =
-        List<String?>.generate(_optionsVariant1.length, (_) => null);
-    _stockOptionErrors1 =
-        List<String?>.generate(_optionsVariant1.length, (_) => null);
-    _labelOptionErrors2 =
-        List<String?>.generate(_optionsVariant2.length, (_) => null);
-    _priceOptionErrors2 =
-        List<String?>.generate(_optionsVariant2.length, (_) => null);
-    _stockOptionErrors2 =
-        List<String?>.generate(_optionsVariant2.length, (_) => null);
+    _labelOptionErrors = _options
+        .map((optionList) =>
+            List<String?>.filled(optionList.length, null, growable: true))
+        .toList();
+    _priceOptionErrors = _options
+        .map((optionList) =>
+            List<String?>.filled(optionList.length, null, growable: true))
+        .toList();
+    _stockOptionErrors = _options
+        .map((optionList) =>
+            List<String?>.filled(optionList.length, null, growable: true))
+        .toList();
 
-    for (var focusNode in _labelFocusNodes1) {
-      focusNode.addListener(_handleFocusChange);
-    }
-    for (var focusNode in _labelFocusNodes2) {
-      focusNode.addListener(_handleFocusChange);
-    }
-    for (var focusNode in _priceFocusNodes1) {
-      focusNode.addListener(_handlePriceFocusChange1);
-    }
-    for (var focusNode in _priceFocusNodes2) {
-      focusNode.addListener(_handlePriceFocusChange2);
-    }
-    for (var focusNode in _stockFocusNodes1) {
-      focusNode.addListener(_handleStockFocusChange1);
-    }
-    for (var focusNode in _stockFocusNodes2) {
-      focusNode.addListener(_handleStockFocusChange2);
+    for (int i = 0; i < _labelFocusNodes.length; i++) {
+      for (var focusNode in _labelFocusNodes[i]) {
+        focusNode.addListener(_handleFocusChange);
+      }
+      for (var focusNode in _priceFocusNodes[i]) {
+        focusNode.addListener(() => _handlePriceFocusChange(i));
+      }
+      for (var focusNode in _stockFocusNodes[i]) {
+        focusNode.addListener(() => _handleStockFocusChange(i));
+      }
     }
   }
 
   @override
   void dispose() {
-    _valueController1.dispose();
-    _valueController2.dispose();
-    _labelController1.dispose();
-    _labelController2.dispose();
-    for (var controller in _labelOptionControllers1) controller.dispose();
-    for (var controller in _priceOptionControllers1) controller.dispose();
-    for (var controller in _stockOptionControllers1) controller.dispose();
-    for (var controller in _labelOptionControllers2) controller.dispose();
-    for (var controller in _priceOptionControllers2) controller.dispose();
-    for (var controller in _stockOptionControllers2) controller.dispose();
-    for (var focusNode in _labelFocusNodes1) focusNode.dispose();
-    for (var focusNode in _priceFocusNodes1) focusNode.dispose();
-    for (var focusNode in _stockFocusNodes1) focusNode.dispose();
-    for (var focusNode in _labelFocusNodes2) focusNode.dispose();
-    for (var focusNode in _priceFocusNodes2) focusNode.dispose();
-    for (var focusNode in _stockFocusNodes2) focusNode.dispose();
+    for (var controller in _valueControllers) controller.dispose();
+    for (var controller in _labelControllers) controller.dispose();
+    for (var controllers in _labelOptionControllers) {
+      for (var controller in controllers) controller.dispose();
+    }
+    for (var controllers in _priceOptionControllers) {
+      for (var controller in controllers) controller.dispose();
+    }
+    for (var controllers in _stockOptionControllers) {
+      for (var controller in controllers) controller.dispose();
+    }
+    for (var focusNodes in _labelFocusNodes) {
+      for (var focusNode in focusNodes) focusNode.dispose();
+    }
+    for (var focusNodes in _priceFocusNodes) {
+      for (var focusNode in focusNodes) focusNode.dispose();
+    }
+    for (var focusNodes in _stockFocusNodes) {
+      for (var focusNode in focusNodes) focusNode.dispose();
+    }
     super.dispose();
   }
 
-  void _addValue1() {
+  void _addValue(int variantIndex) {
     setState(() {
-      if (_valueController1.text.isNotEmpty) {
-        variantValues1.add(_valueController1.text);
-        _optionsVariant1.add(
-            ProductOption(price: 0, stock: 0, name: _valueController1.text));
-        _labelOptionControllers1
-            .add(TextEditingController(text: _valueController1.text));
-        _priceOptionControllers1.add(TextEditingController(text: '0'));
-        _stockOptionControllers1.add(TextEditingController(text: '0'));
-        _labelFocusNodes1.add(FocusNode()..addListener(_handleFocusChange));
-        _priceFocusNodes1
-            .add(FocusNode()..addListener(_handlePriceFocusChange1));
-        _stockFocusNodes1
-            .add(FocusNode()..addListener(_handleStockFocusChange1));
-        _labelOptionErrors1.add(null);
-        _priceOptionErrors1.add(null);
-        _stockOptionErrors1.add(null);
-        _valueController1.clear();
+      if (_valueControllers[variantIndex].text.isNotEmpty) {
+        _options[variantIndex].add(ProductOption(
+            price: 0, stock: 0, name: _valueControllers[variantIndex].text));
+        _labelOptionControllers[variantIndex].add(
+            TextEditingController(text: _valueControllers[variantIndex].text));
+        _priceOptionControllers[variantIndex]
+            .add(TextEditingController(text: '0'));
+        _stockOptionControllers[variantIndex]
+            .add(TextEditingController(text: '0'));
+        _labelFocusNodes[variantIndex]
+            .add(FocusNode()..addListener(_handleFocusChange));
+        _priceFocusNodes[variantIndex].add(FocusNode()
+          ..addListener(() => _handlePriceFocusChange(variantIndex)));
+        _stockFocusNodes[variantIndex].add(FocusNode()
+          ..addListener(() => _handleStockFocusChange(variantIndex)));
+        _labelOptionErrors[variantIndex].add(null);
+        _priceOptionErrors[variantIndex].add(null);
+        _stockOptionErrors[variantIndex].add(null);
+        _valueControllers[variantIndex].clear();
       } else {
-        _optionsVariant1.add(ProductOption(price: 0, stock: 0, name: ''));
-        _labelOptionControllers1.add(TextEditingController(text: ''));
-        _priceOptionControllers1.add(TextEditingController(text: '0'));
-        _stockOptionControllers1.add(TextEditingController(text: '0'));
+        _options[variantIndex].add(ProductOption(price: 0, stock: 0, name: ''));
+        _labelOptionControllers[variantIndex]
+            .add(TextEditingController(text: ''));
+        _priceOptionControllers[variantIndex]
+            .add(TextEditingController(text: '0'));
+        _stockOptionControllers[variantIndex]
+            .add(TextEditingController(text: '0'));
         final newFocusNode = FocusNode()..addListener(_handleFocusChange);
-        _labelFocusNodes1.add(newFocusNode);
-        _priceFocusNodes1
-            .add(FocusNode()..addListener(_handlePriceFocusChange1));
-        _stockFocusNodes1
-            .add(FocusNode()..addListener(_handleStockFocusChange1));
-        _labelOptionErrors1.add(null);
-        _priceOptionErrors1.add(null);
-        _stockOptionErrors1.add(null);
+        _labelFocusNodes[variantIndex].add(newFocusNode);
+        _priceFocusNodes[variantIndex].add(FocusNode()
+          ..addListener(() => _handlePriceFocusChange(variantIndex)));
+        _stockFocusNodes[variantIndex].add(FocusNode()
+          ..addListener(() => _handleStockFocusChange(variantIndex)));
+        _labelOptionErrors[variantIndex].add(null);
+        _priceOptionErrors[variantIndex].add(null);
+        _stockOptionErrors[variantIndex].add(null);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           FocusScope.of(context).requestFocus(newFocusNode);
         });
       }
-      _variants[0] = _variants[0].copyWith(options: _optionsVariant1);
+      _variants[variantIndex] =
+          _variants[variantIndex].copyWith(options: _options[variantIndex]);
     });
   }
 
-  void _addValue2() {
+  void _removeVariant(int variantIndex) {
     setState(() {
-      if (_valueController2.text.isNotEmpty) {
-        variantValues2.add(_valueController2.text);
-        _optionsVariant2.add(
-            ProductOption(price: 0, stock: 0, name: _valueController2.text));
-        _labelOptionControllers2
-            .add(TextEditingController(text: _valueController2.text));
-        _priceOptionControllers2.add(TextEditingController(text: '0'));
-        _stockOptionControllers2.add(TextEditingController(text: '0'));
-        _labelFocusNodes2.add(FocusNode()..addListener(_handleFocusChange));
-        _priceFocusNodes2
-            .add(FocusNode()..addListener(_handlePriceFocusChange2));
-        _stockFocusNodes2
-            .add(FocusNode()..addListener(_handleStockFocusChange2));
-        _labelOptionErrors2.add(null);
-        _priceOptionErrors2.add(null);
-        _stockOptionErrors2.add(null);
-        _valueController2.clear();
-      } else {
-        _optionsVariant2.add(ProductOption(price: 0, stock: 0, name: ''));
-        _labelOptionControllers2.add(TextEditingController(text: ''));
-        _priceOptionControllers2.add(TextEditingController(text: '0'));
-        _stockOptionControllers2.add(TextEditingController(text: '0'));
-        final newFocusNode = FocusNode()..addListener(_handleFocusChange);
-        _labelFocusNodes2.add(newFocusNode);
-        _priceFocusNodes2
-            .add(FocusNode()..addListener(_handlePriceFocusChange2));
-        _stockFocusNodes2
-            .add(FocusNode()..addListener(_handleStockFocusChange2));
-        _labelOptionErrors2.add(null);
-        _priceOptionErrors2.add(null);
-        _stockOptionErrors2.add(null);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          FocusScope.of(context).requestFocus(newFocusNode);
-        });
-      }
-      if (_variants.length > 1)
-        _variants[1] = _variants[1].copyWith(options: _optionsVariant2);
-    });
-  }
+      _variants.removeAt(variantIndex);
+      _options.removeAt(variantIndex);
+      _labelOptionControllers.removeAt(variantIndex);
+      _priceOptionControllers.removeAt(variantIndex);
+      _stockOptionControllers.removeAt(variantIndex);
+      _labelFocusNodes.removeAt(variantIndex);
+      _priceFocusNodes.removeAt(variantIndex);
+      _stockFocusNodes.removeAt(variantIndex);
+      _labelOptionErrors.removeAt(variantIndex);
+      _priceOptionErrors.removeAt(variantIndex);
+      _stockOptionErrors.removeAt(variantIndex);
+      _labelControllers.removeAt(variantIndex);
+      _labelErrors.removeAt(variantIndex);
 
-  void _removeVariant1() {
-    setState(() {
-      _variants.removeAt(0);
-      variantLabel1 = "";
-      variantValues1.clear();
-      _optionsVariant1.clear();
-      _labelOptionControllers1.clear();
-      _priceOptionControllers1.clear();
-      _stockOptionControllers1.clear();
-      _labelFocusNodes1.clear();
-      _priceFocusNodes1.clear();
-      _stockFocusNodes1.clear();
-      _labelOptionErrors1.clear();
-      _priceOptionErrors1.clear();
-      _stockOptionErrors1.clear();
-      _labelController1.clear();
-      _labelError1 = null;
-
-      if (_variants.isNotEmpty) {
-        variantLabel1 = variantLabel2;
-        _optionsVariant1 = List.from(_optionsVariant2);
-        _labelOptionControllers1 = _optionsVariant1
+      if (_variants.isNotEmpty && variantIndex == 0) {
+        _options[0] = List.from(_options[1]);
+        _labelOptionControllers[0] = _options[0]
             .map((option) => TextEditingController(text: option.name))
             .toList();
-        _priceOptionControllers1 = _optionsVariant1
+        _priceOptionControllers[0] = _options[0]
             .map((option) =>
                 TextEditingController(text: option.price.toString()))
             .toList();
-        _stockOptionControllers1 = _optionsVariant1
+        _stockOptionControllers[0] = _options[0]
             .map((option) =>
                 TextEditingController(text: option.stock.toString()))
             .toList();
-        _labelFocusNodes1 = _optionsVariant1
+        _labelFocusNodes[0] = _options[0]
             .map((_) => FocusNode()..addListener(_handleFocusChange))
             .toList();
-        _priceFocusNodes1 = _optionsVariant1
-            .map((_) => FocusNode()..addListener(_handlePriceFocusChange1))
+        _priceFocusNodes[0] = _options[0]
+            .map((_) =>
+                FocusNode()..addListener(() => _handlePriceFocusChange(0)))
             .toList();
-        _stockFocusNodes1 = _optionsVariant1
-            .map((_) => FocusNode()..addListener(_handleStockFocusChange1))
+        _stockFocusNodes[0] = _options[0]
+            .map((_) =>
+                FocusNode()..addListener(() => _handleStockFocusChange(0)))
             .toList();
-        _labelOptionErrors1 =
-            List<String?>.generate(_optionsVariant1.length, (_) => null);
-        _priceOptionErrors1 =
-            List<String?>.generate(_optionsVariant1.length, (_) => null);
-        _stockOptionErrors1 =
-            List<String?>.generate(_optionsVariant1.length, (_) => null);
-        _labelController1.text = variantLabel2;
-        _labelError1 = _labelError2;
+        _labelOptionErrors[0] =
+            List<String?>.generate(_options[0].length, (_) => null);
+        _priceOptionErrors[0] =
+            List<String?>.generate(_options[0].length, (_) => null);
+        _stockOptionErrors[0] =
+            List<String?>.generate(_options[0].length, (_) => null);
+        _labelControllers[0].text = _labelControllers[1].text;
+        _labelErrors[0] = _labelErrors[1];
 
-        variantLabel2 = "";
-        _optionsVariant2.clear();
-        _labelOptionControllers2.clear();
-        _priceOptionControllers2.clear();
-        _stockOptionControllers2.clear();
-        _labelFocusNodes2.clear();
-        _priceFocusNodes2.clear();
-        _stockFocusNodes2.clear();
-        _labelOptionErrors2.clear();
-        _priceOptionErrors2.clear();
-        _stockOptionErrors2.clear();
-        _labelController2.clear();
-        _labelError2 = null;
-      }
-    });
-  }
-
-  void _removeVariant2() {
-    setState(() {
-      if (_variants.length > 1) {
-        _variants.removeAt(1);
-        variantLabel2 = "";
-        variantValues2.clear();
-        _optionsVariant2.clear();
-        _labelOptionControllers2.clear();
-        _priceOptionControllers2.clear();
-        _stockOptionControllers2.clear();
-        _labelFocusNodes2.clear();
-        _priceFocusNodes2.clear();
-        _stockFocusNodes2.clear();
-        _labelOptionErrors2.clear();
-        _priceOptionErrors2.clear();
-        _stockOptionErrors2.clear();
-        _labelController2.clear();
-        _labelError2 = null;
+        _options.removeAt(1);
+        _labelOptionControllers.removeAt(1);
+        _priceOptionControllers.removeAt(1);
+        _stockOptionControllers.removeAt(1);
+        _labelFocusNodes.removeAt(1);
+        _priceFocusNodes.removeAt(1);
+        _stockFocusNodes.removeAt(1);
+        _labelOptionErrors.removeAt(1);
+        _priceOptionErrors.removeAt(1);
+        _stockOptionErrors.removeAt(1);
+        _labelControllers.removeAt(1);
+        _labelErrors.removeAt(1);
       }
     });
   }
@@ -329,117 +255,73 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
   void _addNewVariant() {
     setState(() {
       _variants.add(ProductVariant(label: "Phân loại mới", options: []));
-      variantLabel2 = "Phân loại mới";
-      variantValues2 = [];
-      _optionsVariant2 = [];
-      _labelOptionControllers2 = [];
-      _priceOptionControllers2 = [];
-      _stockOptionControllers2 = [];
-      _labelFocusNodes2 = [];
-      _priceFocusNodes2 = [];
-      _stockFocusNodes2 = [];
-      _labelOptionErrors2 = [];
-      _priceOptionErrors2 = [];
-      _stockOptionErrors2 = [];
-      if (_variants.isEmpty) _labelController1.text = "Phân loại mới";
-      _labelController2.text = "Phân loại mới";
-      _addValue2();
+      _options.add([]);
+      _labelOptionControllers.add([]);
+      _priceOptionControllers.add([]);
+      _stockOptionControllers.add([]);
+      _labelFocusNodes.add([]);
+      _priceFocusNodes.add([]);
+      _stockFocusNodes.add([]);
+      _labelOptionErrors.add([]);
+      _priceOptionErrors.add([]);
+      _stockOptionErrors.add([]);
+      _labelControllers.add(TextEditingController(text: "Phân loại mới"));
+      _labelErrors.add(null);
+      _addValue(_variants.length - 1);
     });
   }
 
   void _handleFocusChange() {
     setState(() {
-      for (int i = 0; i < _labelFocusNodes1.length; i++) {
-        if (!_labelFocusNodes1[i].hasFocus &&
-            _labelOptionControllers1[i].text.isEmpty) {
-          _optionsVariant1.removeAt(i);
-          _labelOptionControllers1.removeAt(i);
-          _priceOptionControllers1.removeAt(i);
-          _stockOptionControllers1.removeAt(i);
-          _labelFocusNodes1.removeAt(i);
-          _priceFocusNodes1.removeAt(i);
-          _stockFocusNodes1.removeAt(i);
-          _labelOptionErrors1.removeAt(i);
-          _priceOptionErrors1.removeAt(i);
-          _stockOptionErrors1.removeAt(i);
-          _variants[0] = _variants[0].copyWith(options: _optionsVariant1);
-          break;
-        }
-      }
-      for (int i = 0; i < _labelFocusNodes2.length; i++) {
-        if (!_labelFocusNodes2[i].hasFocus &&
-            _labelOptionControllers2[i].text.isEmpty) {
-          _optionsVariant2.removeAt(i);
-          _labelOptionControllers2.removeAt(i);
-          _priceOptionControllers2.removeAt(i);
-          _stockOptionControllers2.removeAt(i);
-          _labelFocusNodes2.removeAt(i);
-          _priceFocusNodes2.removeAt(i);
-          _stockFocusNodes2.removeAt(i);
-          _labelOptionErrors2.removeAt(i);
-          _priceOptionErrors2.removeAt(i);
-          _stockOptionErrors2.removeAt(i);
-          if (_variants.length > 1)
-            _variants[1] = _variants[1].copyWith(options: _optionsVariant2);
-          break;
+      for (int i = 0; i < _variants.length; i++) {
+        for (int j = 0; j < _labelFocusNodes[i].length; j++) {
+          if (!_labelFocusNodes[i][j].hasFocus &&
+              _labelOptionControllers[i][j].text.isEmpty) {
+            _options[i].removeAt(j);
+            _labelOptionControllers[i].removeAt(j);
+            _priceOptionControllers[i].removeAt(j);
+            _stockOptionControllers[i].removeAt(j);
+            _labelFocusNodes[i].removeAt(j);
+            _priceFocusNodes[i].removeAt(j);
+            _stockFocusNodes[i].removeAt(j);
+            _labelOptionErrors[i].removeAt(j);
+            _priceOptionErrors[i].removeAt(j);
+            _stockOptionErrors[i].removeAt(j);
+            _variants[i] = _variants[i].copyWith(options: _options[i]);
+            break;
+          }
         }
       }
     });
   }
 
-  void _handlePriceFocusChange1() {
+  void _handlePriceFocusChange(int variantIndex) {
     setState(() {
-      for (int i = 0; i < _priceFocusNodes1.length; i++) {
-        if (!_priceFocusNodes1[i].hasFocus) {
+      for (int i = 0; i < _priceFocusNodes[variantIndex].length; i++) {
+        if (!_priceFocusNodes[variantIndex][i].hasFocus) {
           final validatedPrice = _validatePrice(
-              _priceOptionControllers1[i].text, _priceOptionControllers1[i]);
-          _optionsVariant1[i] =
-              _optionsVariant1[i].copyWith(price: validatedPrice);
-          _variants[0] = _variants[0].copyWith(options: _optionsVariant1);
+              _priceOptionControllers[variantIndex][i].text,
+              _priceOptionControllers[variantIndex][i]);
+          _options[variantIndex][i] =
+              _options[variantIndex][i].copyWith(price: validatedPrice);
+          _variants[variantIndex] =
+              _variants[variantIndex].copyWith(options: _options[variantIndex]);
         }
       }
     });
   }
 
-  void _handlePriceFocusChange2() {
+  void _handleStockFocusChange(int variantIndex) {
     setState(() {
-      for (int i = 0; i < _priceFocusNodes2.length; i++) {
-        if (!_priceFocusNodes2[i].hasFocus) {
-          final validatedPrice = _validatePrice(
-              _priceOptionControllers2[i].text, _priceOptionControllers2[i]);
-          _optionsVariant2[i] =
-              _optionsVariant2[i].copyWith(price: validatedPrice);
-          if (_variants.length > 1)
-            _variants[1] = _variants[1].copyWith(options: _optionsVariant2);
-        }
-      }
-    });
-  }
-
-  void _handleStockFocusChange1() {
-    setState(() {
-      for (int i = 0; i < _stockFocusNodes1.length; i++) {
-        if (!_stockFocusNodes1[i].hasFocus) {
+      for (int i = 0; i < _stockFocusNodes[variantIndex].length; i++) {
+        if (!_stockFocusNodes[variantIndex][i].hasFocus) {
           final validatedStock = _validateStock(
-              _stockOptionControllers1[i].text, _stockOptionControllers1[i]);
-          _optionsVariant1[i] =
-              _optionsVariant1[i].copyWith(stock: validatedStock);
-          _variants[0] = _variants[0].copyWith(options: _optionsVariant1);
-        }
-      }
-    });
-  }
-
-  void _handleStockFocusChange2() {
-    setState(() {
-      for (int i = 0; i < _stockFocusNodes2.length; i++) {
-        if (!_stockFocusNodes2[i].hasFocus) {
-          final validatedStock = _validateStock(
-              _stockOptionControllers2[i].text, _stockOptionControllers2[i]);
-          _optionsVariant2[i] =
-              _optionsVariant2[i].copyWith(stock: validatedStock);
-          if (_variants.length > 1)
-            _variants[1] = _variants[1].copyWith(options: _optionsVariant2);
+              _stockOptionControllers[variantIndex][i].text,
+              _stockOptionControllers[variantIndex][i]);
+          _options[variantIndex][i] =
+              _options[variantIndex][i].copyWith(stock: validatedStock);
+          _variants[variantIndex] =
+              _variants[variantIndex].copyWith(options: _options[variantIndex]);
         }
       }
     });
@@ -448,54 +330,32 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
   void _handleTapOutside() {
     FocusScope.of(context).unfocus();
     setState(() {
-      if (_optionsVariant1.isNotEmpty &&
-          _labelOptionControllers1.last.text.isEmpty) {
-        _optionsVariant1.removeLast();
-        _labelOptionControllers1.removeLast();
-        _priceOptionControllers1.removeLast();
-        _stockOptionControllers1.removeLast();
-        _labelFocusNodes1.removeLast();
-        _priceFocusNodes1.removeLast();
-        _stockFocusNodes1.removeLast();
-        _labelOptionErrors1.removeLast();
-        _priceOptionErrors1.removeLast();
-        _stockOptionErrors1.removeLast();
-        _variants[0] = _variants[0].copyWith(options: _optionsVariant1);
-      }
-      if (_optionsVariant2.isNotEmpty &&
-          _labelOptionControllers2.last.text.isEmpty) {
-        _optionsVariant2.removeLast();
-        _labelOptionControllers2.removeLast();
-        _priceOptionControllers2.removeLast();
-        _stockOptionControllers2.removeLast();
-        _labelFocusNodes2.removeLast();
-        _priceFocusNodes2.removeLast();
-        _stockFocusNodes2.removeLast();
-        _labelOptionErrors2.removeLast();
-        _priceOptionErrors2.removeLast();
-        _stockOptionErrors2.removeLast();
-        if (_variants.length > 1)
-          _variants[1] = _variants[1].copyWith(options: _optionsVariant2);
-      }
-
-      for (int i = 0; i < _optionsVariant1.length; i++) {
-        final validatedPrice = _validatePrice(
-            _priceOptionControllers1[i].text, _priceOptionControllers1[i]);
-        final validatedStock = _validateStock(
-            _stockOptionControllers1[i].text, _stockOptionControllers1[i]);
-        _optionsVariant1[i] = _optionsVariant1[i]
-            .copyWith(price: validatedPrice, stock: validatedStock);
-        _variants[0] = _variants[0].copyWith(options: _optionsVariant1);
-      }
-      for (int i = 0; i < _optionsVariant2.length; i++) {
-        final validatedPrice = _validatePrice(
-            _priceOptionControllers2[i].text, _priceOptionControllers2[i]);
-        final validatedStock = _validateStock(
-            _stockOptionControllers2[i].text, _stockOptionControllers2[i]);
-        _optionsVariant2[i] = _optionsVariant2[i]
-            .copyWith(price: validatedPrice, stock: validatedStock);
-        if (_variants.length > 1)
-          _variants[1] = _variants[1].copyWith(options: _optionsVariant2);
+      for (int i = 0; i < _variants.length; i++) {
+        if (_options[i].isNotEmpty &&
+            _labelOptionControllers[i].last.text.isEmpty) {
+          _options[i].removeLast();
+          _labelOptionControllers[i].removeLast();
+          _priceOptionControllers[i].removeLast();
+          _stockOptionControllers[i].removeLast();
+          _labelFocusNodes[i].removeLast();
+          _priceFocusNodes[i].removeLast();
+          _stockFocusNodes[i].removeLast();
+          _labelOptionErrors[i].removeLast();
+          _priceOptionErrors[i].removeLast();
+          _stockOptionErrors[i].removeLast();
+          _variants[i] = _variants[i].copyWith(options: _options[i]);
+        }
+        for (int j = 0; j < _options[i].length; j++) {
+          final validatedPrice = _validatePrice(
+              _priceOptionControllers[i][j].text,
+              _priceOptionControllers[i][j]);
+          final validatedStock = _validateStock(
+              _stockOptionControllers[i][j].text,
+              _stockOptionControllers[i][j]);
+          _options[i][j] = _options[i][j]
+              .copyWith(price: validatedPrice, stock: validatedStock);
+          _variants[i] = _variants[i].copyWith(options: _options[i]);
+        }
       }
     });
   }
@@ -545,21 +405,16 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
   bool _validateDataBeforeSave() {
     bool isValid = true;
     setState(() {
-      // Reset lỗi cũ
-      _labelError1 = null;
-      _labelError2 = null;
-      _labelOptionErrors1 =
-          List<String?>.generate(_labelOptionControllers1.length, (_) => null);
-      _priceOptionErrors1 =
-          List<String?>.generate(_priceOptionControllers1.length, (_) => null);
-      _stockOptionErrors1 =
-          List<String?>.generate(_stockOptionControllers1.length, (_) => null);
-      _labelOptionErrors2 =
-          List<String?>.generate(_labelOptionControllers2.length, (_) => null);
-      _priceOptionErrors2 =
-          List<String?>.generate(_priceOptionControllers2.length, (_) => null);
-      _stockOptionErrors2 =
-          List<String?>.generate(_stockOptionControllers2.length, (_) => null);
+      _labelErrors = List.filled(_variants.length, null, growable: true);
+      _labelOptionErrors = _options
+          .map((opts) => List<String?>.generate(opts.length, (_) => null))
+          .toList();
+      _priceOptionErrors = _options
+          .map((opts) => List<String?>.generate(opts.length, (_) => null))
+          .toList();
+      _stockOptionErrors = _options
+          .map((opts) => List<String?>.generate(opts.length, (_) => null))
+          .toList();
 
       if (_variants.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -568,65 +423,34 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
         return;
       }
 
-      if (variantLabel1.isEmpty) {
-        _labelError1 = "Tên phân loại không được để trống";
-        isValid = false;
-      }
-      for (int i = 0; i < _optionsVariant1.length; i++) {
-        if (_labelOptionControllers1[i].text.isEmpty) {
-          _labelOptionErrors1[i] = "Tên nhãn không được để trống";
+      for (int i = 0; i < _variants.length; i++) {
+        if (_labelControllers[i].text.isEmpty) {
+          _labelErrors[i] = "Tên phân loại không được để trống";
           isValid = false;
         }
-        try {
-          final price = double.parse(_priceOptionControllers1[i].text);
-          if (price <= 0) {
-            _priceOptionErrors1[i] = "Giá phải lớn hơn 0";
-            isValid = false;
-          }
-        } catch (e) {
-          _priceOptionErrors1[i] = "Giá không hợp lệ";
-          isValid = false;
-        }
-        try {
-          final stock = int.parse(_stockOptionControllers1[i].text);
-          if (stock <= 0) {
-            _stockOptionErrors1[i] = "Kho phải lớn hơn 0";
-            isValid = false;
-          }
-        } catch (e) {
-          _stockOptionErrors1[i] = "Kho không hợp lệ";
-          isValid = false;
-        }
-      }
-
-      if (_variants.length > 1) {
-        if (variantLabel2.isEmpty) {
-          _labelError2 = "Tên phân loại không được để trống";
-          isValid = false;
-        }
-        for (int i = 0; i < _optionsVariant2.length; i++) {
-          if (_labelOptionControllers2[i].text.isEmpty) {
-            _labelOptionErrors2[i] = "Tên nhãn không được để trống";
+        for (int j = 0; j < _options[i].length; j++) {
+          if (_labelOptionControllers[i][j].text.isEmpty) {
+            _labelOptionErrors[i][j] = "Tên nhãn không được để trống";
             isValid = false;
           }
           try {
-            final price = double.parse(_priceOptionControllers2[i].text);
+            final price = double.parse(_priceOptionControllers[i][j].text);
             if (price <= 0) {
-              _priceOptionErrors2[i] = "Giá phải lớn hơn 0";
+              _priceOptionErrors[i][j] = "Giá phải lớn hơn 0";
               isValid = false;
             }
           } catch (e) {
-            _priceOptionErrors2[i] = "Giá không hợp lệ";
+            _priceOptionErrors[i][j] = "Giá không hợp lệ";
             isValid = false;
           }
           try {
-            final stock = int.parse(_stockOptionControllers2[i].text);
+            final stock = int.parse(_stockOptionControllers[i][j].text);
             if (stock <= 0) {
-              _stockOptionErrors2[i] = "Kho phải lớn hơn 0";
+              _stockOptionErrors[i][j] = "Kho phải lớn hơn 0";
               isValid = false;
             }
           } catch (e) {
-            _stockOptionErrors2[i] = "Kho không hợp lệ";
+            _stockOptionErrors[i][j] = "Kho không hợp lệ";
             isValid = false;
           }
         }
@@ -638,17 +462,13 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
   void _saveData() async {
     if (!_validateDataBeforeSave()) return;
 
-    final firestore = FirebaseFirestore.instance;
     try {
-      await firestore.collection('variants').add({
-        'variants': _variants.map((v) => v.toJson()).toList(),
-        'enableImageForVariant': enableImageForVariant,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      product.variants.clear();
+      product.variants.addAll(_variants);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Đã lưu phân loại thành công")),
       );
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(product);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Lỗi khi lưu dữ liệu: $e")),
@@ -675,8 +495,9 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_variants.isNotEmpty) ...[
-                        Container(
+                      ..._variants.asMap().entries.map((entry) {
+                        int index = entry.key;
+                        return Container(
                           color: Colors.white,
                           padding: const EdgeInsets.all(8),
                           child: Column(
@@ -686,7 +507,7 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   GestureDetector(
-                                    onTap: _removeVariant1,
+                                    onTap: () => _removeVariant(index),
                                     child: SvgPicture.asset(
                                       IconHelper.minus,
                                       height: 25,
@@ -697,323 +518,19 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                   const SizedBox(width: 5),
                                   Expanded(
                                     child: TextField(
-                                      controller: _labelController1,
-                                      maxLength: 30,
-                                      decoration: InputDecoration(
-                                        hintText: "",
-                                        counterText: '',
-                                        border: InputBorder.none,
-                                        errorText: _labelError1,
-                                      ),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          variantLabel1 = value;
-                                          _variants[0] = _variants[0]
-                                              .copyWith(label: value);
-                                          _labelError1 = null;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                      child: Text("Tên nhãn",
-                                          textAlign: TextAlign.center)),
-                                  Expanded(
-                                      child: Text("Giá",
-                                          textAlign: TextAlign.center)),
-                                  Expanded(
-                                      child: Text("Kho",
-                                          textAlign: TextAlign.center)),
-                                ],
-                              ),
-                              Wrap(
-                                spacing: 8.0,
-                                runSpacing: 8.0,
-                                children: [
-                                  ..._optionsVariant1
-                                      .asMap()
-                                      .entries
-                                      .map((entry) {
-                                    int index = entry.key;
-                                    return Stack(
-                                      children: [
-                                        Container(
-                                          constraints: const BoxConstraints(
-                                              minWidth: 70),
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            border: Border.all(
-                                                color: Colors.grey, width: 0.6),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: TextField(
-                                                  maxLength: 30,
-                                                  textAlign: TextAlign.center,
-                                                  textAlignVertical:
-                                                      TextAlignVertical.center,
-                                                  decoration: InputDecoration(
-                                                    border: InputBorder.none,
-                                                    counterText: '',
-                                                    contentPadding:
-                                                        EdgeInsets.only(
-                                                            bottom: 15),
-                                                    errorText:
-                                                        _labelOptionErrors1[
-                                                            index],
-                                                  ),
-                                                  controller:
-                                                      _labelOptionControllers1[
-                                                          index],
-                                                  focusNode:
-                                                      _labelFocusNodes1[index],
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      _optionsVariant1[index] =
-                                                          _optionsVariant1[
-                                                                  index]
-                                                              .copyWith(
-                                                                  name: value);
-                                                      _variants[0] =
-                                                          _variants[0].copyWith(
-                                                              options:
-                                                                  _optionsVariant1);
-                                                      _labelOptionErrors1[
-                                                          index] = null;
-                                                    });
-                                                  },
-                                                  style: const TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.black),
-                                                  maxLines: 1,
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: TextField(
-                                                  keyboardType:
-                                                      const TextInputType
-                                                          .numberWithOptions(
-                                                          decimal: true),
-                                                  maxLength: 30,
-                                                  textAlign: TextAlign.center,
-                                                  textAlignVertical:
-                                                      TextAlignVertical.center,
-                                                  decoration: InputDecoration(
-                                                    border: InputBorder.none,
-                                                    counterText: '',
-                                                    contentPadding:
-                                                        EdgeInsets.only(
-                                                            bottom: 15),
-                                                    errorText:
-                                                        _priceOptionErrors1[
-                                                            index],
-                                                  ),
-                                                  controller:
-                                                      _priceOptionControllers1[
-                                                          index],
-                                                  focusNode:
-                                                      _priceFocusNodes1[index],
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      _priceOptionErrors1[
-                                                          index] = null;
-                                                    });
-                                                  },
-                                                  style: const TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.black),
-                                                  maxLines: 1,
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: TextField(
-                                                  keyboardType:
-                                                      TextInputType.number,
-                                                  maxLength: 30,
-                                                  textAlign: TextAlign.center,
-                                                  textAlignVertical:
-                                                      TextAlignVertical.center,
-                                                  decoration: InputDecoration(
-                                                    border: InputBorder.none,
-                                                    counterText: '',
-                                                    contentPadding:
-                                                        EdgeInsets.only(
-                                                            bottom: 15),
-                                                    errorText:
-                                                        _stockOptionErrors1[
-                                                            index],
-                                                  ),
-                                                  controller:
-                                                      _stockOptionControllers1[
-                                                          index],
-                                                  focusNode:
-                                                      _stockFocusNodes1[index],
-                                                  onChanged: (value) {
-                                                    setState(() {
-                                                      _stockOptionErrors1[
-                                                          index] = null;
-                                                    });
-                                                  },
-                                                  style: const TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.black),
-                                                  maxLines: 1,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Positioned(
-                                          top: 0,
-                                          right: 0,
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                _optionsVariant1
-                                                    .removeAt(index);
-                                                _labelOptionControllers1
-                                                    .removeAt(index);
-                                                _priceOptionControllers1
-                                                    .removeAt(index);
-                                                _stockOptionControllers1
-                                                    .removeAt(index);
-                                                _labelFocusNodes1
-                                                    .removeAt(index);
-                                                _priceFocusNodes1
-                                                    .removeAt(index);
-                                                _stockFocusNodes1
-                                                    .removeAt(index);
-                                                _labelOptionErrors1
-                                                    .removeAt(index);
-                                                _priceOptionErrors1
-                                                    .removeAt(index);
-                                                _stockOptionErrors1
-                                                    .removeAt(index);
-                                                _variants[0] = _variants[0]
-                                                    .copyWith(
-                                                        options:
-                                                            _optionsVariant1);
-                                              });
-                                            },
-                                            child: Icon(Icons.cancel,
-                                                color: Colors.yellow[800],
-                                                size: 15),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList(),
-                                  GestureDetector(
-                                    onTap: _addValue1,
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            width: 0.5, color: Colors.red),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Text("Thêm",
-                                          style: TextStyle(color: Colors.red)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      "Thêm hình ảnh cho phân loại $variantLabel1\nKhi bật tính năng này, tất cả hình ảnh phải được tải lên",
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  ),
-                                  CupertinoSwitch(
-                                    value: enableImageForVariant,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        enableImageForVariant = value;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                              if (enableImageForVariant) ...[
-                                const SizedBox(height: 10),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: _optionsVariant1.map((value) {
-                                    return GestureDetector(
-                                      onTap: () {},
-                                      child: Container(
-                                        height: 70,
-                                        width: 70,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                              width: 0.5, color: Colors.red),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Text(value.name,
-                                            style: const TextStyle(
-                                                color: Colors.red)),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 10),
-                      if (_variants.length > 1) ...[
-                        Container(
-                          color: Colors.white,
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  GestureDetector(
-                                    onTap: _removeVariant2,
-                                    child: SvgPicture.asset(
-                                      IconHelper.minus,
-                                      height: 25,
-                                      width: 25,
-                                      color: Colors.red[500],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _labelController2,
+                                      controller: _labelControllers[index],
                                       maxLength: 30,
                                       decoration: InputDecoration(
                                         hintText: "Nhập tên phân loại",
                                         counterText: '',
                                         border: InputBorder.none,
-                                        errorText: _labelError2,
+                                        errorText: _labelErrors[index],
                                       ),
                                       onChanged: (value) {
                                         setState(() {
-                                          variantLabel2 = value;
-                                          _variants[1] = _variants[1]
+                                          _variants[index] = _variants[index]
                                               .copyWith(label: value);
-                                          _labelError2 = null;
+                                          _labelErrors[index] = null;
                                         });
                                       },
                                     ),
@@ -1037,16 +554,17 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                 spacing: 8.0,
                                 runSpacing: 8.0,
                                 children: [
-                                  ..._optionsVariant2
-                                      .asMap()
-                                      .entries
+                                  ...(_options.isNotEmpty &&
+                                              index < _options.length
+                                          ? _options[index].asMap().entries
+                                          : <MapEntry<int, ProductOption>>[])
                                       .map((entry) {
-                                    int index = entry.key;
+                                    int optIndex = entry.key;
                                     return Stack(
                                       children: [
                                         Container(
                                           constraints: const BoxConstraints(
-                                              minWidth: 70),
+                                              minHeight: 70),
                                           decoration: BoxDecoration(
                                             borderRadius:
                                                 BorderRadius.circular(8),
@@ -1068,27 +586,31 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                                         EdgeInsets.only(
                                                             bottom: 15),
                                                     errorText:
-                                                        _labelOptionErrors2[
-                                                            index],
+                                                        _labelOptionErrors[
+                                                            index][optIndex],
                                                   ),
                                                   controller:
-                                                      _labelOptionControllers2[
-                                                          index],
+                                                      _labelOptionControllers[
+                                                          index][optIndex],
                                                   focusNode:
-                                                      _labelFocusNodes2[index],
+                                                      _labelFocusNodes[index]
+                                                          [optIndex],
                                                   onChanged: (value) {
                                                     setState(() {
-                                                      _optionsVariant2[index] =
-                                                          _optionsVariant2[
-                                                                  index]
+                                                      _options[index]
+                                                              [optIndex] =
+                                                          _options[index]
+                                                                  [optIndex]
                                                               .copyWith(
                                                                   name: value);
-                                                      _variants[1] =
-                                                          _variants[1].copyWith(
-                                                              options:
-                                                                  _optionsVariant2);
-                                                      _labelOptionErrors2[
-                                                          index] = null;
+                                                      _variants[
+                                                          index] = _variants[
+                                                              index]
+                                                          .copyWith(
+                                                              options: _options[
+                                                                  index]);
+                                                      _labelOptionErrors[index]
+                                                          [optIndex] = null;
                                                     });
                                                   },
                                                   style: const TextStyle(
@@ -1114,18 +636,19 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                                         EdgeInsets.only(
                                                             bottom: 15),
                                                     errorText:
-                                                        _priceOptionErrors2[
-                                                            index],
+                                                        _priceOptionErrors[
+                                                            index][optIndex],
                                                   ),
                                                   controller:
-                                                      _priceOptionControllers2[
-                                                          index],
+                                                      _priceOptionControllers[
+                                                          index][optIndex],
                                                   focusNode:
-                                                      _priceFocusNodes2[index],
+                                                      _priceFocusNodes[index]
+                                                          [optIndex],
                                                   onChanged: (value) {
                                                     setState(() {
-                                                      _priceOptionErrors2[
-                                                          index] = null;
+                                                      _priceOptionErrors[index]
+                                                          [optIndex] = null;
                                                     });
                                                   },
                                                   style: const TextStyle(
@@ -1149,18 +672,19 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                                         EdgeInsets.only(
                                                             bottom: 15),
                                                     errorText:
-                                                        _stockOptionErrors2[
-                                                            index],
+                                                        _stockOptionErrors[
+                                                            index][optIndex],
                                                   ),
                                                   controller:
-                                                      _stockOptionControllers2[
-                                                          index],
+                                                      _stockOptionControllers[
+                                                          index][optIndex],
                                                   focusNode:
-                                                      _stockFocusNodes2[index],
+                                                      _stockFocusNodes[index]
+                                                          [optIndex],
                                                   onChanged: (value) {
                                                     setState(() {
-                                                      _stockOptionErrors2[
-                                                          index] = null;
+                                                      _stockOptionErrors[index]
+                                                          [optIndex] = null;
                                                     });
                                                   },
                                                   style: const TextStyle(
@@ -1178,30 +702,30 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                           child: GestureDetector(
                                             onTap: () {
                                               setState(() {
-                                                _optionsVariant2
-                                                    .removeAt(index);
-                                                _labelOptionControllers2
-                                                    .removeAt(index);
-                                                _priceOptionControllers2
-                                                    .removeAt(index);
-                                                _stockOptionControllers2
-                                                    .removeAt(index);
-                                                _labelFocusNodes2
-                                                    .removeAt(index);
-                                                _priceFocusNodes2
-                                                    .removeAt(index);
-                                                _stockFocusNodes2
-                                                    .removeAt(index);
-                                                _labelOptionErrors2
-                                                    .removeAt(index);
-                                                _priceOptionErrors2
-                                                    .removeAt(index);
-                                                _stockOptionErrors2
-                                                    .removeAt(index);
-                                                _variants[1] = _variants[1]
-                                                    .copyWith(
+                                                _options[index]
+                                                    .removeAt(optIndex);
+                                                _labelOptionControllers[index]
+                                                    .removeAt(optIndex);
+                                                _priceOptionControllers[index]
+                                                    .removeAt(optIndex);
+                                                _stockOptionControllers[index]
+                                                    .removeAt(optIndex);
+                                                _labelFocusNodes[index]
+                                                    .removeAt(optIndex);
+                                                _priceFocusNodes[index]
+                                                    .removeAt(optIndex);
+                                                _stockFocusNodes[index]
+                                                    .removeAt(optIndex);
+                                                _labelOptionErrors[index]
+                                                    .removeAt(optIndex);
+                                                _priceOptionErrors[index]
+                                                    .removeAt(optIndex);
+                                                _stockOptionErrors[index]
+                                                    .removeAt(optIndex);
+                                                _variants[index] =
+                                                    _variants[index].copyWith(
                                                         options:
-                                                            _optionsVariant2);
+                                                            _options[index]);
                                               });
                                             },
                                             child: Icon(Icons.cancel,
@@ -1213,7 +737,7 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                     );
                                   }).toList(),
                                   GestureDetector(
-                                    onTap: _addValue2,
+                                    onTap: () => _addValue(index),
                                     child: Container(
                                       alignment: Alignment.center,
                                       padding: const EdgeInsets.symmetric(
@@ -1229,10 +753,59 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                   ),
                                 ],
                               ),
+                              if (index == 0) ...[
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        "Thêm hình ảnh cho phân loại ${_labelControllers[index].text}\nKhi bật tính năng này, tất cả hình ảnh phải được tải lên",
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    ),
+                                    CupertinoSwitch(
+                                      value: enableImageForVariant,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          enableImageForVariant = value;
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                if (enableImageForVariant) ...[
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: _options[index].map((value) {
+                                      return GestureDetector(
+                                        onTap: () {},
+                                        child: Container(
+                                          height: 70,
+                                          width: 70,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                                width: 0.5, color: Colors.red),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Text(value.name,
+                                              style: const TextStyle(
+                                                  color: Colors.red)),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ],
                             ],
                           ),
-                        ),
-                      ],
+                        );
+                      }).toList(),
                       const SizedBox(height: 10),
                       if (_variants.length < 2) ...[
                         Container(

@@ -2,12 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 
-class UserService {
+class ShopService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  Future<UserInfoModel> fetchUserInfo(String userId) async {
+  Future<Shop> fetchShop(String userId) async {
     final QuerySnapshot querySnapshot = await firebaseFirestore
-        .collection('users')
-        .where('id', isEqualTo: userId)
+        .collection('shops')
+        .where('userId', isEqualTo: userId)
         .limit(1)
         .get();
     if (querySnapshot.docs.isNotEmpty) {
@@ -17,26 +17,19 @@ class UserService {
     } else {
       print("User not found!");
     }
-    final UserInfoModel userInfoModel = UserInfoModel.fromFirestore(
-        querySnapshot.docs.first.data() as Map<String, dynamic>);
-    return userInfoModel;
+    final Shop shop = Shop.fromFirestore(
+        querySnapshot.docs.first as DocumentSnapshot<Map<String, dynamic>>);
+    return shop;
   }
 
-  Future<void> updateBasicUserInfo(UserInfoModel user) async {
-    await firebaseFirestore
-        .collection('users')
-        .doc(user.id)
-        .set(user.toMap(), SetOptions(merge: true));
-  }
-
-  Future<void> updateUserName(String userName, String userId) async {
+  Future<void> updateShop(String userName, String userId) async {
     await firebaseFirestore
         .collection('users')
         .doc(userId)
         .update({'userName': '(changed)$userName'});
   }
 
-  Future<void> registrationSeller(Shop sellerRegistration) async {
+  Future<void> hideShop(Shop sellerRegistration) async {
     await firebaseFirestore.collection('shops').add(sellerRegistration.toMap());
 
     await firebaseFirestore

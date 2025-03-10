@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:luanvan/blocs/user/user_bloc.dart';
-import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_event.dart';
+import 'package:luanvan/blocs/shop/shop_state.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/my_product_screen.dart';
@@ -19,14 +21,16 @@ class MyShopScreen extends StatefulWidget {
 class _MyShopScreenState extends State<MyShopScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<UserBloc, UserState>(
-      builder: (context, userState) {
-        if (userState is UserLoading) {
+    final user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
+    context.read<ShopBloc>().add(FetchShopEvent(user.id));
+    return Scaffold(body: BlocBuilder<ShopBloc, ShopState>(
+      builder: (context, shopState) {
+        if (shopState is ShopLoading) {
           return _buildLoading();
-        } else if (userState is UserLoaded) {
-          return _buildUserContent(context, userState.user);
-        } else if (userState is UserError) {
-          return _buildError(userState.message);
+        } else if (shopState is ShopLoaded) {
+          return _buildShopContent(context, shopState.shop, user);
+        } else if (shopState is ShopError) {
+          return _buildError(shopState.message);
         }
         return _buildInitializing();
       },
@@ -48,7 +52,8 @@ class _MyShopScreenState extends State<MyShopScreen> {
     return const Center(child: Text('Đang khởi tạo'));
   }
 
-  Widget _buildUserContent(BuildContext context, UserInfoModel user) {
+  Widget _buildShopContent(
+      BuildContext context, Shop shop, UserInfoModel user) {
     return Stack(
       children: [
         SingleChildScrollView(
@@ -90,7 +95,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
                           height: 60,
                           alignment: Alignment.topLeft,
                           child: Text(
-                            user.name!,
+                            shop.name,
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,

@@ -7,7 +7,7 @@ import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/address.dart';
-import 'package:luanvan/models/seller_registration.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
@@ -182,7 +182,7 @@ class _SignShopState extends State<SignShop> {
   }
 
   void _submitForm() async {
-    final SellerRegistration sellerRegistrationModel = SellerRegistration(
+    final Shop sellerRegistrationModel = Shop(
         userId: userId,
         name: _shopNameController.text,
         address: address,

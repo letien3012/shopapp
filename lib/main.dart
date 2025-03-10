@@ -5,9 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/di.dart';
 import 'package:luanvan/routes.dart';
 import 'package:luanvan/services/auth_service.dart';
+import 'package:luanvan/services/shop_service.dart';
 import 'package:luanvan/services/user_service.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -58,7 +60,10 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => AuthBloc(AuthService()),
-        )
+        ),
+        BlocProvider(
+          create: (context) => ShopBloc(ShopService()),
+        ),
       ],
       child: MaterialApp(
         locale: const Locale('vi'), // Đặt ngôn ngữ chính là tiếng Việt

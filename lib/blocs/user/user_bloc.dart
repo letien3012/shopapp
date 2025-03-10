@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
-import 'package:luanvan/models/seller_registration.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/services/user_service.dart';
 
@@ -62,9 +62,9 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       RegistrationSellerEvent event, Emitter<UserState> emit) async {
     emit(UserLoading());
     try {
-      await _userService.registrationSeller(event.sellerRegistration);
+      await _userService.registrationSeller(event.shop);
       final UserInfoModel user =
-          await _userService.fetchUserInfo(event.sellerRegistration.userId);
+          await _userService.fetchUserInfo(event.shop.userId);
       emit(UserLoaded(user));
     } catch (e) {
       emit(UserError(e.toString()));

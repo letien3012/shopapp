@@ -4,11 +4,11 @@ import 'package:luanvan/models/product_variant.dart';
 class Product {
   String id;
   String name;
-  int quantity;
+  int? quantity;
   int quantitySold;
   String description;
   double averageRating;
-  final List<ProductVariant> variants;
+  List<ProductVariant> variants;
   List<String> imageUrl;
   String category;
   String videoUrl;
@@ -17,7 +17,7 @@ class Product {
   Product({
     required this.id,
     required this.name,
-    required this.quantity,
+    this.quantity,
     required this.quantitySold,
     required this.description,
     required this.averageRating,
@@ -100,5 +100,53 @@ class Product {
   @override
   String toString() {
     return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId)';
+  }
+
+  double getMaxOptionPrice() {
+    if (variants.isEmpty) return 0.0;
+
+    List<double> allPrices = variants
+        .expand((variant) => variant.options.map((option) => option.price))
+        .toList();
+
+    if (allPrices.isEmpty) return 0.0;
+
+    return allPrices.reduce((a, b) => a > b ? a : b);
+  }
+
+  double getMinOptionPrice() {
+    if (variants.isEmpty) return 0.0;
+
+    List<double> allPrices = variants
+        .expand((variant) => variant.options.map((option) => option.price))
+        .toList();
+
+    if (allPrices.isEmpty) return 0.0;
+
+    return allPrices.reduce((a, b) => a < b ? a : b);
+  }
+
+  int getMaxOptionStock() {
+    if (variants.isEmpty) return 0;
+
+    List<int> allPrices = variants
+        .expand((variant) => variant.options.map((option) => option.stock))
+        .toList();
+
+    if (allPrices.isEmpty) return 0;
+
+    return allPrices.reduce((a, b) => a > b ? a : b);
+  }
+
+  int getMinOptionStock() {
+    if (variants.isEmpty) return 0;
+
+    List<int> allPrices = variants
+        .expand((variant) => variant.options.map((option) => option.stock))
+        .toList();
+
+    if (allPrices.isEmpty) return 0;
+
+    return allPrices.reduce((a, b) => a < b ? a : b);
   }
 }

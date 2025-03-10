@@ -1,16 +1,18 @@
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_option.dart';
 import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/models/user_info_model.dart';
+import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/add_category_screen.dart';
 import 'package:luanvan/ui/shop/add_variant_screen.dart';
@@ -36,6 +38,31 @@ class _AddProductScreenState extends State<AddProductScreen> {
   List<XFile> _imageFiles = [];
   String _product_variant = "Thiết lập màu sắc kích thước";
   String _category = "Chọn ngành hàng";
+  String shopId = '';
+  String userId = '';
+  @override
+  void initState() {
+    product = Product(
+        id: '',
+        name: '',
+        quantitySold: 0,
+        description: '',
+        averageRating: 0,
+        variants: [
+          ProductVariant(label: "Màu sắc", options: [
+            ProductOption(price: 0, stock: 0, name: "Trắng"),
+            ProductOption(price: 0, stock: 0, name: "Đen")
+          ]),
+          ProductVariant(label: "Kích thước", options: [
+            ProductOption(price: 0, stock: 0, name: "S"),
+            ProductOption(price: 0, stock: 0, name: "M"),
+            ProductOption(price: 0, stock: 0, name: "L")
+          ]),
+        ],
+        shopId: '');
+    super.initState();
+  }
+
   void showImagePickMethod(BuildContext context) {
     showDialog(
       context: context,
@@ -63,7 +90,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   final pickedImage =
                       await ImagePicker().pickImage(source: ImageSource.camera);
                   if (pickedImage != null) {
-                    _imageFiles.insert(0, pickedImage);
+                    _imageFiles.add(pickedImage);
                     setState(() {});
                   }
                   Navigator.pop(context);
@@ -100,9 +127,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm(String useId) async {
     if (_formKey.currentState!.validate()) {
-      // Xử lý logic lưu sản phẩm (gửi dữ liệu qua BLoC hoặc API)
+      final StorageService _storageService = StorageService();
+      product.name = _nameController.text;
+      product.category = _category;
+      product.description = _descriptionController.text;
+      List<String> _listImageUrl = [];
+
+      for (int i = 0; i < _imageFiles.length; i++) {
+        String? downloadUrl = await _storageService.uploadFile(
+            File(_imageFiles[i].path), 'image', 'avatar', '');
+        if (downloadUrl != null) {
+          _listImageUrl.add(downloadUrl);
+        }
+      }
+      product.imageUrl = _listImageUrl;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Sản phẩm đã được lưu!")),
       );
@@ -117,6 +158,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
           if (userState is UserLoading) {
             return _buildLoading();
           } else if (userState is UserLoaded) {
+            userId = userState.user.id;
+
             return _buildUserContent(context, userState.user);
           } else if (userState is UserError) {
             return _buildError(userState.message);
@@ -181,6 +224,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             Spacer(),
                             Text("Tỉ lệ hình ảnh 1:1")
                           ],
+                        ),
+                        Text(
+                          "(Vui lòng giữ và kéo thả ảnh bìa ở đầu)",
+                          style: TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                         const SizedBox(height: 10),
                         ReorderableGridView.builder(
@@ -418,9 +465,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ),
                   const SizedBox(height: 10),
                   GestureDetector(
-                    onTap: () {
-                      Navigator.of(context)
-                          .pushNamed(AddVariantScreen.routeName);
+                    onTap: () async {
+                      final updatedProduct = await Navigator.pushNamed(
+                        context,
+                        AddVariantScreen.routeName,
+                        arguments: product,
+                      );
+
+                      if (updatedProduct != null && updatedProduct is Product) {
+                        setState(() {
+                          product = updatedProduct;
+                          _product_variant = product.variants
+                              .map((val) => val.label)
+                              .toString();
+                          _priceController.text =
+                              "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
+                          _stockController.text =
+                              "${product.getMaxOptionStock()}";
+                        });
+                      }
                     },
                     child: Container(
                       color: Colors.white,

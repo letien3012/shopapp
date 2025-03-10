@@ -1,4 +1,4 @@
-import 'package:luanvan/models/seller_registration.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 
 abstract class UserEvent {}
@@ -25,6 +25,6 @@ class UpdateUserEvent extends UserEvent {
 }
 
 class RegistrationSellerEvent extends UserEvent {
-  final SellerRegistration sellerRegistration;
-  RegistrationSellerEvent(this.sellerRegistration);
+  final Shop shop;
+  RegistrationSellerEvent(this.shop);
 }

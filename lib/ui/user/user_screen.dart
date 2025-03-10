@@ -226,8 +226,9 @@ class _UserScreenState extends State<UserScreen> {
                   child: InkWell(
                     onTap: () {
                       user.role == 1
-                          ? Navigator.of(context)
-                              .pushNamed(MyShopScreen.routeName)
+                          ? Navigator.of(context).pushNamed(
+                              MyShopScreen.routeName,
+                              arguments: user)
                           : Navigator.of(context)
                               .pushNamed(StartShop.routeName);
                     },

@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/address.dart';
 
-class SellerRegistration {
-  final String? shopId; // Đổi từ registrationId thành shopId
+class Shop {
+  final String? shopId;
   final String userId;
   final String name;
   final Address address;
@@ -11,8 +11,8 @@ class SellerRegistration {
   final String email;
   final DateTime submittedAt;
 
-  SellerRegistration({
-    this.shopId, // Cập nhật tên trong constructor
+  Shop({
+    this.shopId,
     required this.userId,
     required this.name,
     required this.address,
@@ -21,8 +21,8 @@ class SellerRegistration {
     required this.submittedAt,
   });
 
-  SellerRegistration copyWith({
-    String? shopId, // Cập nhật tên trong copyWith
+  Shop copyWith({
+    String? shopId,
     String? userId,
     String? name,
     Address? address,
@@ -30,8 +30,8 @@ class SellerRegistration {
     String? email,
     DateTime? submittedAt,
   }) {
-    return SellerRegistration(
-      shopId: shopId ?? this.shopId, // Cập nhật tên
+    return Shop(
+      shopId: shopId ?? this.shopId,
       userId: userId ?? this.userId,
       name: name ?? this.name,
       address: address ?? this.address,
@@ -41,9 +41,9 @@ class SellerRegistration {
     );
   }
 
-  factory SellerRegistration.fromMap(Map<String, dynamic> map) {
-    return SellerRegistration(
-      shopId: map['shopId'] as String?, // Cập nhật tên trong fromMap
+  factory Shop.fromMap(Map<String, dynamic> map) {
+    return Shop(
+      shopId: map['shopId'] as String?,
       userId: map['userId'] as String,
       name: map['name'] as String,
       address: Address.fromMap(map['address'] as Map<String, dynamic>),
@@ -55,11 +55,10 @@ class SellerRegistration {
     );
   }
 
-  factory SellerRegistration.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory Shop.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
-    return SellerRegistration(
-      shopId: doc.id, // Cập nhật tên trong fromFirestore
+    return Shop(
+      shopId: doc.id,
       userId: data['userId'] as String,
       name: data['name'] as String,
       address: Address.fromMap(data['address'] as Map<String, dynamic>),
@@ -71,7 +70,7 @@ class SellerRegistration {
 
   Map<String, dynamic> toMap() {
     return {
-      'shopId': shopId, // Cập nhật tên trong toMap
+      'shopId': shopId,
       'userId': userId,
       'name': name,
       'address': address.toMap(),
@@ -83,12 +82,12 @@ class SellerRegistration {
 
   String toJson() => json.encode(toMap());
 
-  factory SellerRegistration.fromJson(String source) =>
-      SellerRegistration.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory Shop.fromJson(String source) =>
+      Shop.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
-    return 'SellerRegistration(shopId: $shopId, userId: $userId, name: $name, '
+    return 'Shop(shopId: $shopId, userId: $userId, name: $name, '
         'address: $address, phoneNumber: $phoneNumber, email: $email, submittedAt: $submittedAt)';
   }
 }

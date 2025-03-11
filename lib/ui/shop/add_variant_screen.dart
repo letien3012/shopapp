@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get_it/get_it.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_option.dart';
 import 'package:luanvan/models/product_variant.dart';
@@ -32,6 +34,8 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
     TextEditingController()
   ];
   List<TextEditingController> _labelControllers = [];
+  List<XFile> _imageFiles =
+      []; // Danh sách hình ảnh tổng quát cho variant đầu tiên
 
   // Biến lưu trữ lỗi
   List<String?> _labelErrors = [];
@@ -53,8 +57,21 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
         _options = product.variants
             .map((variant) => List<ProductOption>.from(variant.options))
             .toList();
-        _labelErrors = List<String?>.filled(_variants.length, null,
-            growable: true); // Sửa thành growable
+        _labelErrors =
+            List<String?>.filled(_variants.length, null, growable: true);
+        enableImageForVariant = product.hasVariantImages;
+
+        // Đồng bộ _imageFiles với options của variant đầu tiên
+        if (enableImageForVariant && _options.isNotEmpty) {
+          _imageFiles = _options[0].map((option) {
+            return option.imageUrl != null && option.imageUrl!.isNotEmpty
+                ? XFile(option.imageUrl!)
+                : XFile(''); // Placeholder nếu không có hình ảnh
+          }).toList();
+        } else {
+          _imageFiles = [];
+        }
+
         _initializeVariantsAndControllers();
       });
     });
@@ -160,6 +177,8 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
         _labelOptionErrors[variantIndex].add(null);
         _priceOptionErrors[variantIndex].add(null);
         _stockOptionErrors[variantIndex].add(null);
+        if (variantIndex == 0 && enableImageForVariant)
+          _imageFiles.add(XFile(''));
         _valueControllers[variantIndex].clear();
       } else {
         _options[variantIndex].add(ProductOption(price: 0, stock: 0, name: ''));
@@ -178,6 +197,8 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
         _labelOptionErrors[variantIndex].add(null);
         _priceOptionErrors[variantIndex].add(null);
         _stockOptionErrors[variantIndex].add(null);
+        if (variantIndex == 0 && enableImageForVariant)
+          _imageFiles.add(XFile(''));
         WidgetsBinding.instance.addPostFrameCallback((_) {
           FocusScope.of(context).requestFocus(newFocusNode);
         });
@@ -233,6 +254,11 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
             List<String?>.generate(_options[0].length, (_) => null);
         _stockOptionErrors[0] =
             List<String?>.generate(_options[0].length, (_) => null);
+        _imageFiles = _options[0].map((option) {
+          return option.imageUrl != null && option.imageUrl!.isNotEmpty
+              ? XFile(option.imageUrl!)
+              : XFile('');
+        }).toList();
         _labelControllers[0].text = _labelControllers[1].text;
         _labelErrors[0] = _labelErrors[1];
 
@@ -267,7 +293,7 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
       _stockOptionErrors.add([]);
       _labelControllers.add(TextEditingController(text: "Phân loại mới"));
       _labelErrors.add(null);
-      _addValue(_variants.length - 1);
+      _addValue(_variants.length - 1); // Thêm ít nhất 1 ProductOption
     });
   }
 
@@ -276,7 +302,8 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
       for (int i = 0; i < _variants.length; i++) {
         for (int j = 0; j < _labelFocusNodes[i].length; j++) {
           if (!_labelFocusNodes[i][j].hasFocus &&
-              _labelOptionControllers[i][j].text.isEmpty) {
+              _labelOptionControllers[i][j].text.isEmpty &&
+              _options[i].length > 1) {
             _options[i].removeAt(j);
             _labelOptionControllers[i].removeAt(j);
             _priceOptionControllers[i].removeAt(j);
@@ -287,6 +314,7 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
             _labelOptionErrors[i].removeAt(j);
             _priceOptionErrors[i].removeAt(j);
             _stockOptionErrors[i].removeAt(j);
+            if (i == 0 && enableImageForVariant) _imageFiles.removeAt(j);
             _variants[i] = _variants[i].copyWith(options: _options[i]);
             break;
           }
@@ -318,8 +346,10 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
           final validatedStock = _validateStock(
               _stockOptionControllers[variantIndex][i].text,
               _stockOptionControllers[variantIndex][i]);
+          // Đồng bộ giá trị stock vào _options
           _options[variantIndex][i] =
               _options[variantIndex][i].copyWith(stock: validatedStock);
+          // Cập nhật _variants với _options mới
           _variants[variantIndex] =
               _variants[variantIndex].copyWith(options: _options[variantIndex]);
         }
@@ -332,7 +362,8 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
     setState(() {
       for (int i = 0; i < _variants.length; i++) {
         if (_options[i].isNotEmpty &&
-            _labelOptionControllers[i].last.text.isEmpty) {
+            _labelOptionControllers[i].last.text.isEmpty &&
+            _options[i].length > 1) {
           _options[i].removeLast();
           _labelOptionControllers[i].removeLast();
           _priceOptionControllers[i].removeLast();
@@ -343,6 +374,7 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
           _labelOptionErrors[i].removeLast();
           _priceOptionErrors[i].removeLast();
           _stockOptionErrors[i].removeLast();
+          if (i == 0 && enableImageForVariant) _imageFiles.removeLast();
           _variants[i] = _variants[i].copyWith(options: _options[i]);
         }
         for (int j = 0; j < _options[i].length; j++) {
@@ -416,14 +448,12 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
           .map((opts) => List<String?>.generate(opts.length, (_) => null))
           .toList();
 
-      if (_variants.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Vui lòng thêm ít nhất một phân loại")),
-        );
-        return;
-      }
-
       for (int i = 0; i < _variants.length; i++) {
+        if (_options[i].isEmpty) {
+          _labelErrors[i] = "Phân loại phải có ít nhất một tùy chọn";
+          isValid = false;
+          continue;
+        }
         if (_labelControllers[i].text.isEmpty) {
           _labelErrors[i] = "Tên phân loại không được để trống";
           isValid = false;
@@ -453,18 +483,118 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
             _stockOptionErrors[i][j] = "Kho không hợp lệ";
             isValid = false;
           }
+          if (i == 0 &&
+              enableImageForVariant &&
+              (j >= _imageFiles.length || _imageFiles[j].path.isEmpty)) {
+            _labelOptionErrors[i][j] = "Hình ảnh cho nhãn này chưa được thêm";
+            isValid = false;
+          }
         }
       }
     });
     return isValid;
   }
 
+  void showImagePickMethod(BuildContext context, int optionIndex) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          titlePadding: EdgeInsets.symmetric(vertical: 10),
+          contentPadding: EdgeInsets.symmetric(vertical: 10),
+          title: Stack(
+            children: [
+              Center(
+                child: Text(
+                  'Thao tác',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ListTile(
+                title: Text('Chụp ảnh'),
+                onTap: () async {
+                  final pickedImage =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
+                  if (pickedImage != null) {
+                    setState(() {
+                      while (_imageFiles.length <= optionIndex) {
+                        _imageFiles.add(XFile('')); // Đảm bảo đủ phần tử
+                      }
+                      _imageFiles[optionIndex] = pickedImage;
+                    });
+                  }
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text('Thư viện hình ảnh'),
+                onTap: () async {
+                  final pickedImage = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
+                  if (pickedImage != null) {
+                    setState(() {
+                      while (_imageFiles.length <= optionIndex) {
+                        _imageFiles.add(XFile('')); // Đảm bảo đủ phần tử
+                      }
+                      _imageFiles[optionIndex] = pickedImage;
+                    });
+                  }
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        );
+      },
+    );
+  }
+
   void _saveData() async {
     if (!_validateDataBeforeSave()) return;
 
     try {
+      // Đồng bộ tất cả dữ liệu từ controllers vào _options và _variants trước khi lưu
+      for (int i = 0; i < _variants.length; i++) {
+        for (int j = 0; j < _options[i].length; j++) {
+          final name = _labelOptionControllers[i][j].text;
+          final price = _validatePrice(_priceOptionControllers[i][j].text,
+              _priceOptionControllers[i][j]);
+          final stock = _validateStock(_stockOptionControllers[i][j].text,
+              _stockOptionControllers[i][j]);
+
+          // Cập nhật _options với dữ liệu từ controllers
+          _options[i][j] = _options[i][j].copyWith(
+            name: name,
+            price: price,
+            stock: stock,
+            imageUrl: i == 0 &&
+                    enableImageForVariant &&
+                    j < _imageFiles.length &&
+                    _imageFiles[j].path.isNotEmpty
+                ? _imageFiles[j].path
+                : null,
+          );
+        }
+
+        _variants[i] = _variants[i].copyWith(
+          label: _labelControllers[i].text,
+          options: _options[i],
+        );
+      }
+
       product.variants.clear();
       product.variants.addAll(_variants);
+      product = product.copyWith(hasVariantImages: enableImageForVariant);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Đã lưu phân loại thành công")),
       );
@@ -560,6 +690,7 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                           : <MapEntry<int, ProductOption>>[])
                                       .map((entry) {
                                     int optIndex = entry.key;
+                                    ProductOption value = entry.value;
                                     return Stack(
                                       children: [
                                         Container(
@@ -696,43 +827,48 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                             ],
                                           ),
                                         ),
-                                        Positioned(
-                                          top: 0,
-                                          right: 0,
-                                          child: GestureDetector(
-                                            onTap: () {
-                                              setState(() {
-                                                _options[index]
-                                                    .removeAt(optIndex);
-                                                _labelOptionControllers[index]
-                                                    .removeAt(optIndex);
-                                                _priceOptionControllers[index]
-                                                    .removeAt(optIndex);
-                                                _stockOptionControllers[index]
-                                                    .removeAt(optIndex);
-                                                _labelFocusNodes[index]
-                                                    .removeAt(optIndex);
-                                                _priceFocusNodes[index]
-                                                    .removeAt(optIndex);
-                                                _stockFocusNodes[index]
-                                                    .removeAt(optIndex);
-                                                _labelOptionErrors[index]
-                                                    .removeAt(optIndex);
-                                                _priceOptionErrors[index]
-                                                    .removeAt(optIndex);
-                                                _stockOptionErrors[index]
-                                                    .removeAt(optIndex);
-                                                _variants[index] =
-                                                    _variants[index].copyWith(
-                                                        options:
-                                                            _options[index]);
-                                              });
-                                            },
-                                            child: Icon(Icons.cancel,
-                                                color: Colors.yellow[800],
-                                                size: 15),
+                                        if (_options[index].length > 1)
+                                          Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _options[index]
+                                                      .removeAt(optIndex);
+                                                  _labelOptionControllers[index]
+                                                      .removeAt(optIndex);
+                                                  _priceOptionControllers[index]
+                                                      .removeAt(optIndex);
+                                                  _stockOptionControllers[index]
+                                                      .removeAt(optIndex);
+                                                  _labelFocusNodes[index]
+                                                      .removeAt(optIndex);
+                                                  _priceFocusNodes[index]
+                                                      .removeAt(optIndex);
+                                                  _stockFocusNodes[index]
+                                                      .removeAt(optIndex);
+                                                  _labelOptionErrors[index]
+                                                      .removeAt(optIndex);
+                                                  _priceOptionErrors[index]
+                                                      .removeAt(optIndex);
+                                                  _stockOptionErrors[index]
+                                                      .removeAt(optIndex);
+                                                  if (index == 0 &&
+                                                      enableImageForVariant)
+                                                    _imageFiles
+                                                        .removeAt(optIndex);
+                                                  _variants[index] =
+                                                      _variants[index].copyWith(
+                                                          options:
+                                                              _options[index]);
+                                                });
+                                              },
+                                              child: Icon(Icons.cancel,
+                                                  color: Colors.yellow[800],
+                                                  size: 15),
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     );
                                   }).toList(),
@@ -770,6 +906,19 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                       onChanged: (value) {
                                         setState(() {
                                           enableImageForVariant = value;
+                                          product.hasVariantImages = value;
+                                          if (!value) {
+                                            _imageFiles.clear();
+                                          } else if (_options.isNotEmpty) {
+                                            _imageFiles =
+                                                _options[0].map((option) {
+                                              return option.imageUrl != null &&
+                                                      option
+                                                          .imageUrl!.isNotEmpty
+                                                  ? XFile(option.imageUrl!)
+                                                  : XFile('');
+                                            }).toList();
+                                          }
                                         });
                                       },
                                     ),
@@ -780,9 +929,15 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                   Wrap(
                                     spacing: 8,
                                     runSpacing: 8,
-                                    children: _options[index].map((value) {
+                                    children: _options[index]
+                                        .asMap()
+                                        .entries
+                                        .map((entry) {
+                                      int optIndex = entry.key;
+                                      ProductOption value = entry.value;
                                       return GestureDetector(
-                                        onTap: () {},
+                                        onTap: () => showImagePickMethod(
+                                            context, optIndex),
                                         child: Container(
                                           height: 70,
                                           width: 70,
@@ -792,10 +947,28 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                                                 width: 0.5, color: Colors.red),
                                             borderRadius:
                                                 BorderRadius.circular(8),
+                                            image: optIndex <
+                                                        _imageFiles.length &&
+                                                    _imageFiles[optIndex]
+                                                        .path
+                                                        .isNotEmpty
+                                                ? DecorationImage(
+                                                    image: FileImage(File(
+                                                        _imageFiles[optIndex]
+                                                            .path)),
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : null,
                                           ),
-                                          child: Text(value.name,
-                                              style: const TextStyle(
-                                                  color: Colors.red)),
+                                          child:
+                                              optIndex >= _imageFiles.length ||
+                                                      _imageFiles[optIndex]
+                                                          .path
+                                                          .isEmpty
+                                                  ? Text(value.name,
+                                                      style: const TextStyle(
+                                                          color: Colors.red))
+                                                  : null,
                                         ),
                                       );
                                     }).toList(),

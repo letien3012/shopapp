@@ -39,154 +39,160 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 90,
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * .25,
-                  width: MediaQuery.of(context).size.width,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                          child: CarouselSlider(
-                              carouselController: _bannercontroller,
-                              items: imgList
-                                  .map((item) => Image.network(
-                                        item,
-                                        fit: BoxFit.cover,
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                .25,
-                                        width:
-                                            MediaQuery.of(context).size.width,
-                                      ))
-                                  .toList(),
-                              options: CarouselOptions(
-                                autoPlay: true,
-                                enlargeCenterPage: true,
-                                enableInfiniteScroll: true,
-                                viewportFraction: 1,
-                                onPageChanged: (index, reason) {
-                                  setState(() {
-                                    bannerCurrentPage = index;
-                                  });
-                                },
-                              ))),
-                      Positioned(
-                        bottom: MediaQuery.of(context).size.height * .02,
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              imgList.length,
-                              (index) {
-                                bool isSelected = bannerCurrentPage == index;
-                                return GestureDetector(
-                                  onTap: () {
-                                    _bannercontroller.animateToPage(index);
-                                  },
-                                  child: AnimatedContainer(
-                                    width: 8,
-                                    height: 8,
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 3),
-                                    decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? Colors.brown
-                                            : Colors.white,
-                                        shape: BoxShape.circle),
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.ease,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+            child: Container(
+              color: Colors.grey[200],
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 90,
                   ),
-                ),
-                Container(
-                  height: 10,
-                  width: double.infinity,
-                  color: Colors.grey[300],
-                ),
-                GridView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 7),
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 5,
-                            crossAxisSpacing: 5,
-                            mainAxisExtent: 280
-                            // childAspectRatio: 0.8,
-                            ),
-                    itemCount: 100,
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.of(context)
-                              .pushNamed(DetaiItemScreen.routeName);
-                        },
-                        child: Container(
-                          color: Colors.white,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Image.network(
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                  'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                child: const Column(
-                                  children: [
-                                    const Text(
-                                      'Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .25,
+                    width: MediaQuery.of(context).size.width,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                            child: CarouselSlider(
+                                carouselController: _bannercontroller,
+                                items: imgList
+                                    .map((item) => Image.network(
+                                          item,
+                                          fit: BoxFit.cover,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              .25,
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                        ))
+                                    .toList(),
+                                options: CarouselOptions(
+                                  autoPlay: true,
+                                  enlargeCenterPage: true,
+                                  enableInfiniteScroll: true,
+                                  viewportFraction: 1,
+                                  onPageChanged: (index, reason) {
+                                    setState(() {
+                                      bannerCurrentPage = index;
+                                    });
+                                  },
+                                ))),
+                        Positioned(
+                          bottom: MediaQuery.of(context).size.height * .02,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                imgList.length,
+                                (index) {
+                                  bool isSelected = bannerCurrentPage == index;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      _bannercontroller.animateToPage(index);
+                                    },
+                                    child: AnimatedContainer(
+                                      width: 8,
+                                      height: 8,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 3),
+                                      decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? Colors.brown
+                                              : Colors.white,
+                                          shape: BoxShape.circle),
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      curve: Curves.ease,
                                     ),
-                                    // const SizedBox(
-                                    //   height: 10,
-                                    // ),
-                                    const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'đ100',
-                                          style: TextStyle(
-                                              fontSize: 16, color: Colors.red),
-                                          maxLines: 1,
-                                        ),
-                                        Text(
-                                          'Đã bán 6.1k',
-                                          style: TextStyle(fontSize: 12),
-                                          maxLines: 1,
-                                        )
-                                      ],
-                                    )
-                                  ],
-                                ),
+                                  );
+                                },
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      );
-                    })
-              ],
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 10,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                  ),
+                  GridView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: 7),
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 5,
+                              crossAxisSpacing: 5,
+                              mainAxisExtent: 280
+                              // childAspectRatio: 0.8,
+                              ),
+                      itemCount: 100,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.of(context)
+                                .pushNamed(DetaiItemScreen.routeName);
+                          },
+                          child: Container(
+                            color: Colors.white,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Image.network(
+                                    width: double.infinity,
+                                    height: 200,
+                                    fit: BoxFit.cover,
+                                    'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  child: const Column(
+                                    children: [
+                                      const Text(
+                                        'Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      // const SizedBox(
+                                      //   height: 10,
+                                      // ),
+                                      const Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'đ100',
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.red),
+                                            maxLines: 1,
+                                          ),
+                                          Text(
+                                            'Đã bán 6.1k',
+                                            style: TextStyle(fontSize: 12),
+                                            maxLines: 1,
+                                          )
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      })
+                ],
+              ),
             ),
           ),
 
@@ -210,31 +216,37 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: const BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.all(Radius.circular(10))),
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 5,
-                          ),
-                          Icon(
-                            Icons.search,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(
-                            width: 5,
-                          ),
-                          const Expanded(
-                            child: Text(
-                              "tiền đẹp trai",
-                              style: TextStyle(color: Colors.brown),
-                              textAlign: TextAlign.start,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context)
+                              .pushNamed(SearchScreen.routeName);
+                        },
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 5,
                             ),
-                          ),
-                          IconButton(
-                              onPressed: () {},
-                              icon: const Icon(Icons.camera_alt_outlined))
-                        ],
+                            Icon(
+                              Icons.search,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(
+                              width: 5,
+                            ),
+                            const Expanded(
+                              child: Text(
+                                "tiền đẹp trai",
+                                style: TextStyle(color: Colors.brown),
+                                textAlign: TextAlign.start,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                                onPressed: () {},
+                                icon: const Icon(Icons.camera_alt_outlined))
+                          ],
+                        ),
                       ),
                     ),
                   ),

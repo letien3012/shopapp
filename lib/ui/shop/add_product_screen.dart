@@ -1,16 +1,21 @@
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
+import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_option.dart';
 import 'package:luanvan/models/product_variant.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -27,6 +32,7 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
+  late UserInfoModel user;
   late List<ProductOption> productOption;
   late List<ProductVariant> productVariant;
   late Product product;
@@ -38,8 +44,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   List<XFile> _imageFiles = [];
   String _product_variant = "Thiết lập màu sắc kích thước";
   String _category = "Chọn ngành hàng";
-  String shopId = '';
-  String userId = '';
+
   @override
   void initState() {
     product = Product(
@@ -49,17 +54,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
         description: '',
         averageRating: 0,
         variants: [
-          ProductVariant(label: "Màu sắc", options: [
-            ProductOption(price: 0, stock: 0, name: "Trắng"),
-            ProductOption(price: 0, stock: 0, name: "Đen")
-          ]),
-          ProductVariant(label: "Kích thước", options: [
-            ProductOption(price: 0, stock: 0, name: "S"),
-            ProductOption(price: 0, stock: 0, name: "M"),
-            ProductOption(price: 0, stock: 0, name: "L")
-          ]),
+          // ProductVariant(label: "Màu sắc", options: [
+          //   ProductOption(price: 0, stock: 0, name: "Trắng"),
+          //   ProductOption(price: 0, stock: 0, name: "Đen")
+          // ]),
+          // ProductVariant(label: "Kích thước", options: [
+          //   ProductOption(price: 0, stock: 0, name: "S"),
+          //   ProductOption(price: 0, stock: 0, name: "M"),
+          //   ProductOption(price: 0, stock: 0, name: "L")
+          // ]),
         ],
-        shopId: '');
+        shopId: '',
+        isDeleted: false,
+        isHidden: false,
+        hasVariantImages: false);
     super.initState();
   }
 
@@ -127,7 +135,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
-  Future<void> _submitForm(String useId) async {
+  Future<void> _submitForm(String shopId) async {
+    if (_imageFiles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Vui lòng thêm ít nhất 1 hình ảnh sản phẩm")),
+      );
+      return;
+    }
+    if (_category == "Chọn ngành hàng") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng chọn ngành hàng của sản phẩm")),
+      );
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       final StorageService _storageService = StorageService();
       product.name = _nameController.text;
@@ -137,37 +158,43 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       for (int i = 0; i < _imageFiles.length; i++) {
         String? downloadUrl = await _storageService.uploadFile(
-            File(_imageFiles[i].path), 'image', 'avatar', '');
+            File(_imageFiles[i].path), 'image', '', '');
         if (downloadUrl != null) {
           _listImageUrl.add(downloadUrl);
         }
       }
+      if (product.variants.length == 0) {
+        product.variants.add(ProductVariant(label: '', options: [
+          ProductOption(
+              price: double.parse(_priceController.text),
+              stock: int.parse(_stockController.text),
+              name: '')
+        ]));
+      }
       product.imageUrl = _listImageUrl;
+      product.shopId = shopId;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Sản phẩm đã được lưu!")),
-      );
+      context.read<ProductBloc>().add(AddProductEvent(product));
+      Navigator.of(context).pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocBuilder<UserBloc, UserState>(
-        builder: (context, userState) {
-          if (userState is UserLoading) {
-            return _buildLoading();
-          } else if (userState is UserLoaded) {
-            userId = userState.user.id;
-
-            return _buildUserContent(context, userState.user);
-          } else if (userState is UserError) {
-            return _buildError(userState.message);
-          }
-          return _buildInitializing();
-        },
-      ),
-    );
+    user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
+    context.read<ShopBloc>().add(FetchShopEvent(user.id));
+    return Scaffold(body: BlocBuilder<ShopBloc, ShopState>(
+      builder: (context, shopState) {
+        if (shopState is ShopLoading) {
+          return _buildLoading();
+        } else if (shopState is ShopLoaded) {
+          return _buildShopContent(context, shopState.shop);
+        } else if (shopState is ShopError) {
+          return _buildError(shopState.message);
+        }
+        return _buildInitializing();
+      },
+    ));
   }
 
   // Trạng thái đang tải
@@ -185,7 +212,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return const Center(child: Text('Đang khởi tạo'));
   }
 
-  Widget _buildUserContent(BuildContext context, UserInfoModel user) {
+  Widget _buildShopContent(BuildContext context, Shop shop) {
     return Stack(
       children: [
         SingleChildScrollView(
@@ -331,10 +358,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ],
                             ),
                             const Spacer(),
-                            Text(
-                              "${_nameController.text.length}/120",
-                              style: const TextStyle(
-                                  fontSize: 14, color: Colors.grey),
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _nameController,
+                              builder: (context, value, child) {
+                                return Text(
+                                  "${value.text.length}/120",
+                                  style: const TextStyle(
+                                      fontSize: 14, color: Colors.grey),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -347,10 +379,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             border: InputBorder.none,
                             counterText: '',
                           ),
-                          onChanged: (value) => setState(() {}),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "Vui lòng nhập tên sản phẩm";
+                            }
+                            if (value.length < 10) {
+                              return "Tến sản phẩm ít nhất 10 ký tự";
                             }
                             return null;
                           },
@@ -383,10 +417,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ],
                             ),
                             const Spacer(),
-                            Text(
-                              "${_descriptionController.text.length}/3000",
-                              style: const TextStyle(
-                                  fontSize: 14, color: Colors.grey),
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _descriptionController,
+                              builder: (context, value, child) {
+                                return Text(
+                                  "${value.text.length}/3000",
+                                  style: const TextStyle(
+                                      fontSize: 14, color: Colors.grey),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -400,10 +439,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             border: InputBorder.none,
                             counterText: '',
                           ),
-                          onChanged: (value) => setState(() {}),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return "Vui lòng nhập mô tả sản phẩm";
+                            }
+                            if (value.length < 100) {
+                              return "Mô tả sản phẩm ít 100 ký tự";
                             }
                             return null;
                           },
@@ -475,13 +516,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       if (updatedProduct != null && updatedProduct is Product) {
                         setState(() {
                           product = updatedProduct;
-                          _product_variant = product.variants
-                              .map((val) => val.label)
-                              .toString();
-                          _priceController.text =
-                              "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
-                          _stockController.text =
-                              "${product.getMaxOptionStock()}";
+                          if (product.variants.length > 0)
+                            _product_variant = product.variants
+                                .map((val) => val.label)
+                                .toString();
+                          else
+                            _product_variant = 'Thiết lập màu sắc kích thước';
+                          if (product.variants.length == 1 &&
+                              product.variants[0].options.length == 1)
+                            _priceController.text =
+                                product.variants[0].options[0].price.toString();
+                          else if (product.variants.length == 0)
+                            _priceController.text = '';
+                          else
+                            _priceController.text =
+                                "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
+                          if (product.variants.length == 1 &&
+                              product.variants[0].options.length == 1)
+                            _stockController.text =
+                                product.variants[0].options[0].stock.toString();
+                          else if (product.variants.length == 0)
+                            _stockController.text = '';
+                          else
+                            _stockController.text =
+                                "${product.getMaxOptionStock()}";
                         });
                       }
                     },
@@ -559,6 +617,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               border: InputBorder.none,
                             ),
                             validator: (value) {
+                              if (product.variants.length > 0) return null;
                               if (value == null || value.isEmpty) {
                                 return "Vui lòng nhập giá";
                               }
@@ -614,6 +673,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               border: InputBorder.none,
                             ),
                             validator: (value) {
+                              if (product.variants.length > 0) return null;
                               if (value == null || value.isEmpty) {
                                 return "Vui lòng nhập số lượng";
                               }
@@ -728,17 +788,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // Logic lưu nháp
+                      _submitForm(shop.shopId!);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
+                      backgroundColor: Colors.brown,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     child: const Text(
                       "Lưu",
-                      style: TextStyle(fontSize: 16, color: Colors.black),
+                      style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
                 ),

@@ -10,6 +10,9 @@ class Shop {
   final String phoneNumber;
   final String email;
   final DateTime submittedAt;
+  final String? avatarUrl;
+  final bool isClose;
+  final bool isLocked;
 
   Shop({
     this.shopId,
@@ -19,6 +22,9 @@ class Shop {
     required this.phoneNumber,
     required this.email,
     required this.submittedAt,
+    this.avatarUrl,
+    required this.isClose,
+    required this.isLocked,
   });
 
   Shop copyWith({
@@ -29,6 +35,9 @@ class Shop {
     String? phoneNumber,
     String? email,
     DateTime? submittedAt,
+    String? avatarUrl,
+    bool? isClose,
+    bool? isLocked,
   }) {
     return Shop(
       shopId: shopId ?? this.shopId,
@@ -38,6 +47,9 @@ class Shop {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       email: email ?? this.email,
       submittedAt: submittedAt ?? this.submittedAt,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      isClose: isClose ?? this.isClose,
+      isLocked: isLocked ?? this.isLocked,
     );
   }
 
@@ -52,6 +64,9 @@ class Shop {
       submittedAt: (map['submittedAt'] is Timestamp)
           ? (map['submittedAt'] as Timestamp).toDate()
           : DateTime.parse(map['submittedAt'] as String),
+      avatarUrl: map['avatarUrl'] as String?,
+      isClose: map['isClose'] as bool,
+      isLocked: map['isLocked'] as bool,
     );
   }
 
@@ -65,6 +80,9 @@ class Shop {
       phoneNumber: data['phoneNumber'] as String,
       email: data['email'] as String,
       submittedAt: (data['submittedAt'] as Timestamp).toDate(),
+      avatarUrl: data['avatarUrl'] as String?,
+      isClose: data['isClose'] as bool,
+      isLocked: data['isLocked'] as bool,
     );
   }
 
@@ -77,6 +95,9 @@ class Shop {
       'phoneNumber': phoneNumber,
       'email': email,
       'submittedAt': Timestamp.fromDate(submittedAt),
+      'avatarUrl': avatarUrl,
+      'isClose': isClose,
+      'isLocked': isLocked,
     };
   }
 
@@ -88,6 +109,8 @@ class Shop {
   @override
   String toString() {
     return 'Shop(shopId: $shopId, userId: $userId, name: $name, '
-        'address: $address, phoneNumber: $phoneNumber, email: $email, submittedAt: $submittedAt)';
+        'address: $address, phoneNumber: $phoneNumber, email: $email, '
+        'submittedAt: $submittedAt, avatarUrl: $avatarUrl, '
+        'isClose: $isClose, isLocked: $isLocked)';
   }
 }

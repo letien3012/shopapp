@@ -4,15 +4,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/di.dart';
 import 'package:luanvan/routes.dart';
 import 'package:luanvan/services/auth_service.dart';
+import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/shop_service.dart';
 import 'package:luanvan/services/user_service.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +45,7 @@ void main() async {
     systemNavigationBarColor: Colors.white,
     systemNavigationBarIconBrightness: Brightness.dark,
   ));
+  await SharedPreferences.getInstance();
   runApp(const ShopApp());
 }
 
@@ -63,6 +67,9 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => ShopBloc(ShopService()),
+        ),
+        BlocProvider(
+          create: (context) => ProductBloc(ProductService()),
         ),
       ],
       child: MaterialApp(

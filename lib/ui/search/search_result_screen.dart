@@ -11,6 +11,7 @@ class SearchResultScreen extends StatefulWidget {
 }
 
 class _SearchResultScreenState extends State<SearchResultScreen> {
+  String searchKeyword = '';
   bool _isRelate = true;
   bool _isNewest = false;
   bool _isBestSelling = false;
@@ -55,15 +56,42 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   Set<int> selectedFiltersPlace = {};
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Nhận từ khóa tìm kiếm từ arguments khi màn hình được mở
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args != null && args is String) {
+      searchKeyword = args;
+    }
+  }
+
+  TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Cập nhật controller với từ khóa tìm kiếm hiện tại
+    _searchController.text = searchKeyword;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
-        child: Row(
-          children: [
-            Container(
-              color: Colors.white,
-              child: Align(
+        child: Container(
+          color: Colors.white,
+          child: Row(
+            children: [
+              Align(
                 alignment: const Alignment(1, 0.6),
                 child: IconButton(
                     onPressed: () {
@@ -75,315 +103,387 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                       size: 30,
                     )),
               ),
-            ),
-            const SizedBox(
-              width: 10,
-            ),
-            Align(
-              alignment: const Alignment(1, 0.6),
-              child: Container(
-                alignment: Alignment.centerLeft,
-                height: 46,
-                width: 280,
-                child: TextField(
-                  decoration: InputDecoration(
-                      enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(width: 1, color: Colors.brown),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10),
-                        ),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(width: 1, color: Colors.brown),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10),
-                        ),
-                      ),
-                      hintText: 'Từ khóa đã nhập',
-                      hintStyle:
-                          const TextStyle(fontSize: 15, color: Colors.grey),
-                      suffixIcon: IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.camera_alt_outlined),
-                      ),
-                      suffixIconColor: Colors.brown),
-                  style: const TextStyle(color: Colors.black, fontSize: 15),
-                  textAlign: TextAlign.start,
-                  textAlignVertical: TextAlignVertical.bottom,
-                  readOnly: true,
-                  onTap: () {
-                    Navigator.of(context).pushNamed(SearchScreen.routeName);
-                  },
-                ),
+              const SizedBox(
+                width: 10,
               ),
-            ),
-            Align(
-              alignment: const Alignment(1, 0.6),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(15),
-                    bottomRight: Radius.circular(15)),
+              Align(
+                alignment: const Alignment(1, 0.6),
                 child: Container(
+                  alignment: Alignment.centerLeft,
                   height: 46,
-                  width: 60,
-                  child: Stack(
-                    children: [
-                      Builder(
-                        builder: (context) => IconButton(
-                            onPressed: () {
-                              Scaffold.of(context).openEndDrawer();
-                            },
-                            icon: const Icon(
-                              Icons.filter_alt_outlined,
-                              color: Colors.brown,
-                              size: 30,
-                            )),
-                      ),
-                      const Positioned(
-                        left: 30,
-                        top: 25,
-                        child: Text(
-                          "Lọc",
-                          style: TextStyle(fontSize: 13, color: Colors.brown),
+                  width: 280,
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                        enabledBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(width: 1, color: Colors.brown),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
                         ),
-                      )
-                    ],
+                        focusedBorder: const OutlineInputBorder(
+                          borderSide: BorderSide(width: 1, color: Colors.brown),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
+                        ),
+                        hintText: 'Nhập từ khóa',
+                        hintStyle:
+                            const TextStyle(fontSize: 15, color: Colors.grey),
+                        suffixIcon: IconButton(
+                          onPressed: () {},
+                          icon: const Icon(Icons.camera_alt_outlined),
+                        ),
+                        suffixIconColor: Colors.brown),
+                    style: const TextStyle(color: Colors.black, fontSize: 15),
+                    textAlign: TextAlign.start,
+                    textAlignVertical: TextAlignVertical.bottom,
+                    readOnly: true,
+                    onTap: () {
+                      Navigator.of(context).pushNamed(SearchScreen.routeName);
+                    },
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              height: 50,
-              width: double.infinity,
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        if (!_isRelate) {
-                          _isRelate = true;
-                          _isNewest = false;
-                          _isBestSelling = false;
-                          _isPrice = 0;
-                        }
-                      });
-                    },
-                    child: Text(
-                      "Liên quan",
-                      style: TextStyle(
-                          fontSize: 15,
-                          color: _isRelate ? Colors.brown : Colors.grey),
-                    ),
-                  ),
-                  Container(
-                    height: 20,
-                    width: 2,
-                    color: Colors.grey,
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        if (!_isNewest) {
-                          _isRelate = false;
-                          _isBestSelling = false;
-                          _isNewest = true;
-                          _isPrice = 0;
-                        }
-                      });
-                    },
-                    child: Text(
-                      "Mới nhất",
-                      style: TextStyle(
-                          fontSize: 15,
-                          color: _isNewest ? Colors.brown : Colors.grey),
-                    ),
-                  ),
-                  Container(
-                    height: 20,
-                    width: 2,
-                    color: Colors.grey,
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        if (!_isBestSelling) {
-                          _isRelate = false;
-                          _isNewest = false;
-                          _isBestSelling = true;
-                          _isPrice = 0;
-                        }
-                      });
-                    },
-                    child: Text(
-                      "Bán chạy",
-                      style: TextStyle(
-                          fontSize: 15,
-                          color: _isBestSelling ? Colors.brown : Colors.grey),
-                    ),
-                  ),
-                  Container(
-                    height: 20,
-                    width: 2,
-                    color: Colors.grey,
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _isRelate = false;
-                        _isNewest = false;
-                        _isBestSelling = false;
-                        if ((_isPrice + 1) % 3 == 0)
-                          _isPrice = 1;
-                        else {
-                          _isPrice = _isPrice + 1;
-                        }
-                      });
-                    },
-                    child: Row(
+              Align(
+                alignment: const Alignment(1, 0.6),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(15),
+                      bottomRight: Radius.circular(15)),
+                  child: Container(
+                    height: 46,
+                    width: 60,
+                    child: Stack(
                       children: [
-                        Text(
-                          "Giá",
-                          style: TextStyle(
-                              fontSize: 15,
-                              color: _isPrice % 3 != 0
-                                  ? Colors.brown
-                                  : Colors.grey),
-                        ),
-                        const SizedBox(
-                          width: 5,
-                        ),
-                        _isPrice == 0
-                            ? const SizedBox(
-                                height: 50,
-                                width: 20,
-                                child: Stack(
-                                  fit: StackFit.passthrough,
-                                  children: [
-                                    Positioned(
-                                      top: 5,
-                                      child: Icon(
-                                        Icons.keyboard_arrow_up_outlined,
-                                        size: 17,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 5,
-                                      child: Icon(
-                                        Icons.keyboard_arrow_down_outlined,
-                                        size: 17,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              )
-                            : Icon(
-                                _isPrice == 1
-                                    ? Icons.arrow_upward_outlined
-                                    : Icons.arrow_downward_outlined,
-                                size: 15,
+                        Builder(
+                          builder: (context) => IconButton(
+                              onPressed: () {
+                                Scaffold.of(context).openEndDrawer();
+                              },
+                              icon: const Icon(
+                                Icons.filter_alt_outlined,
                                 color: Colors.brown,
-                              )
+                                size: 30,
+                              )),
+                        ),
+                        const Positioned(
+                          left: 30,
+                          top: 25,
+                          child: Text(
+                            "Lọc",
+                            style: TextStyle(fontSize: 13, color: Colors.brown),
+                          ),
+                        )
                       ],
                     ),
                   ),
-                ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          // Hiển thị từ khóa tìm kiếm và số lượng kết quả
+          if (searchKeyword.isNotEmpty)
+            Container(
+              width: double.infinity,
+              color: Colors.grey[100],
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Kết quả tìm kiếm cho ',
+                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                    ),
+                    TextSpan(
+                      text: '"$searchKeyword"',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        fontSize: 13,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' (${100} sản phẩm)', // Số lượng kết quả
+                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.only(top: 15, left: 10, right: 10),
-              color: Colors.grey[200],
-              child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      mainAxisExtent: 290
-                      // childAspectRatio: 0.8,
-                      ),
-                  itemCount: 100,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context)
-                            .pushNamed(DetaiItemScreen.routeName);
-                      },
-                      child: Container(
-                        color: Colors.white,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Image.network(
-                                width: double.infinity,
-                                height: 200,
-                                fit: BoxFit.contain,
-                                'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              child: const Column(
+
+          // Thay thế phần Column trong Expanded của bạn
+          Expanded(
+            child: Column(
+              children: [
+                // Thanh lọc cố định
+                Container(
+                  color: Colors.white,
+                  child: Container(
+                    height: 50,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 1,
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              if (!_isRelate) {
+                                _isRelate = true;
+                                _isNewest = false;
+                                _isBestSelling = false;
+                                _isPrice = 0;
+                              }
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor:
+                                _isRelate ? Colors.brown : Colors.grey,
+                            textStyle: TextStyle(
+                              fontSize: 15,
+                              fontWeight: _isRelate
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            minimumSize: const Size(80, 45),
+                          ),
+                          child: const Text("Liên quan"),
+                        ),
+                        Container(
+                          height: 20,
+                          width: 1,
+                          color: Colors.grey[300],
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              if (!_isNewest) {
+                                _isRelate = false;
+                                _isBestSelling = false;
+                                _isNewest = true;
+                                _isPrice = 0;
+                              }
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor:
+                                _isNewest ? Colors.brown : Colors.grey,
+                            textStyle: TextStyle(
+                              fontSize: 15,
+                              fontWeight: _isNewest
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            minimumSize: const Size(80, 45),
+                          ),
+                          child: const Text("Mới nhất"),
+                        ),
+                        Container(
+                          height: 20,
+                          width: 1,
+                          color: Colors.grey[300],
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              if (!_isBestSelling) {
+                                _isRelate = false;
+                                _isNewest = false;
+                                _isBestSelling = true;
+                                _isPrice = 0;
+                              }
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor:
+                                _isBestSelling ? Colors.brown : Colors.grey,
+                            textStyle: TextStyle(
+                              fontSize: 15,
+                              fontWeight: _isBestSelling
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            minimumSize: const Size(80, 45),
+                          ),
+                          child: const Text("Bán chạy"),
+                        ),
+                        Container(
+                          height: 20,
+                          width: 1,
+                          color: Colors.grey[300],
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _isRelate = false;
+                              _isNewest = false;
+                              _isBestSelling = false;
+                              if ((_isPrice + 1) % 3 == 0)
+                                _isPrice = 1;
+                              else {
+                                _isPrice = _isPrice + 1;
+                              }
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor:
+                                _isPrice % 3 != 0 ? Colors.brown : Colors.grey,
+                            textStyle: TextStyle(
+                              fontSize: 15,
+                              fontWeight: _isPrice % 3 != 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            minimumSize: const Size(80, 45),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text("Giá"),
+                              const SizedBox(width: 5),
+                              _isPrice == 0
+                                  ? SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: Stack(
+                                        fit: StackFit.passthrough,
+                                        children: const [
+                                          Positioned(
+                                            top: 0,
+                                            child: Icon(
+                                              Icons.keyboard_arrow_up_outlined,
+                                              size: 15,
+                                            ),
+                                          ),
+                                          Positioned(
+                                            bottom: 0,
+                                            child: Icon(
+                                              Icons
+                                                  .keyboard_arrow_down_outlined,
+                                              size: 15,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    )
+                                  : Icon(
+                                      _isPrice == 1
+                                          ? Icons.arrow_upward_outlined
+                                          : Icons.arrow_downward_outlined,
+                                      size: 15,
+                                      color: Colors.brown,
+                                    )
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Phần nội dung có thể cuộn
+                Expanded(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.only(top: 15, left: 10, right: 10),
+                    color: Colors.grey[200],
+                    child: GridView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 8,
+                                crossAxisSpacing: 8,
+                                mainAxisExtent: 290),
+                        itemCount: 100,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.of(context)
+                                  .pushNamed(DetaiItemScreen.routeName);
+                            },
+                            child: Container(
+                              color: Colors.white,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003',
-                                    style: TextStyle(
-                                      fontSize: 14,
+                                  Image.network(
+                                      width: double.infinity,
+                                      height: 200,
+                                      fit: BoxFit.contain,
+                                      'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    child: const Column(
+                                      children: [
+                                        Text(
+                                          'Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003',
+                                          style: TextStyle(fontSize: 14),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'đ100',
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.red),
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              'Đã bán 6.1k',
+                                              style: TextStyle(fontSize: 12),
+                                              maxLines: 1,
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.location_on_outlined,
+                                              size: 15,
+                                            ),
+                                            Text(
+                                              "Hồ Chí Minh",
+                                              style: TextStyle(fontSize: 10),
+                                            )
+                                          ],
+                                        )
+                                      ],
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  // const SizedBox(
-                                  //   height: 10,
-                                  // ),
-                                  const Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'đ100',
-                                        style: TextStyle(
-                                            fontSize: 16, color: Colors.red),
-                                        maxLines: 1,
-                                      ),
-                                      Text(
-                                        'Đã bán 6.1k',
-                                        style: TextStyle(fontSize: 12),
-                                        maxLines: 1,
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.location_on_outlined,
-                                        size: 15,
-                                      ),
-                                      Text(
-                                        "Hồ Chí Minh",
-                                        style: TextStyle(fontSize: 10),
-                                      )
-                                    ],
-                                  )
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-            )
-          ],
-        ),
+                          );
+                        }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       // Drawer bên phải khi mở bộ lọc
       endDrawer: Drawer(
@@ -403,7 +503,6 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                 ),
               ),
               //Nơi bán
-
               Column(
                 children: [
                   Container(
@@ -670,6 +769,34 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                       },
                     ),
                   ],
+                ),
+              ),
+
+              // Nút áp dụng bộ lọc
+              Container(
+                margin: const EdgeInsets.all(15),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Áp dụng bộ lọc và đóng drawer
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.brown,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
+                    child: const Text(
+                      "Áp dụng",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -11,6 +11,11 @@ class ProductLoaded extends ProductState {
   ProductLoaded(this.product);
 }
 
+class ListProductLoaded extends ProductState {
+  final List<Product> listProduct;
+  ListProductLoaded(this.listProduct);
+}
+
 class ProductError extends ProductState {
   final String message;
   ProductError(this.message);

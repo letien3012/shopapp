@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/product_variant.dart';
 
 class Product {
@@ -13,6 +14,9 @@ class Product {
   String category;
   String videoUrl;
   String shopId;
+  bool isDeleted;
+  bool isHidden;
+  bool hasVariantImages;
 
   Product({
     required this.id,
@@ -26,6 +30,9 @@ class Product {
     this.category = '',
     this.videoUrl = '',
     required this.shopId,
+    this.isDeleted = false,
+    this.isHidden = false,
+    this.hasVariantImages = false,
   });
 
   Product copyWith({
@@ -40,6 +47,9 @@ class Product {
     String? category,
     String? videoUrl,
     String? shopId,
+    bool? isDeleted,
+    bool? isHidden,
+    bool? hasVariantImages,
   }) {
     return Product(
       id: id ?? this.id,
@@ -53,6 +63,9 @@ class Product {
       category: category ?? this.category,
       videoUrl: videoUrl ?? this.videoUrl,
       shopId: shopId ?? this.shopId,
+      isDeleted: isDeleted ?? this.isDeleted,
+      isHidden: isHidden ?? this.isHidden,
+      hasVariantImages: hasVariantImages ?? this.hasVariantImages,
     );
   }
 
@@ -69,6 +82,9 @@ class Product {
       'category': category,
       'videoUrl': videoUrl,
       'shopId': shopId,
+      'isDeleted': isDeleted,
+      'isHidden': isHidden,
+      'hasVariantImages': hasVariantImages,
     };
   }
 
@@ -76,7 +92,7 @@ class Product {
     return Product(
       id: map['id'] as String,
       name: map['name'] as String,
-      quantity: map['quantity'] as int,
+      quantity: map['quantity'] as int?,
       quantitySold: map['quantitySold'] as int,
       description: map['description'] as String,
       averageRating: map['averageRating'] as double,
@@ -89,9 +105,39 @@ class Product {
       category: map['category'] as String? ?? '',
       videoUrl: map['videoUrl'] as String? ?? '',
       shopId: map['shopId'] as String,
+      isDeleted: map['isDeleted'] as bool? ?? false,
+      isHidden: map['isHidden'] as bool? ?? false,
+      hasVariantImages: map['hasVariantImages'] as bool? ?? false,
     );
   }
+  factory Product.fromFirestore(DocumentSnapshot doc) {
+    final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
+    return Product(
+      id: doc.id,
+      name: data['name'] as String? ?? '',
+      quantity: data['quantity'] as int?,
+      quantitySold: data['quantitySold'] as int? ?? 0,
+      description: data['description'] as String? ?? '',
+      averageRating: (data['averageRating'] as num?)?.toDouble() ?? 0.0,
+      variants: data['variants'] != null
+          ? List<ProductVariant>.from(
+              (data['variants'] as List<dynamic>).map<ProductVariant>(
+                (x) => ProductVariant.fromMap(x as Map<String, dynamic>),
+              ),
+            )
+          : [],
+      imageUrl: data['imageUrl'] != null
+          ? List<String>.from(data['imageUrl'] as List<dynamic>)
+          : [],
+      category: data['category'] as String? ?? '',
+      videoUrl: data['videoUrl'] as String? ?? '',
+      shopId: data['shopId'] as String? ?? '',
+      isDeleted: data['isDeleted'] as bool? ?? false,
+      isHidden: data['isHidden'] as bool? ?? false,
+      hasVariantImages: data['hasVariantImages'] as bool? ?? false,
+    );
+  }
   String toJson() => json.encode(toMap());
 
   factory Product.fromJson(String source) =>
@@ -99,7 +145,7 @@ class Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId)';
+    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isDeleted: $isDeleted, isHidden: $isHidden, hasVariantImages: $hasVariantImages)';
   }
 
   double getMaxOptionPrice() {
@@ -129,24 +175,24 @@ class Product {
   int getMaxOptionStock() {
     if (variants.isEmpty) return 0;
 
-    List<int> allPrices = variants
+    List<int> allStocks = variants
         .expand((variant) => variant.options.map((option) => option.stock))
         .toList();
 
-    if (allPrices.isEmpty) return 0;
+    if (allStocks.isEmpty) return 0;
 
-    return allPrices.reduce((a, b) => a > b ? a : b);
+    return allStocks.reduce((a, b) => a > b ? a : b);
   }
 
   int getMinOptionStock() {
     if (variants.isEmpty) return 0;
 
-    List<int> allPrices = variants
+    List<int> allStocks = variants
         .expand((variant) => variant.options.map((option) => option.stock))
         .toList();
 
-    if (allPrices.isEmpty) return 0;
+    if (allStocks.isEmpty) return 0;
 
-    return allPrices.reduce((a, b) => a < b ? a : b);
+    return allStocks.reduce((a, b) => a < b ? a : b);
   }
 }

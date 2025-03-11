@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
+import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -19,6 +23,11 @@ class MyShopScreen extends StatefulWidget {
 }
 
 class _MyShopScreenState extends State<MyShopScreen> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
@@ -81,7 +90,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
                     children: [
                       ClipOval(
                         child: Image.network(
-                          user.avataUrl!,
+                          shop.avatarUrl!,
                           height: 60,
                           width: 60,
                           fit: BoxFit.cover,
@@ -216,8 +225,8 @@ class _MyShopScreenState extends State<MyShopScreen> {
                   color: Colors.white,
                   child: InkWell(
                     onTap: () {
-                      Navigator.of(context)
-                          .pushNamed(MyProductScreen.routeName);
+                      Navigator.of(context).pushNamed(MyProductScreen.routeName,
+                          arguments: user);
                     },
                     splashColor: Colors.transparent.withOpacity(0.2),
                     highlightColor: Colors.transparent.withOpacity(0.1),

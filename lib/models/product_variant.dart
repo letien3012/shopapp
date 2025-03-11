@@ -4,13 +4,13 @@ import 'package:luanvan/models/product_option.dart';
 class ProductVariant {
   String label;
   List<ProductOption> options;
+
   ProductVariant({
     required this.label,
     required this.options,
   });
 
   ProductVariant copyWith({
-    String? id,
     String? label,
     List<ProductOption>? options,
   }) {
@@ -29,12 +29,14 @@ class ProductVariant {
 
   factory ProductVariant.fromMap(Map<String, dynamic> map) {
     return ProductVariant(
-      label: map['label'] as String,
-      options: List<ProductOption>.from(
-        (map['options'] as List<int>).map<ProductOption>(
-          (x) => ProductOption.fromMap(x as Map<String, dynamic>),
-        ),
-      ),
+      label: map['label'] as String? ?? '',
+      options: map['options'] != null
+          ? List<ProductOption>.from(
+              (map['options'] as List<dynamic>).map<ProductOption>(
+                (x) => ProductOption.fromMap(x as Map<String, dynamic>),
+              ),
+            )
+          : [],
     );
   }
 

@@ -31,6 +31,7 @@ class _SignShopState extends State<SignShop> {
   final PageController _pageController = PageController();
   final _formKey = GlobalKey<FormState>();
   int _currentStep = 0;
+  String avatarUrl = '';
   String userId = '';
   late Address address = Address(
     addressLine: '',
@@ -183,12 +184,17 @@ class _SignShopState extends State<SignShop> {
 
   void _submitForm() async {
     final Shop sellerRegistrationModel = Shop(
-        userId: userId,
-        name: _shopNameController.text,
-        address: address,
-        phoneNumber: _phoneController.text,
-        email: _emailController.text,
-        submittedAt: DateTime.now());
+      userId: userId,
+      name: _shopNameController.text,
+      address: address,
+      phoneNumber: _phoneController.text,
+      email: _emailController.text,
+      avatarUrl: avatarUrl,
+      submittedAt: DateTime.now(),
+      isClose: false,
+      isLocked: false,
+    );
+
     context
         .read<UserBloc>()
         .add(RegistrationSellerEvent(sellerRegistrationModel));
@@ -209,6 +215,7 @@ class _SignShopState extends State<SignShop> {
       _phoneController.text = user.phone ?? '';
       _emailController.text = user.email ?? '';
       userId = user.id;
+      avatarUrl = user.avataUrl!;
     }
     isCompleted = isFastEnabled || isEconomyEnabled;
   }

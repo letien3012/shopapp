@@ -53,7 +53,12 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   Future<void> _onUpdateUser(
       UpdateUserEvent event, Emitter<UserState> emit) async {
     emit(UserLoading());
-    try {} catch (e) {
+    try {
+      await _userService.updateUser(event.user);
+      final UserInfoModel user =
+          await _userService.fetchUserInfo(event.user.id);
+      emit(UserLoaded(user));
+    } catch (e) {
       emit(UserError(e.toString()));
     }
   }

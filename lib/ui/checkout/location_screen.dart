@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/blocs/user/user_bloc.dart';
+import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
+import 'package:luanvan/ui/checkout/edit_location_screen.dart';
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -12,6 +17,36 @@ class LocationScreen extends StatefulWidget {
 class _LocationScreenState extends State<LocationScreen> {
   @override
   Widget build(BuildContext context) {
+    return Scaffold(body: BlocBuilder<UserBloc, UserState>(
+      builder: (context, userState) {
+        if (userState is UserLoading) {
+          return _buildLoading();
+        } else if (userState is UserLoaded) {
+          return _buildUserContent(context, userState.user);
+        } else if (userState is UserError) {
+          return _buildError(userState.message);
+        }
+        return _buildInitializing();
+      },
+    ));
+  }
+
+  // Trạng thái đang tải
+  Widget _buildLoading() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  // Trạng thái lỗi
+  Widget _buildError(String message) {
+    return Center(child: Text('Error: $message'));
+  }
+
+  // Trạng thái khởi tạo
+  Widget _buildInitializing() {
+    return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  Widget _buildUserContent(BuildContext context, UserInfoModel user) {
     return Scaffold(
       body: Stack(
         children: [
@@ -38,90 +73,120 @@ class _LocationScreenState extends State<LocationScreen> {
                     padding: EdgeInsets.zero,
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
-                    itemCount: 2,
-                    itemBuilder: (context, index) => Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom:
-                              BorderSide(width: 1, color: Colors.grey[200]!),
-                          top: BorderSide(width: 1, color: Colors.grey[200]!),
-                        ),
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            height: 60,
-                            alignment: Alignment.topCenter,
+                    itemCount: user.addresses.length,
+                    itemBuilder: (context, index) => Material(
+                      color: Colors.white,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            EditLocationScreen.routeName,
+                            arguments: {"index": index, "user": user},
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                  width: 1, color: Colors.grey[200]!),
+                              top: BorderSide(
+                                  width: 1, color: Colors.grey[200]!),
+                            ),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(
-                            width: 5,
-                          ),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                height: 60,
+                                alignment: Alignment.topCenter,
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          user.addresses[index].receiverName,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        Text(
+                                          user.addresses[index].receiverPhone,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w300,
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
                                     Text(
-                                      "Tên người nhận",
+                                      user.addresses[index].addressLine,
                                       style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    Text(
+                                      "${user.addresses[index].ward}, ${user.addresses[index].district}, ${user.addresses[index].city}",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w400,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      "(0817124418)",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w300,
-                                      ),
-                                    )
+                                    index == 0
+                                        ? Container(
+                                            margin: EdgeInsets.only(
+                                                top: 10, bottom: 10),
+                                            height: 30,
+                                            width: 100,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    width: 1,
+                                                    color: Colors.brown)),
+                                            child: Text(
+                                              'Mặc định',
+                                              style: TextStyle(
+                                                  color: Colors.brown),
+                                            ),
+                                          )
+                                        : Container()
                                   ],
                                 ),
-                                SizedBox(
-                                  height: 5,
-                                ),
-                                Text(
-                                  "Địa chỉ cụ thể",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                Text(
-                                  "Xã or Phường + Huyện or Quận, Tỉnh or Thành phố",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                )
-                              ],
-                            ),
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 15,
+                              ),
+                            ],
                           ),
-                          const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 15,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                   GestureDetector(
                     onTap: () {
                       Navigator.of(context).pushNamed(
-                        AddLocationScreen.routeName,
-                      );
+                          AddLocationScreen.routeName,
+                          arguments: user);
                     },
                     child: Container(
                       decoration: BoxDecoration(

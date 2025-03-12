@@ -1,6 +1,12 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
+import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
@@ -26,6 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context
+          .read<ProductBloc>()
+          .add(FetchProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
+    });
   }
 
   @override
@@ -35,12 +46,47 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context
+        .read<ProductBloc>()
+        .add(FetchProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
+    return Scaffold(body: BlocBuilder<ProductBloc, ProductState>(
+      builder: (context, productState) {
+        if (productState is ProductLoading) return _buildLoading();
+        if (productState is ListProductLoaded) {
+          return _buildHomeScreen(context, productState.listProduct);
+        } else if (productState is ProductError) {
+          return _buildError(productState.message);
+        }
+        return _buildInitializing();
+      },
+    ));
+  }
+
+  // Trạng thái đang tải
+  Widget _buildLoading() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  // Trạng thái lỗi
+  Widget _buildError(String message) {
+    return Center(child: Text('Error: $message'));
+  }
+
+  // Trạng thái khởi tạo
+  Widget _buildInitializing() {
+    return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  Widget _buildHomeScreen(BuildContext context, List<Product> listProduct) {
     return Scaffold(
       body: Stack(
         children: [
           SingleChildScrollView(
             child: Container(
+              padding: EdgeInsets.only(bottom: 10),
               color: Colors.grey[200],
+              constraints:
+                  BoxConstraints(minHeight: MediaQuery.of(context).size.height),
               child: Column(
                 children: [
                   SizedBox(
@@ -131,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               mainAxisExtent: 280
                               // childAspectRatio: 0.8,
                               ),
-                      itemCount: 100,
+                      itemCount: listProduct.length,
                       itemBuilder: (context, index) {
                         return GestureDetector(
                           onTap: () {
@@ -144,40 +190,52 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Image.network(
-                                    width: double.infinity,
-                                    height: 200,
-                                    fit: BoxFit.cover,
-                                    'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                  listProduct[index].imageUrl[0],
+                                ),
                                 Container(
                                   padding: const EdgeInsets.all(6),
-                                  child: const Column(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003',
-                                        style: TextStyle(
-                                          fontSize: 14,
+                                      SizedBox(
+                                        height: 42,
+                                        child: Text(
+                                          listProduct[index].name,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      // const SizedBox(
-                                      //   height: 10,
-                                      // ),
-                                      const Row(
+                                      Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
                                         children: [
-                                          Text(
-                                            'đ100',
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.red),
-                                            maxLines: 1,
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                FontAwesomeIcons.dongSign,
+                                                size: 15,
+                                                color: Colors.red,
+                                              ),
+                                              Text(
+                                                "${listProduct[index].getMinOptionPrice()}",
+                                                style: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.red),
+                                                maxLines: 1,
+                                              ),
+                                            ],
                                           ),
                                           Text(
-                                            'Đã bán 6.1k',
+                                            'Đã bán ${listProduct[index].quantitySold.toString()}',
                                             style: TextStyle(fontSize: 12),
                                             maxLines: 1,
                                           )

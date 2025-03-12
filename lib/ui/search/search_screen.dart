@@ -201,9 +201,6 @@ class _SearchScreenState extends State<SearchScreen> {
                             alignment: Alignment.centerLeft,
                             child: Row(
                               children: [
-                                Icon(Icons.history,
-                                    color: Colors.grey, size: 18),
-                                SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
                                     _searchHistory[index],

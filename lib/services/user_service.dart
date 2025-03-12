@@ -11,11 +11,7 @@ class UserService {
         .limit(1)
         .get();
     if (querySnapshot.docs.isNotEmpty) {
-      for (var doc in querySnapshot.docs) {
-        print("User Data: ${doc.data()}");
-      }
-    } else {
-      print("User not found!");
+      for (var doc in querySnapshot.docs) {}
     }
     final UserInfoModel userInfoModel = UserInfoModel.fromFirestore(
         querySnapshot.docs.first.data() as Map<String, dynamic>);
@@ -44,6 +40,16 @@ class UserService {
         .doc(sellerRegistration.userId)
         .update({
       'role': 1,
+    });
+  }
+
+  Future<void> updateUser(UserInfoModel user) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.id)
+        .update(user.toMap())
+        .catchError((error) {
+      print("Lỗi khi cập nhật: $error");
     });
   }
 }

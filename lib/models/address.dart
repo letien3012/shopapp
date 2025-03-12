@@ -1,5 +1,4 @@
 class Address {
-  String id;
   late String addressLine;
   String city;
   String district;
@@ -8,7 +7,6 @@ class Address {
   String receiverName;
   String receiverPhone;
   Address({
-    required this.id,
     required this.addressLine,
     required this.city,
     required this.district,
@@ -29,7 +27,6 @@ class Address {
     String? receiverPhone,
   }) {
     return Address(
-      id: id ?? this.id,
       addressLine: addressLine ?? this.addressLine,
       city: city ?? this.city,
       district: district ?? this.district,
@@ -42,7 +39,6 @@ class Address {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'addressLine': addressLine,
       'city': city,
       'district': district,
@@ -55,7 +51,6 @@ class Address {
 
   factory Address.fromMap(Map<String, dynamic> map) {
     return Address(
-      id: map['id'] ?? '',
       addressLine: map['addressLine'] ?? '',
       city: map['city'] ?? '',
       district: map['district'] ?? '',

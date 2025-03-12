@@ -5,6 +5,7 @@ import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/checkout/add_addressline_screen.dart.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/check_out_screen.dart';
+import 'package:luanvan/ui/checkout/edit_location_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
@@ -53,6 +54,7 @@ final Map<String, WidgetBuilder> routes = {
   CheckOutScreen.routeName: (context) => const CheckOutScreen(),
   LocationScreen.routeName: (context) => const LocationScreen(),
   AddLocationScreen.routeName: (context) => const AddLocationScreen(),
+  EditLocationScreen.routeName: (context) => const EditLocationScreen(),
   PickLocation.routeName: (context) => const PickLocation(),
   AddAddresslineScreen.routeName: (context) => const AddAddresslineScreen(),
   UserScreen.routeName: (context) => UserScreen(),

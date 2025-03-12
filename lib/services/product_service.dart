@@ -24,6 +24,16 @@ class ProductService {
     return listProduct;
   }
 
+  Future<Product> fetchProductByProductId(String productId) async {
+    final Product product;
+    final querySnapshot =
+        await firebaseFirestore.collection('products').doc(productId).get();
+
+    product = Product.fromFirestore(querySnapshot);
+
+    return product;
+  }
+
   Future<void> deleteProductById(String productId) async {}
   Future<void> UpdateProductById(String productId) async {}
   Future<void> fetchProductById(String productId) async {}

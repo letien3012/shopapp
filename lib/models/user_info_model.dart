@@ -26,33 +26,7 @@ class UserInfoModel {
     this.userName,
     required this.role,
     List<Address>? addresses,
-  }) : addresses = _processAddresses(addresses ?? []);
-
-  // Hàm xử lý danh sách địa chỉ: đặt địa chỉ mặc định lên đầu và đảm bảo chỉ 1 địa chỉ mặc định
-  static List<Address> _processAddresses(List<Address> inputAddresses) {
-    List<Address> processedList = List.from(inputAddresses);
-
-    // Tìm địa chỉ mặc định
-    int defaultIndex = processedList.indexWhere((address) => address.isDefault);
-
-    // Nếu có địa chỉ mặc định, đưa nó lên đầu
-    if (defaultIndex != -1) {
-      Address defaultAddress = processedList.removeAt(defaultIndex);
-      processedList.insert(0, defaultAddress);
-    }
-
-    // Đảm bảo chỉ có 1 địa chỉ mặc định, các địa chỉ còn lại đặt isDefault = false
-    bool hasDefault = false;
-    for (int i = 0; i < processedList.length; i++) {
-      if (processedList[i].isDefault && !hasDefault) {
-        hasDefault = true;
-      } else if (processedList[i].isDefault && hasDefault) {
-        processedList[i] = processedList[i].copyWith(isDefault: false);
-      }
-    }
-
-    return processedList;
-  }
+  }) : addresses = addresses ?? [];
 
   UserInfoModel copyWith({
     String? id,

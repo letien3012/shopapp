@@ -15,7 +15,6 @@ class AddLocationShopScreen extends StatefulWidget {
 class _AddLocationShopScreenState extends State<AddLocationShopScreen> {
   late Address address = Address(
     addressLine: '',
-    id: '',
     city: '',
     district: '',
     ward: '',

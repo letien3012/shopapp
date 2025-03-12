@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
@@ -8,26 +9,19 @@ import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/checkout/add_addressline_screen.dart.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
 
-class AddLocationScreen extends StatefulWidget {
-  const AddLocationScreen({super.key});
-  static String routeName = "add_location_screen";
+class EditLocationScreen extends StatefulWidget {
+  const EditLocationScreen({super.key});
+  static String routeName = "edit_location_screen";
 
   @override
-  State<AddLocationScreen> createState() => _AddLocationScreenState();
+  State<EditLocationScreen> createState() => _EditLocationScreenState();
 }
 
-class _AddLocationScreenState extends State<AddLocationScreen> {
-  late Address address = Address(
-    addressLine: '',
-    city: '',
-    district: '',
-    ward: '',
-    isDefault: false,
-    receiverName: '',
-    receiverPhone: '',
-  );
-  late UserInfoModel user;
+class _EditLocationScreenState extends State<EditLocationScreen> {
+  late Address address;
+  UserInfoModel user = UserInfoModel(role: 0, id: '');
   final FocusNode _focusName = FocusNode();
   final FocusNode _focusPhone = FocusNode();
   final TextEditingController _nameController = TextEditingController();
@@ -36,35 +30,45 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
   bool isAddDefault = true;
   bool isCompleted = false;
   bool isButtonPressed = false;
-  // Biến lưu địa chỉ đã chọn
   String _selectedLocation = "";
   String _addressLine = "";
-
+  int locationIndex = 0;
   @override
   void initState() {
     super.initState();
-    _nameController.text = address.receiverName;
-    _phoneController.text = address.receiverPhone;
-    _selectedLocation = address.city.isNotEmpty
-        ? "${address.ward}, ${address.district}, ${address.city}"
-        : 'Tỉnh/Thành phố, Quận/Huyện, Phường/Xã';
-    _addressLine = address.addressLine.isNotEmpty
-        ? address.addressLine
-        : "Tên đường, Tòa nhà, Số nhà";
-
-    // Kiểm tra nếu user.addresses là mảng rỗng
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (user.addresses.isEmpty) {
-        setState(() {
-          isAddDefault = true; // Luôn đặt mặc định cho địa chỉ đầu tiên
-        });
+      if (!mounted) return;
+      final arg = ModalRoute.of(context)?.settings.arguments;
+      if (arg != null && arg is Map<String, dynamic>) {
+        locationIndex = arg['index'] ?? 0;
+        user = arg['user'];
+        if (user.addresses.isNotEmpty) {
+          if (locationIndex >= 0 && locationIndex < user.addresses.length) {
+            address = user.addresses[locationIndex];
+            _nameController.text = address.receiverName;
+            _phoneController.text = address.receiverPhone;
+            _selectedLocation = address.city.isNotEmpty
+                ? "${address.ward}, ${address.district}, ${address.city}"
+                : 'Tỉnh/Thành phố, Quận/Huyện, Phường/Xã';
+            _addressLine = address.addressLine.isNotEmpty
+                ? address.addressLine
+                : "Tên đường, Tòa nhà, Số nhà";
+            isAddDefault = address.isDefault;
+          } else {
+            print("LocationIndex không hợp lệ: $locationIndex");
+            Navigator.of(context).pop();
+          }
+        } else {
+          // Xử lý trường hợp không có địa chỉ
+          print("Không có địa chỉ nào được tìm thấy");
+          Navigator.of(context).pop(); // Quay lại màn hình trước
+        }
       } else {
-        setState(() {
-          isAddDefault = address.isDefault;
-        });
+        // Xử lý trường hợp không có đối số hợp lệ
+        print("Không có đối số hợp lệ");
+        Navigator.of(context).pop(); // Quay lại màn hình trước
       }
     });
-
     _focusName.addListener(_checkFormCompletion);
     _focusPhone.addListener(_checkFormCompletion);
     _nameController.addListener(_checkFormCompletion);
@@ -90,47 +94,133 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
     super.dispose();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    user = ModalRoute.of(context)?.settings.arguments as UserInfoModel;
-  }
-
   void _submitForm() {
     if (_formKey.currentState!.validate() &&
         _selectedLocation != "Tỉnh/Thành phố, Quận/Huyện, Phường/Xã" &&
         _addressLine != "Tên đường, Tòa nhà, Số nhà") {
-      address.addressLine = _addressLine;
-      address.ward = _selectedLocation.split(',')[0].trim();
-      address.district = _selectedLocation.split(',')[1].trim();
-      address.city = _selectedLocation.split(',').last.trim();
-      address.receiverName = _nameController.text;
-      address.receiverPhone = _phoneController.text;
-      address.isDefault = isAddDefault;
+      // Cập nhật thông tin địa chỉ
+      Address updatedAddress = Address(
+        addressLine: _addressLine,
+        ward: _selectedLocation.split(',')[0].trim(),
+        district: _selectedLocation.split(',')[1].trim(),
+        city: _selectedLocation.split(',').last.trim(),
+        receiverName: _nameController.text,
+        receiverPhone: _phoneController.text,
+        isDefault: isAddDefault,
+      );
 
-      // Thêm địa chỉ mới vào user.addresses
+      // Tạo một danh sách mới từ danh sách địa chỉ hiện tại
       List<Address> updatedAddresses = List.from(user.addresses);
-      updatedAddresses.add(address);
 
-      // Xử lý địa chỉ mặc định theo quy tắc trong UserInfoModel._processAddresses
+      // Xóa địa chỉ cũ
+      updatedAddresses.removeAt(locationIndex);
+
+      // Nếu đây là địa chỉ mặc định mới, đặt tất cả các địa chỉ khác thành không mặc định
       if (isAddDefault) {
-        // Đặt tất cả các địa chỉ khác thành không mặc định
-        for (int i = 0; i < updatedAddresses.length - 1; i++) {
-          if (updatedAddresses[i].isDefault) {
-            updatedAddresses[i] =
-                updatedAddresses[i].copyWith(isDefault: false);
-          }
+        for (int i = 0; i < updatedAddresses.length; i++) {
+          updatedAddresses[i] = updatedAddresses[i].copyWith(isDefault: false);
         }
-        // Đặt địa chỉ mới lên đầu nếu là mặc định
-        Address newAddress = updatedAddresses.removeLast();
-        updatedAddresses.insert(0, newAddress);
+        // Thêm địa chỉ đã cập nhật vào đầu danh sách
+        updatedAddresses.insert(0, updatedAddress);
+      } else {
+        // Nếu không phải địa chỉ mặc định, thêm vào vị trí cũ
+        // Trừ khi địa chỉ cũ là mặc định, thì vẫn phải thêm một địa chỉ mặc định mới
+        bool needDefaultAddress =
+            locationIndex == 0 && user.addresses[0].isDefault && !isAddDefault;
+
+        if (needDefaultAddress && updatedAddresses.isNotEmpty) {
+          // Đặt địa chỉ đầu tiên thành mặc định nếu địa chỉ hiện tại là mặc định và bị hủy
+          updatedAddresses[0] = updatedAddresses[0].copyWith(isDefault: true);
+        }
+
+        // Thêm vào vị trí thích hợp (giữ nguyên vị trí nếu không phải địa chỉ mặc định)
+        if (locationIndex < updatedAddresses.length) {
+          updatedAddresses.insert(locationIndex, updatedAddress);
+        } else {
+          updatedAddresses.add(updatedAddress);
+        }
+      }
+
+      // Đảm bảo có ít nhất một địa chỉ mặc định nếu có địa chỉ
+      if (updatedAddresses.isNotEmpty &&
+          !updatedAddresses.any((addr) => addr.isDefault)) {
+        updatedAddresses[0] = updatedAddresses[0].copyWith(isDefault: true);
       }
 
       // Cập nhật user với danh sách địa chỉ mới
       UserInfoModel updatedUser = user.copyWith(addresses: updatedAddresses);
       context.read<UserBloc>().add(UpdateUserEvent(updatedUser));
+
       Navigator.of(context).pop();
     }
+  }
+
+  void _deleteAddress() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Xác nhận xóa"),
+        content: const Text("Bạn có chắc chắn muốn xóa địa chỉ này không?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              "Hủy",
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              if (locationIndex == 0) {
+                Navigator.of(context).pop();
+                showDialog(
+                    context: context,
+                    builder: (context) => Dialog(
+                          backgroundColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(0)),
+                          child: Container(
+                            color: Colors.white,
+                            height: 80,
+                            alignment: Alignment.center,
+                            padding: EdgeInsets.all(10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SvgPicture.asset(
+                                  IconHelper.warning,
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text(
+                                  "Không thể xóa địa chỉ mặc định",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ));
+              } else {
+                List<Address> updatedAddresses = List.from(user.addresses);
+                updatedAddresses.removeAt(locationIndex);
+                // Cập nhật user với danh sách địa chỉ mới
+                UserInfoModel updatedUser =
+                    user.copyWith(addresses: updatedAddresses);
+                context.read<UserBloc>().add(UpdateUserEvent(updatedUser));
+
+                // Đóng dialog và quay về màn hình trước
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text("Xóa", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _pickLocation() async {
@@ -334,7 +424,8 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                                 const Text("Đặt làm địa chỉ mặc định"),
                                 CupertinoSwitch(
                                   value: isAddDefault,
-                                  onChanged: user.addresses.isEmpty
+                                  onChanged: user.addresses.length <= 1 ||
+                                          locationIndex == 0
                                       ? null
                                       : (value) {
                                           setState(() {
@@ -387,7 +478,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          "Địa chỉ mới",
+                          "Sửa địa chỉ",
                           style: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.w400),
                         ),
@@ -404,48 +495,79 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
               height: 70,
               width: double.infinity,
               color: Colors.white,
-              child: GestureDetector(
-                onTap: isCompleted ? _submitForm : null,
-                child: StatefulBuilder(
-                    builder: (BuildContext context, StateSetter setState) {
-                  return InkWell(
-                    onTap: isCompleted
-                        ? () {
-                            setState(() {
-                              isButtonPressed = true;
-                            });
-                            Future.delayed(const Duration(milliseconds: 200),
-                                () {
-                              setState(() {
-                                isButtonPressed = false;
-                              });
-                              _submitForm();
-                            });
-                          }
-                        : null,
-                    child: Container(
-                      margin: const EdgeInsets.all(10),
-                      height: 50,
-                      width: double.infinity,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isCompleted
-                            ? (isButtonPressed
-                                ? Colors.brown[700]
-                                : Colors.brown)
-                            : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        "HOÀN THÀNH",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: isCompleted ? Colors.white : Colors.grey[500],
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _deleteAddress,
+                      child: Container(
+                        margin: const EdgeInsets.only(
+                            left: 10, top: 10, bottom: 10, right: 5),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.red),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          "Xóa địa chỉ",
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
-                  );
-                }),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: isCompleted ? _submitForm : null,
+                      child: StatefulBuilder(builder:
+                          (BuildContext context, StateSetter setState) {
+                        return InkWell(
+                          onTap: isCompleted
+                              ? () {
+                                  setState(() {
+                                    isButtonPressed = true;
+                                  });
+                                  Future.delayed(
+                                      const Duration(milliseconds: 200), () {
+                                    setState(() {
+                                      isButtonPressed = false;
+                                    });
+                                    _submitForm();
+                                  });
+                                }
+                              : null,
+                          child: Container(
+                            margin: const EdgeInsets.only(
+                                left: 5, top: 10, bottom: 10, right: 10),
+                            height: 50,
+                            width: double.infinity,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isCompleted
+                                  ? (isButtonPressed
+                                      ? Colors.brown[700]
+                                      : Colors.brown)
+                                  : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              "HOÀN THÀNH",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: isCompleted
+                                    ? Colors.white
+                                    : Colors.grey[500],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

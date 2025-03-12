@@ -23,4 +23,5 @@ class IconHelper {
   static const String pricetag = "${imagePath}pricetag.svg";
   static const String cube = "${imagePath}cube.svg";
   static const String minus = "${imagePath}minus.svg";
+  static const String warning = "${imagePath}warning.svg";
 }

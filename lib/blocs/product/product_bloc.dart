@@ -10,6 +10,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   ProductBloc(this._productService) : super(ProductInitial()) {
     on<FetchListProductEvent>(_onLoadProducts);
     on<FetchProductEventByShopId>(_onFetchProductByShopId);
+    on<FetchProductEventByProductId>(_onFetchProductByProductId);
     on<AddProductEvent>(_onAddProduct);
     on<DeleteProductByIdEvent>(_onDeleteProduct);
     on<UpdateProductEvent>(_onUpdateProduct);
@@ -30,6 +31,18 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       final listProduct =
           await _productService.fetchProductByShopId(event.shopId);
       emit(ListProductLoaded(listProduct));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  Future<void> _onFetchProductByProductId(
+      FetchProductEventByProductId event, Emitter<ProductState> emit) async {
+    emit(ProductLoading());
+    try {
+      final product =
+          await _productService.fetchProductByProductId(event.productId);
+      emit(ProductLoaded(product));
     } catch (e) {
       emit(ProductError(e.toString()));
     }

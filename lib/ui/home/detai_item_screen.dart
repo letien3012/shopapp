@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
+import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/item/review_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
@@ -29,6 +34,11 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context
+          .read<ProductBloc>()
+          .add(FetchProductEventByProductId('2Fk0wqCDWihRGqnXwH2h'));
+    });
     _imageController.addListener(() {
       setState(() {
         _currentImage = _imageController.page!.round();
@@ -71,7 +81,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   }
 
   // UI Components
-  Widget _buildImageSlider() {
+  Widget _buildImageSlider(Product product) {
     return SizedBox(
       height: 350,
       width: double.infinity,
@@ -80,10 +90,11 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
           PageView.builder(
             controller: _imageController,
             scrollDirection: Axis.horizontal,
-            itemCount: 2,
+            itemCount: product.imageUrl.length,
             itemBuilder: (context, index) {
-              return Container(
-                color: (index % 2 == 0) ? Colors.amber : Colors.blue,
+              return Image.network(
+                product.imageUrl[index],
+                fit: BoxFit.cover,
               );
             },
           ),
@@ -100,7 +111,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
               height: 25,
               child: Center(
                 child: Text(
-                  '${_currentImage + 1}/2',
+                  '${_currentImage + 1}/${product.imageUrl.length}',
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
@@ -111,7 +122,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     );
   }
 
-  Widget _buildProductInfo() {
+  Widget _buildProductInfo(Product product) {
     return Container(
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -932,6 +943,36 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(body: BlocBuilder<ProductBloc, ProductState>(
+      builder: (context, productState) {
+        if (productState is ProductLoading) return _buildLoading();
+        if (productState is ProductLoaded) {
+          return _builDetailScreen(context, productState.product);
+        } else if (productState is ProductError) {
+          return _buildError(productState.message);
+        }
+        return _buildInitializing();
+      },
+    ));
+  }
+
+  // Trạng thái đang tải
+  Widget _buildLoading() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  // Trạng thái lỗi
+  Widget _buildError(String message) {
+    return Center(child: Text('Error: $message'));
+  }
+
+  // Trạng thái khởi tạo
+  Widget _buildInitializing() {
+    return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  Widget _builDetailScreen(BuildContext context, Product product) {
+    print(product);
     return Scaffold(
       body: Stack(
         children: [
@@ -939,8 +980,8 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
             controller: _appBarScrollController,
             child: Column(
               children: [
-                _buildImageSlider(),
-                _buildProductInfo(),
+                _buildImageSlider(product),
+                _buildProductInfo(product),
                 _buildReviewsSection(),
                 _buildProductDetails(),
                 _buildSimilarProducts(),

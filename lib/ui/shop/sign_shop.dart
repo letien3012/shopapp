@@ -35,7 +35,6 @@ class _SignShopState extends State<SignShop> {
   String userId = '';
   late Address address = Address(
     addressLine: '',
-    id: '',
     city: '',
     district: '',
     ward: '',

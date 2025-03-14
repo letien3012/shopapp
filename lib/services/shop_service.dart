@@ -22,6 +22,15 @@ class ShopService {
     return shop;
   }
 
+  Future<Shop> fetchShopByShopId(String shopId) async {
+    final querySnapshot =
+        await firebaseFirestore.collection('shops').doc(shopId).get();
+
+    final Shop shop = Shop.fromFirestore(
+        querySnapshot as DocumentSnapshot<Map<String, dynamic>>);
+    return shop;
+  }
+
   Future<void> updateShop(String userName, String userId) async {
     await firebaseFirestore
         .collection('users')

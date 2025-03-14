@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
+    <uses-feature android:name="android.hardware.vulkan" android:required="false"/>
+    <uses-feature android:name="android.hardware.opengles.aep" android:required="false"/>
 
     <queries>
         <provider android:authorities="com.facebook.katana.provider.PlatformProvider" />

@@ -8,6 +8,11 @@ class FetchShopEvent extends ShopEvent {
   FetchShopEvent(this.userId);
 }
 
+class FetchShopEventByShopId extends ShopEvent {
+  final String shopId;
+  FetchShopEventByShopId(this.shopId);
+}
+
 class UpdateShopEvent extends ShopEvent {
   final Shop shop;
   UpdateShopEvent(this.shop);

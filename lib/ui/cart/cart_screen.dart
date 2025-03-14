@@ -1,8 +1,23 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/cart/cart_bloc.dart';
+import 'package:luanvan/blocs/cart/cart_event.dart';
+import 'package:luanvan/blocs/cart/cart_state.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_event.dart';
+import 'package:luanvan/blocs/shop/shop_state.dart';
+import 'package:luanvan/models/cart.dart';
+import 'package:luanvan/models/product.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/checkout/check_out_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -13,17 +28,10 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  // Map<String, Map<dynamic, List<dynamic>>> cart = {
-  //   "Đây là shop 1": {"aaa": [
-  //     "Tến sản phẩm của shop 1 Tến sản phẩm của shop 1",
-  //     "price1"
-  //   ],
-  //   }
-  //   "Đây là shop 2": [
-  //     "Tến sản phẩm của shop 2 Tến sản phẩm của shop 2",
-  //     "price2"
-  //   ],
-  // };
+  List<String> listProductId = [];
+  List<String> listShopId = [];
+  List<Shop> listShop = [];
+  List<Product> listProduct = [];
   List<bool> checkedShop = [];
   Map<String, List<bool>> checkedProduct = {};
   bool checkAllProduct = false;
@@ -35,14 +43,100 @@ class _CartScreenState extends State<CartScreen> {
   void initState() {
     super.initState();
     checkedShop = List.generate(3, (item) => false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchShops(context, listShopId);
+      fetchProducts(context, listProductId);
+    });
 
     for (int i = 0; i <= checkedShop.length; i++) {
       checkedProduct['Shop$i'] = List.filled(2, false);
     }
   }
 
+  Future<void> fetchShops(BuildContext context, List<String> listShopId) async {
+    final shopBloc = context.read<ShopBloc>();
+    for (var shopId in listShopId) {
+      shopBloc.add(FetchShopEventByShopId(shopId));
+
+      await for (var state in shopBloc.stream) {
+        if (state is ShopLoaded) {
+          if (!listShop.contains(state.shop)) listShop.add(state.shop);
+          break;
+        } else if (state is ShopError) {
+          print("Lỗi khi tải shop: ${state.message}");
+          break;
+        }
+      }
+    }
+  }
+
+  Future<void> fetchProducts(
+      BuildContext context, List<String> listProductId) async {
+    final shopBloc = context.read<ProductBloc>();
+    for (var productId in listProductId) {
+      shopBloc.add(FetchProductEventByProductId(productId));
+
+      await for (var state in shopBloc.stream) {
+        if (state is ProductLoaded) {
+          if (!listProduct.contains(state.product))
+            listProduct.add(state.product);
+          break;
+        } else if (state is ProductError) {
+          print("Lỗi khi tải sản phẩm: ${state.message}");
+          break;
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      body: BlocBuilder<AuthBloc, AuthState>(
+          builder: (BuildContext context, AuthState authState) {
+        if (authState is AuthLoading) return _buildLoading();
+        if (authState is AuthAuthenticated) {
+          context
+              .read<CartBloc>()
+              .add(FetchCartEventUserId(authState.user.uid));
+          return BlocBuilder<CartBloc, CartState>(
+            builder: (context, cartState) {
+              if (cartState is CartLoading) return _buildLoading();
+              if (cartState is CartLoaded) {
+                listShopId = cartState.cart.listShopId;
+                listProductId =
+                    cartState.cart.productIdAndQuantity.keys.toList();
+                return _buildCartScreen(context, cartState.cart);
+              } else if (cartState is CartError) {
+                return _buildError(cartState.message);
+              }
+              return _buildInitializing();
+            },
+          );
+        } else if (authState is AuthError) {
+          return _buildError(authState.message);
+        }
+        return _buildInitializing();
+      }),
+    );
+  }
+
+  // Trạng thái đang tải
+  Widget _buildLoading() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  // Trạng thái lỗi
+  Widget _buildError(String message) {
+    return Center(child: Text('Error: $message'));
+  }
+
+  // Trạng thái khởi tạo
+  Widget _buildInitializing() {
+    return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  Widget _buildCartScreen(BuildContext context, Cart cart) {
     return Scaffold(
       body: Stack(
         children: [
@@ -51,6 +145,8 @@ class _CartScreenState extends State<CartScreen> {
               color: Colors.grey[200],
               padding: const EdgeInsets.only(
                   left: 10, right: 10, top: 90, bottom: 60),
+              constraints:
+                  BoxConstraints(minHeight: MediaQuery.of(context).size.height),
               child: Column(
                 children: [
                   // Danh sách các shop trong giỏ hàng
@@ -58,9 +154,9 @@ class _CartScreenState extends State<CartScreen> {
                       padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
-                      itemCount: 3,
+                      itemCount: listShop.length,
                       itemBuilder: (context, index) {
-                        String shopName = "Shop$index";
+                        final shopName = 'Shop$index';
                         return Container(
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.only(
@@ -96,9 +192,9 @@ class _CartScreenState extends State<CartScreen> {
                                   Expanded(
                                     child: Row(
                                       children: [
-                                        const Expanded(
+                                        Expanded(
                                           child: Text(
-                                            "Đây là tên shop Đây là tên  tên shop Đây là tên",
+                                            listShop[index].name,
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w500,
@@ -130,7 +226,7 @@ class _CartScreenState extends State<CartScreen> {
                               ListView.builder(
                                 physics: const NeverScrollableScrollPhysics(),
                                 shrinkWrap: true,
-                                itemCount: 2,
+                                itemCount: listProduct.length,
                                 padding: EdgeInsets.zero,
                                 itemBuilder: (context, index) => Stack(
                                   children: [
@@ -233,10 +329,12 @@ class _CartScreenState extends State<CartScreen> {
                                                         BorderRadius.circular(
                                                             10),
                                                     child: Image.network(
-                                                        width: 110,
-                                                        height: 110,
-                                                        fit: BoxFit.fill,
-                                                        'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
+                                                      width: 110,
+                                                      height: 110,
+                                                      fit: BoxFit.cover,
+                                                      listProduct[index]
+                                                          .imageUrl[0],
+                                                    ),
                                                   ),
                                                 ),
                                               ],
@@ -249,8 +347,8 @@ class _CartScreenState extends State<CartScreen> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  const Text(
-                                                    "Đây là tên sản phẩm Đây là tên  tên sản phẩm Đây là tên",
+                                                  Text(
+                                                    listProduct[index].name,
                                                     style: TextStyle(
                                                       fontSize: 16,
                                                       fontWeight:
@@ -277,11 +375,11 @@ class _CartScreenState extends State<CartScreen> {
                                                                   .circular(5)),
                                                       alignment:
                                                           Alignment.center,
-                                                      child: const Row(
+                                                      child: Row(
                                                         children: [
                                                           Expanded(
                                                             child: Text(
-                                                              "Trắng quài đi taoTrắng quài đi taoTrắng quài đi taoTrắng quài đi tao",
+                                                              '',
                                                               style: TextStyle(
                                                                   fontSize: 13,
                                                                   color: Colors
@@ -497,7 +595,7 @@ class _CartScreenState extends State<CartScreen> {
                     Expanded(
                         child: GestureDetector(
                       onTap: () {},
-                      child: const SizedBox(
+                      child: SizedBox(
                         height: 40,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -508,7 +606,7 @@ class _CartScreenState extends State<CartScreen> {
                                   fontSize: 20, fontWeight: FontWeight.w500),
                             ),
                             Text(
-                              " (100)",
+                              " (${cart.productIdAndQuantity.length})",
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w500),
                             )

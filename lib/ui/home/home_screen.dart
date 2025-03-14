@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/cart/cart_bloc.dart';
+import 'package:luanvan/blocs/cart/cart_event.dart';
+import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
+import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -28,7 +34,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int bannerCurrentPage = 0;
   final CarouselSliderController _bannercontroller = CarouselSliderController();
-
+  Cart cart = Cart(
+      id: '',
+      userId: '',
+      productIdAndQuantity: {},
+      listShopId: [],
+      productOptionIndexes: {},
+      productVariantIndexes: {});
   @override
   void initState() {
     super.initState();
@@ -36,6 +48,12 @@ class _HomeScreenState extends State<HomeScreen> {
       context
           .read<ProductBloc>()
           .add(FetchProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
+        final cartState = context.read<CartBloc>().state;
+        if (cartState is CartLoaded) cart = cartState.cart;
+      }
     });
   }
 
@@ -46,20 +64,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    context
-        .read<ProductBloc>()
-        .add(FetchProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
-    return Scaffold(body: BlocBuilder<ProductBloc, ProductState>(
-      builder: (context, productState) {
-        if (productState is ProductLoading) return _buildLoading();
-        if (productState is ListProductLoaded) {
-          return _buildHomeScreen(context, productState.listProduct);
-        } else if (productState is ProductError) {
-          return _buildError(productState.message);
+    return Scaffold(
+      body: BlocBuilder<AuthBloc, AuthState>(
+          builder: (BuildContext context, AuthState authState) {
+        if (authState is AuthLoading) return _buildLoading();
+        if (authState is AuthAuthenticated) {
+          context
+              .read<ProductBloc>()
+              .add(FetchProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
+
+          return BlocBuilder<ProductBloc, ProductState>(
+            builder: (context, productState) {
+              if (productState is ProductLoading) return _buildLoading();
+              if (productState is ListProductLoaded) {
+                return _buildHomeScreen(context, productState.listProduct);
+              } else if (productState is ProductError) {
+                return _buildError(productState.message);
+              }
+              return _buildInitializing();
+            },
+          );
+        } else if (authState is AuthError) {
+          return _buildError(authState.message);
         }
         return _buildInitializing();
-      },
-    ));
+      }),
+    );
   }
 
   // Trạng thái đang tải
@@ -181,8 +211,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemBuilder: (context, index) {
                         return GestureDetector(
                           onTap: () {
-                            Navigator.of(context)
-                                .pushNamed(DetaiItemScreen.routeName);
+                            Navigator.of(context).pushNamed(
+                                DetaiItemScreen.routeName,
+                                arguments: listProduct[index].id);
                           },
                           child: Container(
                             color: Colors.white,
@@ -335,26 +366,29 @@ class _HomeScreenState extends State<HomeScreen> {
                                     width: 30,
                                     color: Colors.white,
                                   )),
-                              Positioned(
-                                left: 15,
-                                top: 5,
-                                child: Container(
-                                  height: 18,
-                                  width: 30,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: Colors.red,
-                                    border: Border.all(
-                                        width: 1.5, color: Colors.white),
-                                  ),
-                                  child: const Text(
-                                    "99+",
-                                    style: TextStyle(
-                                        fontSize: 10, color: Colors.white),
-                                  ),
-                                ),
-                              )
+                              cart.productIdAndQuantity.length != 0
+                                  ? Positioned(
+                                      left: 15,
+                                      top: 5,
+                                      child: Container(
+                                        height: 18,
+                                        width: 30,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.red,
+                                          border: Border.all(
+                                              width: 1.5, color: Colors.white),
+                                        ),
+                                        child: Text(
+                                          "${cart.productIdAndQuantity.length}",
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    )
+                                  : Container()
                             ],
                           ),
                         ),

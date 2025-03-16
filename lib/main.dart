@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
+import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
@@ -12,6 +13,7 @@ import 'package:luanvan/di.dart';
 import 'package:luanvan/routes.dart';
 import 'package:luanvan/services/auth_service.dart';
 import 'package:luanvan/services/cart_service.dart';
+import 'package:luanvan/services/chat_service.dart';
 import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/shop_service.dart';
 import 'package:luanvan/services/user_service.dart';
@@ -82,6 +84,9 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => CartBloc(CartService()),
+        ),
+        BlocProvider<ChatBloc>(
+          create: (context) => ChatBloc(ChatService()),
         ),
       ],
       child: MaterialApp(

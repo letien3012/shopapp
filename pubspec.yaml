@@ -36,6 +36,7 @@ dependencies:
   flutter_svg: ^2.0.17
   reorderable_grid_view: ^2.2.8
   shared_preferences: ^2.5.2
+  flutter_keyboard_visibility: ^6.0.0
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
-import 'package:luanvan/models/product.dart';
 import 'package:luanvan/services/product_service.dart';
 
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
@@ -61,7 +59,28 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   }
 
   void _onDeleteProduct(
-      DeleteProductByIdEvent event, Emitter<ProductState> emit) {}
+      DeleteProductByIdEvent event, Emitter<ProductState> emit) async {
+    emit(ProductLoading());
+    try {
+      await _productService.deleteProduct(event.productId);
+      final listproduct =
+          await _productService.fetchProductByShopId(event.shopId);
+      emit(ListProductLoaded(listproduct));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
 
-  void _onUpdateProduct(UpdateProductEvent event, Emitter<ProductState> emit) {}
+  void _onUpdateProduct(
+      UpdateProductEvent event, Emitter<ProductState> emit) async {
+    emit(ProductLoading());
+    try {
+      await _productService.UpdateProduct(event.product);
+      final listproduct =
+          await _productService.fetchProductByShopId(event.product.shopId);
+      emit(ListProductLoaded(listproduct));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
 }

@@ -18,15 +18,20 @@ import 'package:luanvan/ui/login/verify_screen.dart';
 import 'package:luanvan/ui/mainscreen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
-import 'package:luanvan/ui/shop/add_category_screen.dart';
-import 'package:luanvan/ui/shop/add_location_shop_screen.dart';
-import 'package:luanvan/ui/shop/add_product_screen.dart';
-import 'package:luanvan/ui/shop/add_variant_screen.dart';
-import 'package:luanvan/ui/shop/my_product_screen.dart';
-import 'package:luanvan/ui/shop/my_shop_screen.dart';
-import 'package:luanvan/ui/shop/ship_setting_screen.dart';
-import 'package:luanvan/ui/shop/sign_shop.dart';
-import 'package:luanvan/ui/shop/start_shop.dart';
+import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/edit_variant_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/change_shop_info_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop/add_location_shop_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/add_variant_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop/ship_setting_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop/sign_shop.dart';
+import 'package:luanvan/ui/shop/sign_shop/start_shop.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
@@ -45,6 +50,8 @@ final Map<String, WidgetBuilder> routes = {
   MainScreen.routeName: (context) => const MainScreen(),
   HomeScreen.routeName: (context) => const HomeScreen(),
   DetaiItemScreen.routeName: (context) => const DetaiItemScreen(),
+  DetailsProductShopScreen.routeName: (context) =>
+      const DetailsProductShopScreen(),
   SearchScreen.routeName: (context) => const SearchScreen(),
   SearchResultScreen.routeName: (context) => const SearchResultScreen(),
   CartScreen.routeName: (context) => const CartScreen(),
@@ -71,6 +78,10 @@ final Map<String, WidgetBuilder> routes = {
   MyShopScreen.routeName: (context) => MyShopScreen(),
   MyProductScreen.routeName: (context) => MyProductScreen(),
   AddProductScreen.routeName: (context) => AddProductScreen(),
+  EditProductScreen.routeName: (context) => EditProductScreen(),
   AddCategoryScreen.routeName: (context) => AddCategoryScreen(),
   AddVariantScreen.routeName: (context) => AddVariantScreen(),
+  EditVariantScreen.routeName: (context) => EditVariantScreen(),
+  SettingShopScreen.routeName: (context) => SettingShopScreen(),
+  ChangeShopInfoScreen.routeName: (context) => ChangeShopInfoScreen(),
 };

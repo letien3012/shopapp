@@ -6,7 +6,6 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
-import 'package:luanvan/models/message.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   const ChatDetailScreen({super.key});
@@ -23,7 +22,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _shouldReverse = false;
   bool _hasMeasured = false;
   int _lastMessageCount = 0;
+  final FocusNode focusNode = FocusNode();
   final _scrollController = ScrollController();
+  bool _isKeyboardVisible = false;
   @override
   void initState() {
     super.initState();
@@ -41,12 +42,30 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   void dispose() {
+    focusNode.dispose();
     _chatController.dispose();
     super.dispose();
   }
 
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    if (date.day == now.day &&
+        date.month == now.month &&
+        date.year == now.year) {
+      return 'Hôm nay';
+    }
+    return '${date.day} tháng ${date.month}, ${date.year}';
+  }
+
+  String _formatTime(DateTime date) {
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
   @override
   Widget build(BuildContext context) {
+    print("viewInsets.bottom: ${MediaQuery.of(context).viewInsets.horizontal}");
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: BlocBuilder<AuthBloc, AuthState>(
@@ -58,7 +77,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             return SingleChildScrollView(
               padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).viewInsets.bottom),
-              physics: AlwaysScrollableScrollPhysics(),
               child: SizedBox(
                 height: MediaQuery.of(context).size.height,
                 child: Column(
@@ -156,6 +174,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final GlobalKey contentKey = GlobalKey();
 
     return Container(
+      key: contentKey,
       padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
       decoration: BoxDecoration(
         color: Colors.grey[200],
@@ -207,16 +226,45 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               });
             }
 
-            return ListView.builder(
-              controller: _scrollController,
-              key: contentKey,
-              reverse: _shouldReverse,
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                final isSender = message.senderId == currentUserId;
-                return Row(
+            List<Widget> messageWidgets = [];
+            DateTime? lastDate;
+
+            for (int index = 0; index < messages.length; index++) {
+              final message = messages[index];
+              final messageDate = message.sentAt; // Giả sử message có timestamp
+              final isSender = message.senderId == currentUserId;
+
+              // Kiểm tra xem có cần hiển thị nhãn ngày không
+              if (lastDate == null ||
+                  messageDate.day != lastDate.day ||
+                  messageDate.month != lastDate.month ||
+                  messageDate.year != lastDate.year) {
+                lastDate = messageDate;
+                messageWidgets.add(
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _formatDate(messageDate),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              // Tạo widget tin nhắn
+              messageWidgets.add(
+                Row(
                   mainAxisAlignment: isSender
                       ? MainAxisAlignment.end
                       : MainAxisAlignment.start,
@@ -228,15 +276,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         ),
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color:
-                              isSender ? Colors.green[200] : Colors.grey[300],
+                          color: isSender
+                              ? Colors.green[200] // Tin nhắn của người gửi
+                              : Colors.grey[300], // Tin nhắn của người nhận
                           borderRadius: BorderRadius.circular(10),
                         ),
                         margin: const EdgeInsets.only(bottom: 10),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(message.content),
+                            Text(
+                              message.content,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black,
+                              ),
+                            ),
                             if (message.imageUrl != null)
                               Image.network(
                                 message.imageUrl!,
@@ -248,13 +303,36 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                               Text('Sản phẩm: ${message.productId}'),
                             if (message.orderId != null)
                               Text('Đơn hàng: ${message.orderId}'),
+                            const SizedBox(height: 5),
+                            // Thêm thời gian của tin nhắn
+                            Text(
+                              _formatTime(messageDate),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.black54,
+                              ),
+                              textAlign:
+                                  isSender ? TextAlign.end : TextAlign.start,
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ],
-                );
-              },
+                ),
+              );
+            }
+
+            return SingleChildScrollView(
+              controller: _scrollController,
+              reverse: _shouldReverse,
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ListView(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                children: messageWidgets,
+              ),
             );
           }
           if (state is ChatError) {
@@ -272,7 +350,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Widget _buildInputArea(BuildContext context, String userId) {
-    final FocusNode focusNode = FocusNode();
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),

@@ -6,11 +6,13 @@ class Shop {
   final String? shopId;
   final String userId;
   final String name;
-  final Address address;
+  final List<Address> addresses;
   final String phoneNumber;
   final String email;
   final DateTime submittedAt;
   final String? avatarUrl;
+  final String? backgroundImageUrl;
+  final String? description;
   final bool isClose;
   final bool isLocked;
 
@@ -18,11 +20,13 @@ class Shop {
     this.shopId,
     required this.userId,
     required this.name,
-    required this.address,
+    required this.addresses,
     required this.phoneNumber,
     required this.email,
     required this.submittedAt,
     this.avatarUrl,
+    this.backgroundImageUrl,
+    this.description,
     required this.isClose,
     required this.isLocked,
   });
@@ -31,11 +35,13 @@ class Shop {
     String? shopId,
     String? userId,
     String? name,
-    Address? address,
+    List<Address>? addresses,
     String? phoneNumber,
     String? email,
     DateTime? submittedAt,
     String? avatarUrl,
+    String? backgroundImageUrl,
+    String? description,
     bool? isClose,
     bool? isLocked,
   }) {
@@ -43,11 +49,13 @@ class Shop {
       shopId: shopId ?? this.shopId,
       userId: userId ?? this.userId,
       name: name ?? this.name,
-      address: address ?? this.address,
+      addresses: addresses ?? this.addresses,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       email: email ?? this.email,
       submittedAt: submittedAt ?? this.submittedAt,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      backgroundImageUrl: backgroundImageUrl ?? this.backgroundImageUrl,
+      description: description ?? this.description,
       isClose: isClose ?? this.isClose,
       isLocked: isLocked ?? this.isLocked,
     );
@@ -58,13 +66,17 @@ class Shop {
       shopId: map['shopId'] as String?,
       userId: map['userId'] as String,
       name: map['name'] as String,
-      address: Address.fromMap(map['address'] as Map<String, dynamic>),
+      addresses: (map['addresses'] as List<dynamic>)
+          .map((e) => Address.fromMap(e as Map<String, dynamic>))
+          .toList(),
       phoneNumber: map['phoneNumber'] as String,
       email: map['email'] as String,
       submittedAt: (map['submittedAt'] is Timestamp)
           ? (map['submittedAt'] as Timestamp).toDate()
           : DateTime.parse(map['submittedAt'] as String),
       avatarUrl: map['avatarUrl'] as String?,
+      backgroundImageUrl: map['backgroundImageUrl'] as String?,
+      description: map['description'] as String?,
       isClose: map['isClose'] as bool,
       isLocked: map['isLocked'] as bool,
     );
@@ -76,11 +88,15 @@ class Shop {
       shopId: doc.id,
       userId: data['userId'] as String,
       name: data['name'] as String,
-      address: Address.fromMap(data['address'] as Map<String, dynamic>),
+      addresses: (data['addresses'] as List<dynamic>)
+          .map((e) => Address.fromMap(e as Map<String, dynamic>))
+          .toList(),
       phoneNumber: data['phoneNumber'] as String,
       email: data['email'] as String,
       submittedAt: (data['submittedAt'] as Timestamp).toDate(),
       avatarUrl: data['avatarUrl'] as String?,
+      backgroundImageUrl: data['backgroundImageUrl'] as String?,
+      description: data['description'] as String?,
       isClose: data['isClose'] as bool,
       isLocked: data['isLocked'] as bool,
     );
@@ -91,11 +107,13 @@ class Shop {
       'shopId': shopId,
       'userId': userId,
       'name': name,
-      'address': address.toMap(),
+      'addresses': addresses.map((address) => address.toMap()).toList(),
       'phoneNumber': phoneNumber,
       'email': email,
       'submittedAt': Timestamp.fromDate(submittedAt),
       'avatarUrl': avatarUrl,
+      'backgroundImageUrl': backgroundImageUrl,
+      'description': description,
       'isClose': isClose,
       'isLocked': isLocked,
     };
@@ -109,8 +127,9 @@ class Shop {
   @override
   String toString() {
     return 'Shop(shopId: $shopId, userId: $userId, name: $name, '
-        'address: $address, phoneNumber: $phoneNumber, email: $email, '
+        'addresses: $addresses, phoneNumber: $phoneNumber, email: $email, '
         'submittedAt: $submittedAt, avatarUrl: $avatarUrl, '
+        'backgroundImageUrl: $backgroundImageUrl, description: $description, '
         'isClose: $isClose, isLocked: $isLocked)';
   }
 }

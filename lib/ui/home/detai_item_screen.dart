@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
-import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
@@ -15,13 +13,11 @@ import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/chat/chat_detail_screen.dart';
-import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/item/review_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:intl/intl.dart';
@@ -89,15 +85,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     shop = Shop(
       userId: '',
       name: '',
-      address: Address(
-        addressLine: '',
-        city: '',
-        district: '',
-        ward: '',
-        isDefault: false,
-        receiverName: '',
-        receiverPhone: '',
-      ),
+      addresses: [],
       phoneNumber: '',
       email: '',
       submittedAt: DateTime.now(),
@@ -131,7 +119,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
         _searchIconColor = Colors.grey[500]!;
         _textSearchColor = Colors.grey[500]!;
       });
-    } else if (_appBarScrollController.offset >= 200.0) {
+    } else if (_appBarScrollController.offset >= 250.0) {
       setState(() {
         _appBarColor = Colors.white.withOpacity(0.7);
         _logoColor = Colors.white.withOpacity(0.7);
@@ -146,6 +134,11 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
       _searchIconColor = Colors.transparent;
       _textSearchColor = Colors.transparent;
     }
+  }
+
+  String formatPrice(double price) {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return formatter.format(price.toInt());
   }
 
   Widget _buildImageSlider(Product product) {
@@ -196,11 +189,6 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   }
 
   Widget _buildProductInfo(Product product) {
-    String formatPrice(double price) {
-      final formatter = NumberFormat('#,###', 'vi_VN');
-      return formatter.format(price.toInt());
-    }
-
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.all(10),
@@ -212,7 +200,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                product.variants.length > 1
+                (product.variants[0].options[0].name.isNotEmpty)
                     ? 'đ${formatPrice(product.getMinOptionPrice())} - đ${formatPrice(product.getMaxOptionPrice())}'
                     : 'đ${formatPrice(product.variants[0].options[0].price)}',
                 style: const TextStyle(
@@ -403,7 +391,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        shop.address.city,
+                        shop.addresses[0].city,
                         style:
                             const TextStyle(fontSize: 14, color: Colors.grey),
                         maxLines: 1,
@@ -1020,51 +1008,32 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                           Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              SvgPicture.asset(
-                                IconHelper.dong,
-                                color: Colors.red,
-                                height: 15,
-                                width: 15,
-                              ),
                               Text(
-                                product.variants.length > 1
-                                    ? '${product.getMinOptionPrice()}'
-                                    : "${product.variants[0].options[0].price}",
+                                (product.variants[0].options[0].name.isNotEmpty)
+                                    ? 'đ${formatPrice(product.getMinOptionPrice())} - '
+                                    : 'đ${formatPrice(product.variants[0].options[0].price)}',
                                 style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFFDD0000)),
+                                    color: Color.fromARGB(255, 151, 14, 4)),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (product.variants.length > 1)
-                                IntrinsicWidth(
-                                  child: Row(
-                                    children: [
-                                      SvgPicture.asset(
-                                        IconHelper.dong,
-                                        color: Colors.red,
-                                        height: 15,
-                                        width: 15,
-                                      ),
-                                      Text(
-                                        product.variants.length > 1
-                                            ? '${product.getMaxOptionPrice()}'
-                                            : "",
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFFDD0000)),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              Text(
+                                (product.variants[0].options[0].name.isNotEmpty)
+                                    ? 'đ${formatPrice(product.getMaxOptionPrice())}'
+                                    : '',
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color.fromARGB(255, 151, 14, 4)),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 10),
-                          const Text('Kho:',
+                          Text('Kho: ${product.getTotalOptionStock()}',
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w400)),
                         ],
@@ -1075,6 +1044,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
               ),
             ),
             Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                     height: 0.5,

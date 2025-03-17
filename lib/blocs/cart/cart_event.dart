@@ -1,5 +1,3 @@
-import 'package:luanvan/models/product.dart';
-
 abstract class CartEvent {}
 
 class AddCartEvent extends CartEvent {

@@ -2,20 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
-import 'package:luanvan/ui/checkout/add_location_screen.dart';
-import 'package:luanvan/ui/checkout/pick_location.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/helper/image_helper.dart';
-import 'package:luanvan/ui/shop/add_location_shop_screen.dart';
-import 'package:luanvan/ui/shop/my_shop_screen.dart';
-import 'package:luanvan/ui/shop/ship_setting_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop/add_location_shop_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop/ship_setting_screen.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
 import 'package:luanvan/ui/user/change_info/change_phone.dart';
 
@@ -185,7 +181,7 @@ class _SignShopState extends State<SignShop> {
     final Shop sellerRegistrationModel = Shop(
       userId: userId,
       name: _shopNameController.text,
-      address: address,
+      addresses: [],
       phoneNumber: _phoneController.text,
       email: _emailController.text,
       avatarUrl: avatarUrl,
@@ -193,7 +189,7 @@ class _SignShopState extends State<SignShop> {
       isClose: false,
       isLocked: false,
     );
-
+    sellerRegistrationModel.addresses.add(address);
     context
         .read<UserBloc>()
         .add(RegistrationSellerEvent(sellerRegistrationModel));

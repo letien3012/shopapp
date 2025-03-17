@@ -13,7 +13,8 @@ import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/shop/my_product_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
 
 class MyShopScreen extends StatefulWidget {
   const MyShopScreen({super.key});
@@ -458,10 +459,19 @@ class _MyShopScreenState extends State<MyShopScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Icon(
-                              HeroIcons.cog_8_tooth,
-                              color: Colors.brown,
-                              size: 30,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  SettingShopScreen.routeName,
+                                  arguments: shop.shopId,
+                                );
+                              },
+                              child: Icon(
+                                HeroIcons.cog_8_tooth,
+                                color: Colors.brown,
+                                size: 30,
+                              ),
                             ),
                             const SizedBox(
                               width: 10,

@@ -38,7 +38,11 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
   Future<void> _onUpdateShop(
       UpdateShopEvent event, Emitter<ShopState> emit) async {
     emit(ShopLoading());
-    try {} catch (e) {
+    try {
+      await _shopService.updateShop(event.shop);
+      final shop = await _shopService.fetchShopByShopId(event.shop.shopId!);
+      emit(ShopLoaded(shop));
+    } catch (e) {
       emit(ShopError(e.toString()));
     }
   }

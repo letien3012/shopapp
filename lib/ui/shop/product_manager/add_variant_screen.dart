@@ -562,7 +562,6 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
     if (!_validateDataBeforeSave()) return;
 
     try {
-      // Đồng bộ tất cả dữ liệu từ controllers vào _options và _variants trước khi lưu
       for (int i = 0; i < _variants.length; i++) {
         for (int j = 0; j < _options[i].length; j++) {
           final name = _labelOptionControllers[i][j].text;
@@ -571,7 +570,6 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
           final stock = _validateStock(_stockOptionControllers[i][j].text,
               _stockOptionControllers[i][j]);
 
-          // Cập nhật _options với dữ liệu từ controllers
           _options[i][j] = _options[i][j].copyWith(
             name: name,
             price: price,

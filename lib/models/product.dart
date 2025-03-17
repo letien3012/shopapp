@@ -14,7 +14,8 @@ class Product {
   String category;
   String videoUrl;
   String shopId;
-  bool isDeleted;
+  bool isViolated;
+  String violationReason;
   bool isHidden;
   bool hasVariantImages;
 
@@ -30,7 +31,8 @@ class Product {
     this.category = '',
     this.videoUrl = '',
     required this.shopId,
-    this.isDeleted = false,
+    this.isViolated = false,
+    this.violationReason = '',
     this.isHidden = false,
     this.hasVariantImages = false,
   });
@@ -47,7 +49,8 @@ class Product {
     String? category,
     String? videoUrl,
     String? shopId,
-    bool? isDeleted,
+    bool? isViolated,
+    String? violationReason,
     bool? isHidden,
     bool? hasVariantImages,
   }) {
@@ -63,7 +66,8 @@ class Product {
       category: category ?? this.category,
       videoUrl: videoUrl ?? this.videoUrl,
       shopId: shopId ?? this.shopId,
-      isDeleted: isDeleted ?? this.isDeleted,
+      isViolated: isViolated ?? this.isViolated,
+      violationReason: violationReason ?? this.violationReason,
       isHidden: isHidden ?? this.isHidden,
       hasVariantImages: hasVariantImages ?? this.hasVariantImages,
     );
@@ -82,7 +86,8 @@ class Product {
       'category': category,
       'videoUrl': videoUrl,
       'shopId': shopId,
-      'isDeleted': isDeleted,
+      'isViolated': isViolated,
+      'violationReason': violationReason,
       'isHidden': isHidden,
       'hasVariantImages': hasVariantImages,
     };
@@ -105,11 +110,13 @@ class Product {
       category: map['category'] as String? ?? '',
       videoUrl: map['videoUrl'] as String? ?? '',
       shopId: map['shopId'] as String,
-      isDeleted: map['isDeleted'] as bool? ?? false,
+      isViolated: map['isViolated'] as bool? ?? false,
+      violationReason: map['violationReason'] as String? ?? '',
       isHidden: map['isHidden'] as bool? ?? false,
       hasVariantImages: map['hasVariantImages'] as bool? ?? false,
     );
   }
+
   factory Product.fromFirestore(DocumentSnapshot doc) {
     final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
@@ -133,11 +140,13 @@ class Product {
       category: data['category'] as String? ?? '',
       videoUrl: data['videoUrl'] as String? ?? '',
       shopId: data['shopId'] as String? ?? '',
-      isDeleted: data['isDeleted'] as bool? ?? false,
+      isViolated: data['isViolated'] as bool? ?? false,
+      violationReason: data['violationReason'] as String? ?? '',
       isHidden: data['isHidden'] as bool? ?? false,
       hasVariantImages: data['hasVariantImages'] as bool? ?? false,
     );
   }
+
   String toJson() => json.encode(toMap());
 
   factory Product.fromJson(String source) =>
@@ -145,7 +154,7 @@ class Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isDeleted: $isDeleted, isHidden: $isHidden, hasVariantImages: $hasVariantImages)';
+    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isViolated: $isViolated, violationReason: $violationReason, isHidden: $isHidden, hasVariantImages: $hasVariantImages)';
   }
 
   double getMaxOptionPrice() {
@@ -194,5 +203,17 @@ class Product {
     if (allStocks.isEmpty) return 0;
 
     return allStocks.reduce((a, b) => a < b ? a : b);
+  }
+
+  int getTotalOptionStock() {
+    if (variants.isEmpty) return 0;
+
+    List<int> allStocks = variants
+        .expand((variant) => variant.options.map((option) => option.stock))
+        .toList();
+
+    if (allStocks.isEmpty) return 0;
+
+    return allStocks.reduce((a, b) => a + b);
   }
 }

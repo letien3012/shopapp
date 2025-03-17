@@ -15,8 +15,8 @@ import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
-import 'package:luanvan/ui/shop/my_shop_screen.dart';
-import 'package:luanvan/ui/shop/start_shop.dart';
+import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop/start_shop.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
 

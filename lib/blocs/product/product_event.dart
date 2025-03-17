@@ -14,7 +14,8 @@ class UpdateProductEvent extends ProductEvent {
 
 class DeleteProductByIdEvent extends ProductEvent {
   String productId;
-  DeleteProductByIdEvent(this.productId);
+  String shopId;
+  DeleteProductByIdEvent(this.productId, this.shopId);
 }
 
 class FetchProductEventById extends ProductEvent {

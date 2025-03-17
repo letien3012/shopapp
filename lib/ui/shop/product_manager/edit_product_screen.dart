@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,8 +9,6 @@ import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/blocs/user/user_bloc.dart';
-import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_option.dart';
 import 'package:luanvan/models/product_variant.dart';
@@ -19,19 +16,20 @@ import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/shop/add_category_screen.dart';
-import 'package:luanvan/ui/shop/add_variant_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/add_variant_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/edit_variant_screen.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
-class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
-  static String routeName = 'add_product';
+class EditProductScreen extends StatefulWidget {
+  const EditProductScreen({super.key});
+  static String routeName = 'edit_product';
 
   @override
-  State<AddProductScreen> createState() => _AddProductScreenState();
+  State<EditProductScreen> createState() => _EditProductScreenState();
 }
 
-class _AddProductScreenState extends State<AddProductScreen> {
+class _EditProductScreenState extends State<EditProductScreen> {
   late UserInfoModel user;
   late List<ProductOption> productOption;
   late List<ProductVariant> productVariant;
@@ -48,26 +46,47 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   void initState() {
     product = Product(
-        id: '',
-        name: '',
-        quantitySold: 0,
-        description: '',
-        averageRating: 0,
-        variants: [
-          // ProductVariant(label: "Màu sắc", options: [
-          //   ProductOption(price: 0, stock: 0, name: "Trắng"),
-          //   ProductOption(price: 0, stock: 0, name: "Đen")
-          // ]),
-          // ProductVariant(label: "Kích thước", options: [
-          //   ProductOption(price: 0, stock: 0, name: "S"),
-          //   ProductOption(price: 0, stock: 0, name: "M"),
-          //   ProductOption(price: 0, stock: 0, name: "L")
-          // ]),
-        ],
-        shopId: '',
-        isDeleted: false,
-        isHidden: false,
-        hasVariantImages: false);
+      id: '',
+      name: '',
+      quantitySold: 0,
+      description: '',
+      averageRating: 0,
+      variants: [],
+      shopId: '',
+      isViolated: false,
+      isHidden: false,
+      hasVariantImages: false,
+    );
+    user = UserInfoModel(id: '', role: 0);
+    Future.microtask(() {
+      final args =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      user = args['user'] as UserInfoModel;
+      product = args['product'] as Product;
+      _nameController.text = product.name;
+      _descriptionController.text = product.description;
+      _category =
+          product.category.isNotEmpty ? product.category : "Chọn ngành hàng";
+      _imageFiles = product.imageUrl.map((url) => XFile(url)).toList();
+      if (product.variants.isNotEmpty) {
+        _product_variant = product.variants.map((v) => v.label).join(", ");
+        if (product.variants.length == 1 &&
+            product.variants[0].options.length == 1) {
+          _priceController.text =
+              product.variants[0].options[0].price.toString();
+          _stockController.text =
+              product.variants[0].options[0].stock.toString();
+        } else {
+          _priceController.text =
+              "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
+          _stockController.text = "${product.getMaxOptionStock()}";
+        }
+      } else {
+        _priceController.text = '';
+        _stockController.text = '';
+      }
+    });
+
     super.initState();
   }
 
@@ -155,15 +174,36 @@ class _AddProductScreenState extends State<AddProductScreen> {
       product.category = _category;
       product.description = _descriptionController.text;
       List<String> _listImageUrl = [];
-
       for (int i = 0; i < _imageFiles.length; i++) {
-        String? downloadUrl = await _storageService.uploadFile(
-            File(_imageFiles[i].path), 'image', '', '');
-        if (downloadUrl != null) {
-          _listImageUrl.add(downloadUrl);
+        if (!_imageFiles[i].path.startsWith('http')) {
+          String? downloadUrl = await _storageService.uploadFile(
+              File(_imageFiles[i].path), 'image', '', '');
+          if (downloadUrl != null) {
+            _listImageUrl.add(downloadUrl);
+          }
+        } else {
+          _listImageUrl.add(_imageFiles[i].path);
         }
       }
-      if (product.variants.length == 0) {
+      if (product.hasVariantImages) {
+        for (int i = 0; i < product.variants[0].options.length; i++) {
+          if (!product.variants[0].options[i].imageUrl!.startsWith('http')) {
+            String? downloadUrl = await _storageService.uploadFile(
+                File(product.variants[0].options[i].imageUrl!),
+                'image',
+                '',
+                '');
+            if (downloadUrl != null) {
+              product.variants[0].options[i].imageUrl = downloadUrl;
+            }
+          }
+        }
+      } else {
+        for (int i = 0; i < product.variants[0].options.length; i++) {
+          product.variants[0].options[i].imageUrl = '';
+        }
+      }
+      if (product.variants.isEmpty) {
         product.variants.add(ProductVariant(label: '', options: [
           ProductOption(
               price: double.parse(_priceController.text),
@@ -174,14 +214,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
       product.imageUrl = _listImageUrl;
       product.shopId = shopId;
 
-      context.read<ProductBloc>().add(AddProductEvent(product));
+      context.read<ProductBloc>().add(UpdateProductEvent(product));
       Navigator.of(context).pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
     context.read<ShopBloc>().add(FetchShopEvent(user.id));
     return Scaffold(body: BlocBuilder<ShopBloc, ShopState>(
       builder: (context, shopState) {
@@ -197,17 +236,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
     ));
   }
 
-  // Trạng thái đang tải
   Widget _buildLoading() {
     return const Center(child: CircularProgressIndicator());
   }
 
-  // Trạng thái lỗi
   Widget _buildError(String message) {
     return Center(child: Text('Error: $message'));
   }
 
-  // Trạng thái khởi tạo
   Widget _buildInitializing() {
     return const Center(child: Text('Đang khởi tạo'));
   }
@@ -225,7 +261,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hình ảnh/Video sản phẩm
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -268,12 +303,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     key: ValueKey(index),
                                     children: [
                                       Positioned.fill(
-                                        child: Image.file(
-                                          File(
-                                            _imageFiles[index].path,
-                                          ),
-                                          fit: BoxFit.cover,
-                                        ),
+                                        child: _imageFiles[index]
+                                                .path
+                                                .startsWith('http')
+                                            ? Image.network(
+                                                _imageFiles[index].path,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Image.file(
+                                                File(_imageFiles[index].path),
+                                                fit: BoxFit.cover,
+                                              ),
                                       ),
                                       Align(
                                         alignment: Alignment.topRight,
@@ -322,8 +362,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           ),
                           onReorder: (int oldIndex, int newIndex) {
                             if (oldIndex == _imageFiles.length ||
-                                newIndex == _imageFiles.length)
-                              return; // Không cho kéo phần tử cuối
+                                newIndex == _imageFiles.length) return;
                             setState(() {
                               final item = _imageFiles.removeAt(oldIndex);
                               _imageFiles.insert(newIndex, item);
@@ -334,7 +373,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Tên sản phẩm
                   Container(
                     color: Colors.white,
                     padding: const EdgeInsets.all(16),
@@ -384,7 +422,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               return "Vui lòng nhập tên sản phẩm";
                             }
                             if (value.length < 10) {
-                              return "Tến sản phẩm ít nhất 10 ký tự";
+                              return "Tên sản phẩm ít nhất 10 ký tự";
                             }
                             return null;
                           },
@@ -393,7 +431,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Mô tả sản phẩm
                   Container(
                     color: Colors.white,
                     padding: const EdgeInsets.all(16),
@@ -453,7 +490,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Ngành hàng
                   GestureDetector(
                     onTap: () async {
                       final result = await Navigator.pushNamed(
@@ -509,37 +545,34 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     onTap: () async {
                       final updatedProduct = await Navigator.pushNamed(
                         context,
-                        AddVariantScreen.routeName,
+                        EditVariantScreen.routeName,
                         arguments: product,
                       );
 
                       if (updatedProduct != null && updatedProduct is Product) {
                         setState(() {
                           product = updatedProduct;
-                          if (product.variants.length > 0)
+                          if (product.variants.isNotEmpty)
                             _product_variant = product.variants
                                 .map((val) => val.label)
-                                .toString();
+                                .join(", ");
                           else
                             _product_variant = 'Thiết lập màu sắc kích thước';
                           if (product.variants.length == 1 &&
-                              product.variants[0].options.length == 1)
+                              product.variants[0].options.length == 1) {
                             _priceController.text =
                                 product.variants[0].options[0].price.toString();
-                          else if (product.variants.length == 0)
-                            _priceController.text = '';
-                          else
-                            _priceController.text =
-                                "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
-                          if (product.variants.length == 1 &&
-                              product.variants[0].options.length == 1)
                             _stockController.text =
                                 product.variants[0].options[0].stock.toString();
-                          else if (product.variants.length == 0)
+                          } else if (product.variants.isEmpty) {
+                            _priceController.text = '';
                             _stockController.text = '';
-                          else
+                          } else {
+                            _priceController.text =
+                                "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
                             _stockController.text =
                                 "${product.getMaxOptionStock()}";
+                          }
                         });
                       }
                     },
@@ -576,7 +609,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Giá
                   Container(
                     color: Colors.white,
                     padding:
@@ -617,7 +649,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               border: InputBorder.none,
                             ),
                             validator: (value) {
-                              if (product.variants.length > 0) return null;
+                              if (product.variants.isNotEmpty) return null;
                               if (value == null || value.isEmpty) {
                                 return "Vui lòng nhập giá";
                               }
@@ -632,7 +664,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Kho hàng
                   Container(
                     color: Colors.white,
                     padding:
@@ -673,7 +704,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               border: InputBorder.none,
                             ),
                             validator: (value) {
-                              if (product.variants.length > 0) return null;
+                              if (product.variants.isNotEmpty) return null;
                               if (value == null || value.isEmpty) {
                                 return "Vui lòng nhập số lượng";
                               }
@@ -687,52 +718,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       ],
                     ),
                   ),
-
-                  // Phí vận chuyển
-                  // Container(
-                  //   color: Colors.white,
-                  //   padding: const EdgeInsets.all(16),
-                  //   child: Row(
-                  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //     children: [
-                  //       const Text(
-                  //         "Phí vận chuyển (Cân nặng/Kích thước) *",
-                  //         style: TextStyle(
-                  //             fontSize: 16, fontWeight: FontWeight.w500),
-                  //       ),
-                  //       GestureDetector(
-                  //         onTap: () {
-                  //           // Logic cài đặt phí vận chuyển
-                  //           setState(() {
-                  //             _shippingInfo = "Đã cài đặt"; // Ví dụ
-                  //           });
-                  //         },
-                  //         child: Row(
-                  //           children: [
-                  //             Text(
-                  //               _shippingInfo,
-                  //               style: TextStyle(
-                  //                 fontSize: 16,
-                  //                 color: _shippingInfo == "Cân nặng/Kích thước"
-                  //                     ? Colors.grey
-                  //                     : Colors.black,
-                  //               ),
-                  //             ),
-                  //             const SizedBox(width: 5),
-                  //             const Icon(Icons.arrow_forward_ios,
-                  //                 size: 16, color: Colors.grey),
-                  //           ],
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
                 ],
               ),
             ),
           ),
         ),
-        // AppBar
         Align(
           alignment: Alignment.topCenter,
           child: Container(
@@ -746,7 +736,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Icon trở về
                 GestureDetector(
                   onTap: () {
                     Navigator.of(context).pop();
@@ -775,7 +764,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ),
           ),
         ),
-        //Bottom Appbar
         Align(
           alignment: Alignment.bottomCenter,
           child: Container(

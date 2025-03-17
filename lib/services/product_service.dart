@@ -34,7 +34,16 @@ class ProductService {
     return product;
   }
 
-  Future<void> deleteProductById(String productId) async {}
-  Future<void> UpdateProductById(String productId) async {}
+  Future<void> deleteProduct(String productId) async {
+    await firebaseFirestore.collection('products').doc(productId).delete();
+  }
+
+  Future<void> UpdateProduct(Product product) async {
+    await firebaseFirestore
+        .collection('products')
+        .doc(product.id)
+        .update(product.toMap());
+  }
+
   Future<void> fetchProductById(String productId) async {}
 }

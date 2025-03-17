@@ -10,13 +10,6 @@ class ShopService {
         .where('userId', isEqualTo: userId)
         .limit(1)
         .get();
-    if (querySnapshot.docs.isNotEmpty) {
-      for (var doc in querySnapshot.docs) {
-        print("User Data: ${doc.data()}");
-      }
-    } else {
-      print("User not found!");
-    }
     final Shop shop = Shop.fromFirestore(
         querySnapshot.docs.first as DocumentSnapshot<Map<String, dynamic>>);
     return shop;
@@ -31,11 +24,11 @@ class ShopService {
     return shop;
   }
 
-  Future<void> updateShop(String userName, String userId) async {
+  Future<void> updateShop(Shop shop) async {
     await firebaseFirestore
-        .collection('users')
-        .doc(userId)
-        .update({'userName': '(changed)$userName'});
+        .collection('shops')
+        .doc(shop.shopId)
+        .update(shop.toMap());
   }
 
   Future<void> hideShop(Shop sellerRegistration) async {

@@ -2,20 +2,20 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/blocs/user/user_bloc.dart';
-import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/shop/add_product_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
 
 class MyProductScreen extends StatefulWidget {
   const MyProductScreen({super.key});
@@ -28,6 +28,7 @@ class _MyProductScreenState extends State<MyProductScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late UserInfoModel user;
+  late Shop shop;
   final ScrollController _scrollController = ScrollController();
   @override
   void initState() {
@@ -49,6 +50,24 @@ class _MyProductScreenState extends State<MyProductScreen>
       duration: Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
+  }
+
+  void _hideProduct(Product product) {
+    context.read<ProductBloc>().add(UpdateProductEvent(product));
+  }
+
+  void _editProduct(Product product) {
+    Navigator.of(context).pushNamed(
+      EditProductScreen.routeName,
+      arguments: {
+        'user': user,
+        'product': product,
+      },
+    );
+  }
+
+  void _deleteProduct(String productId, String shopId) {
+    context.read<ProductBloc>().add(DeleteProductByIdEvent(productId, shopId));
   }
 
   @override
@@ -109,21 +128,21 @@ class _MyProductScreenState extends State<MyProductScreen>
     // Lọc danh sách sản phẩm theo từng trạng thái
     final inStockProducts = listProduct
         .where((product) =>
-            !product.isDeleted &&
+            !product.isViolated &&
             !product.isHidden &&
             product.getMaxOptionStock() > 0)
         .toList();
     final outOfStockProducts = listProduct
         .where((product) =>
-            !product.isDeleted &&
+            !product.isViolated &&
             !product.isHidden &&
             product.getMaxOptionStock() == 0)
         .toList();
     final hiddenProducts = listProduct
-        .where((product) => !product.isDeleted && product.isHidden)
+        .where((product) => !product.isViolated && product.isHidden)
         .toList();
-    final deletedProducts =
-        listProduct.where((product) => product.isDeleted).toList();
+    final violatedProducts =
+        listProduct.where((product) => product.isViolated).toList();
 
     return Stack(
       children: [
@@ -163,7 +182,7 @@ class _MyProductScreenState extends State<MyProductScreen>
                         Tab(text: 'Còn hàng (${inStockProducts.length})'),
                         Tab(text: 'Hết hàng (${outOfStockProducts.length})'),
                         Tab(text: 'Đã ẩn (${hiddenProducts.length})'),
-                        Tab(text: 'Đã xóa (${deletedProducts.length})'),
+                        Tab(text: 'Vi phạm (${violatedProducts.length})'),
                       ],
                     ),
                   ),
@@ -180,9 +199,9 @@ class _MyProductScreenState extends State<MyProductScreen>
                       hiddenProducts.isEmpty
                           ? _buildEmptyTab("Không có sản phẩm đã ẩn")
                           : _buildProductList(hiddenProducts), // Đã ẩn
-                      deletedProducts.isEmpty
-                          ? _buildEmptyTab("Không có sản phẩm đã xóa")
-                          : _buildProductList(deletedProducts), // Đã xóa
+                      violatedProducts.isEmpty
+                          ? _buildEmptyTab("Không có sản phẩm vi phạm")
+                          : _buildProductList(violatedProducts), // Đã xóa
                     ],
                   ),
                 ),
@@ -305,57 +324,64 @@ class _MyProductScreenState extends State<MyProductScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  // Hình ảnh sản phẩm
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      product.imageUrl.isNotEmpty
-                          ? product.imageUrl[0]
-                          : 'https://via.placeholder.com/80',
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Image.network(
-                        'https://via.placeholder.com/80',
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                      context, DetailsProductShopScreen.routeName,
+                      arguments: {'product': product});
+                },
+                child: Row(
+                  children: [
+                    // Hình ảnh sản phẩm
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        product.imageUrl.isNotEmpty
+                            ? product.imageUrl[0]
+                            : 'https://via.placeholder.com/80',
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Image.network(
+                          'https://via.placeholder.com/80',
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          product.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          product.variants.isNotEmpty
-                              ? "₫${product.getMinOptionPrice()} - ₫${product.getMaxOptionPrice()}"
-                              : "₫0",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(height: 5),
+                          Text(
+                            product.variants.isNotEmpty
+                                ? "₫${product.getMinOptionPrice()} - ₫${product.getMaxOptionPrice()}"
+                                : "₫0",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 5),
               Row(
@@ -414,11 +440,21 @@ class _MyProductScreenState extends State<MyProductScreen>
               // Nút hành động
               Row(
                 children: [
-                  _buildActionButton("Ẩn", Colors.white, Colors.black),
+                  _buildActionButton(
+                      product.isHidden ? "Hiện" : "Ẩn",
+                      Colors.white,
+                      Colors.black,
+                      product.isHidden
+                          ? () =>
+                              _hideProduct(product.copyWith(isHidden: false))
+                          : () =>
+                              _hideProduct(product.copyWith(isHidden: true))),
                   const SizedBox(width: 10),
-                  _buildActionButton("Sửa", Colors.brown, Colors.white),
+                  _buildActionButton("Sửa", Colors.brown, Colors.white,
+                      () => _editProduct(product)),
                   const SizedBox(width: 10),
-                  _buildActionButton("Xóa", Colors.red[800]!, Colors.white),
+                  _buildActionButton("Xóa", Colors.red[800]!, Colors.white,
+                      () => _deleteProduct(product.id, product.shopId)),
                 ],
               ),
             ],
@@ -429,20 +465,28 @@ class _MyProductScreenState extends State<MyProductScreen>
   }
 
   // Nút hành động (Ẩn, Sửa, Xóa)
-  Widget _buildActionButton(String label, Color bgColor, Color textColor) {
-    return Container(
-      height: 35,
-      width: 80,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor,
-        border: Border.all(color: Colors.grey[400]!),
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 14, color: textColor),
+  Widget _buildActionButton(
+      String label, Color bgColor, Color textColor, VoidCallback onTap) {
+    return Material(
+      color: bgColor,
+      child: InkWell(
+        splashColor: bgColor.withOpacity(0.2),
+        highlightColor: bgColor.withOpacity(0.1),
+        onTap: onTap,
+        child: Container(
+          height: 35,
+          width: 80,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[400]!),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 14, color: textColor),
+          ),
+        ),
       ),
     );
   }

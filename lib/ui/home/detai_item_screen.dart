@@ -73,15 +73,15 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
       productOptionIndexes: {},
     );
     product = Product(
-      id: '',
-      name: 'name',
-      quantitySold: 0,
-      description: '',
-      averageRating: 0,
-      variants: [],
-      shopId: '',
-      imageUrl: [],
-    );
+        id: '',
+        name: 'name',
+        quantitySold: 0,
+        description: '',
+        averageRating: 0,
+        variants: [],
+        shopId: '',
+        imageUrl: [],
+        shippingMethods: []);
     shop = Shop(
       userId: '',
       name: '',
@@ -91,6 +91,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
       submittedAt: DateTime.now(),
       isClose: false,
       isLocked: false,
+      shippingMethods: [],
     );
 
     _imageController.addListener(() {
@@ -200,7 +201,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                (product.variants[0].options[0].name.isNotEmpty)
+                (product.variants[0].label.isNotEmpty)
                     ? 'đ${formatPrice(product.getMinOptionPrice())} - đ${formatPrice(product.getMaxOptionPrice())}'
                     : 'đ${formatPrice(product.variants[0].options[0].price)}',
                 style: const TextStyle(
@@ -1009,7 +1010,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
-                                (product.variants[0].options[0].name.isNotEmpty)
+                                (product.variants[0].label.isNotEmpty)
                                     ? 'đ${formatPrice(product.getMinOptionPrice())} - '
                                     : 'đ${formatPrice(product.variants[0].options[0].price)}',
                                 style: const TextStyle(
@@ -1020,7 +1021,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                (product.variants[0].options[0].name.isNotEmpty)
+                                (product.variants[0].label.isNotEmpty)
                                     ? 'đ${formatPrice(product.getMaxOptionPrice())}'
                                     : '',
                                 style: const TextStyle(

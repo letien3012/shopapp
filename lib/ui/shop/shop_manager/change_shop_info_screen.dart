@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
@@ -24,18 +25,12 @@ class ChangeShopInfoScreen extends StatefulWidget {
 
 class _ChangeShopInfoScreenState extends State<ChangeShopInfoScreen> {
   final StorageService _storageService = StorageService();
-  final ImagePicker _imagePicker = ImagePicker();
-  Gender _selectedGender = Gender.unknown;
-  String _selectedDate = '';
-  final GlobalKey<PopupMenuButtonState<Gender>> _popupMenuKey =
-      GlobalKey<PopupMenuButtonState<Gender>>();
   TextEditingController _nameController = TextEditingController();
   TextEditingController _descriptionController = TextEditingController();
-  TextEditingController _dateController = TextEditingController();
   TextEditingController _avatarUrlController = TextEditingController();
   TextEditingController _backgroundUrlController = TextEditingController();
   bool _isInfoChange = false;
-
+  final _formKey = GlobalKey<FormState>();
   Future<void> _uploadAvatar(String userId, XFile image) async {
     try {
       File imageFile = File(image.path);
@@ -52,6 +47,84 @@ class _ChangeShopInfoScreenState extends State<ChangeShopInfoScreen> {
         SnackBar(content: Text('Lỗi tải ảnh: $e')),
       );
     }
+  }
+
+  Future<void> _uploadBackground(String userId, XFile image) async {
+    try {
+      File imageFile = File(image.path);
+      String? downloadUrl = await _storageService.uploadFile(
+          imageFile, 'image', 'background', userId);
+      if (downloadUrl != null) {
+        _backgroundUrlController.text = downloadUrl;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tải ảnh lên thành công')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tải ảnh: $e')),
+      );
+    }
+  }
+
+  void showImagePickMethod(
+      BuildContext context, TextEditingController controller) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          titlePadding: EdgeInsets.symmetric(vertical: 10),
+          contentPadding: EdgeInsets.symmetric(vertical: 10),
+          title: Stack(
+            children: [
+              Center(
+                child: Text(
+                  'Thao tác',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ListTile(
+                title: Text('Chụp ảnh'),
+                onTap: () async {
+                  final pickedImage =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
+                  if (pickedImage != null) {
+                    controller.text = pickedImage.path;
+                    setState(() {
+                      _isInfoChange = true;
+                    });
+                  }
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text('Thư viện hình ảnh'),
+                onTap: () async {
+                  final pickedImage = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
+                  if (pickedImage != null) {
+                    controller.text = pickedImage.path;
+                    setState(() {
+                      _isInfoChange = true;
+                    });
+                  }
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -128,17 +201,16 @@ class _ChangeShopInfoScreenState extends State<ChangeShopInfoScreen> {
         child: Column(
           children: [
             _buildAvatarSection(shop),
-            _buildSpacer(10),
-            _buildNameShop(),
-            _buildSpacer(10),
-            _buildDescriptionShop()
-
-            // _buildSpacer(10),
-            // _buildDateItem(context, "Ngày sinh", userState.user),
-            // _buildPhoneItem(
-            //     "Số điện thoại", _maskPhoneNumber(userState.user.phone ?? "")),
-            // _buildSpacer(10),
-            // _buildEmailItem("Email", _maskEmail(userState.user.email ?? "")),
+            Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildSpacer(10),
+                    _buildNameShop(),
+                    _buildSpacer(10),
+                    _buildDescriptionShop()
+                  ],
+                ))
           ],
         ),
       ),
@@ -157,17 +229,21 @@ class _ChangeShopInfoScreenState extends State<ChangeShopInfoScreen> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Colors.grey[300],
+              image: shop.backgroundImageUrl != null
+                  ? DecorationImage(
+                      image: _backgroundUrlController.text.startsWith('http')
+                          ? NetworkImage(
+                              _backgroundUrlController.text,
+                            )
+                          : FileImage(
+                              File(_backgroundUrlController.text),
+                            ),
+                      fit: BoxFit.fitWidth)
+                  : null,
             ),
             child: GestureDetector(
               onTap: () async {
-                final XFile? image =
-                    await _imagePicker.pickImage(source: ImageSource.gallery);
-                if (image != null) {
-                  setState(() {
-                    _avatarUrlController.text = image.path;
-                    _isInfoChange = true;
-                  });
-                }
+                showImagePickMethod(context, _avatarUrlController);
               },
               child: Stack(
                 children: [
@@ -214,15 +290,8 @@ class _ChangeShopInfoScreenState extends State<ChangeShopInfoScreen> {
           Align(
               alignment: Alignment.bottomCenter,
               child: GestureDetector(
-                onTap: () async {
-                  final XFile? image =
-                      await _imagePicker.pickImage(source: ImageSource.gallery);
-                  if (image != null) {
-                    setState(() {
-                      _avatarUrlController.text = image.path;
-                      _isInfoChange = true;
-                    });
-                  }
+                onTap: () {
+                  showImagePickMethod(context, _backgroundUrlController);
                 },
                 child: Container(
                     color: Colors.black54,
@@ -342,177 +411,6 @@ class _ChangeShopInfoScreenState extends State<ChangeShopInfoScreen> {
     );
   }
 
-  // Mục ngày sinh với DatePicker
-  Widget _buildDateItem(
-      BuildContext context, String title, UserInfoModel user) {
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        splashColor: Colors.grey.withOpacity(0.3),
-        highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: () async {
-          DateTime? pickedDate = await showDatePicker(
-            context: context,
-            helpText: 'Chọn ngày sinh',
-            cancelText: 'Hủy',
-            confirmText: 'Xác nhận',
-            locale: Locale('vi'),
-            initialDate: DateTime.now(),
-            firstDate: DateTime(1900),
-            lastDate: DateTime.now(),
-            builder: (context, child) {
-              return Theme(
-                data: ThemeData.light().copyWith(
-                  primaryColor: Colors.brown, // Màu chính
-                  hintColor: Colors.brown, // Màu gợi ý
-                  colorScheme: const ColorScheme.light(
-                    primary: Colors.brown, // Màu tiêu đề & nút chọn
-                    onPrimary: Colors.white, // Màu chữ của tiêu đề & nút chọn
-                    onSurface: Colors.black, // Màu chữ trên bề mặt
-                  ),
-                  dialogBackgroundColor: Colors.white, // Màu nền
-                ),
-                child: child!,
-              );
-            },
-          );
-          if (pickedDate != null) {
-            setState(() {
-              _selectedDate =
-                  "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-              _dateController.text = _selectedDate;
-              if (_dateController.text != user.date) {
-                setState(() {
-                  _isInfoChange = true;
-                });
-              }
-            });
-          }
-        },
-        child: Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(width: 0.1, color: Colors.grey)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              Row(
-                children: [
-                  Text(_selectedDate != '' ? _selectedDate : "Thiết lập ngay",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: _selectedDate.isNotEmpty
-                            ? Colors.black
-                            : Colors.grey,
-                      )),
-                  const SizedBox(width: 5),
-                  const Icon(Icons.arrow_forward_ios, size: 16),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhoneItem(String title, String value) {
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        splashColor: Colors.grey.withOpacity(0.3),
-        highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: () {
-          Navigator.of(context).pushNamed(ChangeName.routeName);
-        },
-        child: Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(width: 0.2, color: Colors.grey)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              Row(
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: value == "Thiết lập ngay"
-                          ? Colors.grey
-                          : Colors.black,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  const Icon(Icons.arrow_forward_ios, size: 16),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmailItem(String title, String value) {
-    return Material(
-      color: Colors.white,
-      child: InkWell(
-        splashColor: Colors.grey.withOpacity(0.3),
-        highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: () {
-          Navigator.of(context).pushNamed(ChangeName.routeName);
-        },
-        child: Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(width: 0.2, color: Colors.grey)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              Row(
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: value == "Thiết lập ngay"
-                          ? Colors.grey
-                          : Colors.black,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  const Icon(Icons.arrow_forward_ios, size: 16),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   // AppBar
   Widget _buildAppBar(BuildContext context, Shop shop) {
     return Align(
@@ -550,16 +448,23 @@ class _ChangeShopInfoScreenState extends State<ChangeShopInfoScreen> {
             ),
             GestureDetector(
               onTap: () async {
-                if (_isInfoChange) {
+                if (_isInfoChange && _formKey.currentState!.validate()) {
                   if (!_avatarUrlController.text.startsWith('http')) {
                     await _uploadAvatar(
                         shop.shopId!, XFile(_avatarUrlController.text));
                   }
-
-                  // context
-                  //     .read<UserBloc>()
-                  //     .add(UpdateBasicInfoUserEvent(userUpdate));
-                  // Navigator.of(context).pop();
+                  if (!_backgroundUrlController.text.startsWith('http')) {
+                    await _uploadBackground(
+                        shop.shopId!, XFile(_backgroundUrlController.text));
+                  }
+                  final updateShop = shop.copyWith(
+                    avatarUrl: _avatarUrlController.text,
+                    backgroundImageUrl: _backgroundUrlController.text,
+                    name: _nameController.text,
+                    description: _descriptionController.text,
+                  );
+                  context.read<ShopBloc>().add(UpdateShopEvent(updateShop));
+                  Navigator.of(context).pop();
                 }
               },
               child: Container(
@@ -577,21 +482,5 @@ class _ChangeShopInfoScreenState extends State<ChangeShopInfoScreen> {
         ),
       ),
     );
-  }
-
-  // Hàm ẩn số điện thoại
-  String _maskPhoneNumber(String phone) {
-    if (phone.isEmpty || phone.length < 2) {
-      return "Thiết lập ngay";
-    }
-    return '********${phone.substring(phone.length - 2)}';
-  }
-
-  // Hàm ẩn email
-  String _maskEmail(String email) {
-    if (email.isEmpty || !email.contains('@')) {
-      return "Thiết lập ngay";
-    }
-    return '${email[0]}****${email[email.indexOf('@') - 1]}@gmail.com';
   }
 }

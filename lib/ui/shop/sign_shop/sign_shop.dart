@@ -6,6 +6,7 @@ import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/address.dart';
+import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -46,6 +47,7 @@ class _SignShopState extends State<SignShop> {
   // Quản lý hai tham số vận chuyển
   bool isFastEnabled = false;
   bool isEconomyEnabled = false;
+  bool isExpress = false;
   bool isCompleted = false; // Trạng thái hoàn thành
   bool isRegisCompelete = false;
   Future<bool> _showExitConfirmationDialog() async {
@@ -188,7 +190,19 @@ class _SignShopState extends State<SignShop> {
       submittedAt: DateTime.now(),
       isClose: false,
       isLocked: false,
+      shippingMethods: [],
     );
+    sellerRegistrationModel.shippingMethods
+        .addAll(ShippingMethod.defaultMethods);
+    if (isEconomyEnabled) {
+      sellerRegistrationModel.shippingMethods[0].isEnabled = isEconomyEnabled;
+    }
+    if (isFastEnabled) {
+      sellerRegistrationModel.shippingMethods[1].isEnabled = isFastEnabled;
+    }
+    if (isExpress) {
+      sellerRegistrationModel.shippingMethods[2].isEnabled = isExpress;
+    }
     sellerRegistrationModel.addresses.add(address);
     context
         .read<UserBloc>()
@@ -235,7 +249,7 @@ class _SignShopState extends State<SignShop> {
             return _buildLoading();
           } else if (userState is UserLoaded) {
             return isRegisCompelete
-                ? _buidRegisSuccess()
+                ? _buidRegisSuccess(context, userState.user)
                 : _buildContent(context, userState.user);
           } else if (userState is UserError) {
             return _buildError(userState.message);
@@ -261,7 +275,7 @@ class _SignShopState extends State<SignShop> {
     return const Center(child: Text('Đang khởi tạo'));
   }
 
-  Widget _buidRegisSuccess() {
+  Widget _buidRegisSuccess(BuildContext context, UserInfoModel user) {
     return Scaffold(
       body: Stack(
         children: [
@@ -311,7 +325,10 @@ class _SignShopState extends State<SignShop> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.of(context).pushNamed(MyShopScreen.routeName);
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                      Navigator.of(context)
+                          .pushNamed(MyShopScreen.routeName, arguments: user);
                     },
                     child: Container(
                       margin: EdgeInsets.all(10),
@@ -672,6 +689,7 @@ class _SignShopState extends State<SignShop> {
                                                             isFastEnabled,
                                                         'isEconomyEnabled':
                                                             isEconomyEnabled,
+                                                        'isExpress': isExpress,
                                                       },
                                                     );
                                                     if (result != null &&
@@ -683,9 +701,13 @@ class _SignShopState extends State<SignShop> {
                                                         isEconomyEnabled = result[
                                                                 'isEconomyEnabled'] ??
                                                             false;
+                                                        isExpress = result[
+                                                                'isExpress'] ??
+                                                            false;
                                                         isCompleted =
                                                             isFastEnabled ||
-                                                                isEconomyEnabled;
+                                                                isEconomyEnabled ||
+                                                                isExpress;
                                                       });
                                                     }
                                                   },

@@ -31,15 +31,15 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
   @override
   void initState() {
     product = Product(
-      id: '',
-      name: 'name',
-      quantitySold: 0,
-      description: '',
-      averageRating: 0,
-      variants: [],
-      shopId: '',
-      imageUrl: [],
-    );
+        id: '',
+        name: 'name',
+        quantitySold: 0,
+        description: '',
+        averageRating: 0,
+        variants: [],
+        shopId: '',
+        imageUrl: [],
+        shippingMethods: []);
     // shop = Shop(
     //   userId: '',
     //   name: '',

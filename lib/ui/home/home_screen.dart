@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (authState is AuthAuthenticated) {
           context
               .read<ProductBloc>()
-              .add(FetchProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
+              .add(FetchProductEventByShopId('2Lw9i4fKbZO9x8L4Yieh'));
 
           return BlocBuilder<ProductBloc, ProductState>(
             builder: (context, productState) {

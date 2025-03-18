@@ -4,6 +4,7 @@ import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/ui/user/change_info/change_email.dart';
 import 'package:luanvan/ui/user/change_info/change_phone.dart';
 import 'package:luanvan/ui/user/change_info/change_username.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
@@ -175,11 +176,15 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
               "Điện thoại",
               trailingText: _maskPhoneNumber(userState.user.phone ?? ""),
               showArrow: true,
+              onTap: () =>
+                  Navigator.of(context).pushNamed(ChangePhone.routeName),
             ),
             _buildAccountItem(
               "Email",
               trailingText: _maskEmail(userState.user.email ?? ""),
               showArrow: true,
+              onTap: () =>
+                  Navigator.of(context).pushNamed(ChangeEmail.routeName),
             ),
             _buildAccountItem("Đổi mật khẩu", showArrow: true),
             _buildAccountItem("Xác thực bằng vân tay", showArrow: true),
@@ -284,21 +289,7 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
       child: InkWell(
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: () async {
-          if (showArrow) {
-            final newName = await Navigator.pushNamed(
-              context,
-              ChangePhone.routeName,
-              arguments: trailingText,
-            );
-
-            if (newName != null) {
-              setState(() {
-                _userNameController.text = newName as String;
-              });
-            }
-          }
-        },
+        onTap: onTap,
         child: Container(
           height: 50,
           padding: const EdgeInsets.symmetric(horizontal: 10),

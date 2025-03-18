@@ -46,23 +46,24 @@ class _EditProductScreenState extends State<EditProductScreen> {
   @override
   void initState() {
     product = Product(
-      id: '',
-      name: '',
-      quantitySold: 0,
-      description: '',
-      averageRating: 0,
-      variants: [],
-      shopId: '',
-      isViolated: false,
-      isHidden: false,
-      hasVariantImages: false,
-    );
+        id: '',
+        name: '',
+        quantitySold: 0,
+        description: '',
+        averageRating: 0,
+        variants: [],
+        shopId: '',
+        isViolated: false,
+        isHidden: false,
+        hasVariantImages: false,
+        shippingMethods: []);
     user = UserInfoModel(id: '', role: 0);
     Future.microtask(() {
       final args =
           ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
       user = args['user'] as UserInfoModel;
       product = args['product'] as Product;
+
       _nameController.text = product.name;
       _descriptionController.text = product.description;
       _category =
@@ -756,7 +757,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 const SizedBox(
                   height: 40,
                   child: Text(
-                    "Thêm sản phẩm",
+                    "Chỉnh sửa sản phẩm",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                   ),
                 ),

@@ -187,9 +187,6 @@ class _SettingShopScreenState extends State<SettingShopScreen> {
             _buildAccountItem(
               "Thiết lập tài khoản",
             ),
-            _buildAccountItem(
-              "Lựa chọn vận chuyển",
-            )
           ],
         ),
       ),

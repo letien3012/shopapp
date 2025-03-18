@@ -3,17 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:luanvan/blocs/product/product_bloc.dart';
-import 'package:luanvan/blocs/product/product_event.dart';
-import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/ship_manager_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
 
 class MyShopScreen extends StatefulWidget {
@@ -24,15 +21,21 @@ class MyShopScreen extends StatefulWidget {
 }
 
 class _MyShopScreenState extends State<MyShopScreen> {
+  bool isFastEnabled = false;
+  bool isEconomyEnabled = false;
+  bool isExpress = false;
+  UserInfoModel user = UserInfoModel(id: '', role: 0);
   @override
   void initState() {
+    Future.microtask(() {
+      user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
+      context.read<ShopBloc>().add(FetchShopEvent(user.id));
+    });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
-    context.read<ShopBloc>().add(FetchShopEvent(user.id));
     return Scaffold(body: BlocBuilder<ShopBloc, ShopState>(
       builder: (context, shopState) {
         if (shopState is ShopLoading) {
@@ -316,7 +319,13 @@ class _MyShopScreenState extends State<MyShopScreen> {
                 Material(
                   color: Colors.white,
                   child: InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        ShipManagerScreen.routeName,
+                        arguments: shop,
+                      );
+                    },
                     splashColor: Colors.transparent.withOpacity(0.2),
                     highlightColor: Colors.transparent.withOpacity(0.1),
                     child: Container(

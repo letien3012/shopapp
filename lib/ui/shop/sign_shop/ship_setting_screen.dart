@@ -12,14 +12,15 @@ class ShipSettingScreen extends StatefulWidget {
 class _ShipSettingScreenState extends State<ShipSettingScreen> {
   bool isFastEnabled = false;
   bool isEconomyEnabled = false;
+  bool isExpress = false;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     final args = ModalRoute.of(context)?.settings.arguments as Map;
 
     isFastEnabled = args['isFastEnabled'];
     isEconomyEnabled = args['isEconomyEnabled'];
+    isExpress = args['isExpress'];
   }
 
   @override
@@ -34,6 +35,7 @@ class _ShipSettingScreenState extends State<ShipSettingScreen> {
         Navigator.pop(context, {
           'isFastEnabled': isFastEnabled,
           'isEconomyEnabled': isEconomyEnabled,
+          'isExpress': isExpress
         });
         return false;
       },
@@ -51,6 +53,59 @@ class _ShipSettingScreenState extends State<ShipSettingScreen> {
                     top: 90, bottom: 20, left: 10, right: 10),
                 child: Column(
                   children: [
+                    const SizedBox(height: 10),
+                    // Tiết Kiệm
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Text(
+                                      "Tiết Kiệm",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: Colors.grey[600],
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "Phương thức vận chuyển với mức phí cạnh tranh thấp nhất",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          CupertinoSwitch(
+                            value: isEconomyEnabled,
+                            onChanged: (value) {
+                              setState(() {
+                                isEconomyEnabled = value;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     // Nhanh
                     Container(
@@ -105,7 +160,8 @@ class _ShipSettingScreenState extends State<ShipSettingScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    // Tiết Kiệm
+
+                    //Hỏa tốc
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
@@ -121,7 +177,7 @@ class _ShipSettingScreenState extends State<ShipSettingScreen> {
                                 Row(
                                   children: [
                                     const Text(
-                                      "Tiết Kiệm",
+                                      "Hỏa tốc",
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
@@ -137,7 +193,7 @@ class _ShipSettingScreenState extends State<ShipSettingScreen> {
                                 ),
                                 const SizedBox(height: 5),
                                 Text(
-                                  "Phương thức vận chuyển với mức phí cạnh tranh thấp nhất",
+                                  "Phương thức vận chuyển nhanh nhất",
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[600],
@@ -147,10 +203,10 @@ class _ShipSettingScreenState extends State<ShipSettingScreen> {
                             ),
                           ),
                           CupertinoSwitch(
-                            value: isEconomyEnabled,
+                            value: isExpress,
                             onChanged: (value) {
                               setState(() {
-                                isEconomyEnabled = value;
+                                isExpress = value;
                               });
                             },
                           ),
@@ -178,6 +234,7 @@ class _ShipSettingScreenState extends State<ShipSettingScreen> {
                         Navigator.pop(context, {
                           'isFastEnabled': isFastEnabled,
                           'isEconomyEnabled': isEconomyEnabled,
+                          'isExpress': isExpress
                         });
                       },
                       child: Container(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/product_variant.dart';
+import 'package:luanvan/models/shipping_method.dart';
 
 class Product {
   String id;
@@ -18,6 +19,9 @@ class Product {
   String violationReason;
   bool isHidden;
   bool hasVariantImages;
+  bool hasWeightVariant;
+  double? weight;
+  List<ShippingMethod> shippingMethods;
 
   Product({
     required this.id,
@@ -35,6 +39,9 @@ class Product {
     this.violationReason = '',
     this.isHidden = false,
     this.hasVariantImages = false,
+    this.hasWeightVariant = false,
+    this.weight,
+    required this.shippingMethods,
   });
 
   Product copyWith({
@@ -53,6 +60,9 @@ class Product {
     String? violationReason,
     bool? isHidden,
     bool? hasVariantImages,
+    bool? hasWeightVariant,
+    double? weight,
+    List<ShippingMethod>? shippingMethods,
   }) {
     return Product(
       id: id ?? this.id,
@@ -70,6 +80,9 @@ class Product {
       violationReason: violationReason ?? this.violationReason,
       isHidden: isHidden ?? this.isHidden,
       hasVariantImages: hasVariantImages ?? this.hasVariantImages,
+      hasWeightVariant: hasWeightVariant ?? this.hasWeightVariant,
+      weight: weight ?? this.weight,
+      shippingMethods: shippingMethods ?? this.shippingMethods,
     );
   }
 
@@ -90,6 +103,9 @@ class Product {
       'violationReason': violationReason,
       'isHidden': isHidden,
       'hasVariantImages': hasVariantImages,
+      'hasWeightVariant': hasWeightVariant,
+      'weight': weight,
+      'shippingMethods': shippingMethods.map((x) => x.toMap()).toList(),
     };
   }
 
@@ -114,6 +130,13 @@ class Product {
       violationReason: map['violationReason'] as String? ?? '',
       isHidden: map['isHidden'] as bool? ?? false,
       hasVariantImages: map['hasVariantImages'] as bool? ?? false,
+      hasWeightVariant: map['hasWeightVariant'] as bool? ?? false,
+      weight: map['weight'] as double?,
+      shippingMethods: List<ShippingMethod>.from(
+        (map['shippingMethods'] as List<dynamic>? ?? []).map<ShippingMethod>(
+          (x) => ShippingMethod.fromMap(x as Map<String, dynamic>),
+        ),
+      ),
     );
   }
 
@@ -144,6 +167,15 @@ class Product {
       violationReason: data['violationReason'] as String? ?? '',
       isHidden: data['isHidden'] as bool? ?? false,
       hasVariantImages: data['hasVariantImages'] as bool? ?? false,
+      hasWeightVariant: data['hasWeightVariant'] as bool? ?? false,
+      weight: data['weight'] as double?,
+      shippingMethods: data['shippingMethods'] != null
+          ? List<ShippingMethod>.from(
+              (data['shippingMethods'] as List<dynamic>).map<ShippingMethod>(
+                (x) => ShippingMethod.fromMap(x as Map<String, dynamic>),
+              ),
+            )
+          : [],
     );
   }
 
@@ -154,66 +186,56 @@ class Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isViolated: $isViolated, violationReason: $violationReason, isHidden: $isHidden, hasVariantImages: $hasVariantImages)';
+    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isViolated: $isViolated, violationReason: $violationReason, isHidden: $isHidden, hasVariantImages: $hasVariantImages, hasWeightVariant: $hasWeightVariant, weight: $weight, shippingMethods: $shippingMethods)';
   }
 
   double getMaxOptionPrice() {
     if (variants.isEmpty) return 0.0;
-
     List<double> allPrices = variants
         .expand((variant) => variant.options.map((option) => option.price))
         .toList();
-
     if (allPrices.isEmpty) return 0.0;
-
     return allPrices.reduce((a, b) => a > b ? a : b);
   }
 
   double getMinOptionPrice() {
     if (variants.isEmpty) return 0.0;
-
     List<double> allPrices = variants
         .expand((variant) => variant.options.map((option) => option.price))
         .toList();
-
     if (allPrices.isEmpty) return 0.0;
-
     return allPrices.reduce((a, b) => a < b ? a : b);
   }
 
   int getMaxOptionStock() {
     if (variants.isEmpty) return 0;
-
     List<int> allStocks = variants
         .expand((variant) => variant.options.map((option) => option.stock))
         .toList();
-
     if (allStocks.isEmpty) return 0;
-
     return allStocks.reduce((a, b) => a > b ? a : b);
   }
 
   int getMinOptionStock() {
     if (variants.isEmpty) return 0;
-
     List<int> allStocks = variants
         .expand((variant) => variant.options.map((option) => option.stock))
         .toList();
-
     if (allStocks.isEmpty) return 0;
-
     return allStocks.reduce((a, b) => a < b ? a : b);
   }
 
   int getTotalOptionStock() {
     if (variants.isEmpty) return 0;
-
     List<int> allStocks = variants
         .expand((variant) => variant.options.map((option) => option.stock))
         .toList();
-
     if (allStocks.isEmpty) return 0;
-
     return allStocks.reduce((a, b) => a + b);
+  }
+
+  int getTotalOptionsCount() {
+    if (variants.isEmpty) return 0;
+    return variants.fold(0, (total, variant) => total + variant.options.length);
   }
 }

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,17 +9,17 @@ import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/blocs/user/user_bloc.dart';
-import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_option.dart';
 import 'package:luanvan/models/product_variant.dart';
+import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/add_variant_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/delivery_cost_screen.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -41,6 +40,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _stockController = TextEditingController();
+  final TextEditingController _shipController = TextEditingController();
   List<XFile> _imageFiles = [];
   String _product_variant = "Thiết lập màu sắc kích thước";
   String _category = "Chọn ngành hàng";
@@ -48,26 +48,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   void initState() {
     product = Product(
-        id: '',
-        name: '',
-        quantitySold: 0,
-        description: '',
-        averageRating: 0,
-        variants: [
-          // ProductVariant(label: "Màu sắc", options: [
-          //   ProductOption(price: 0, stock: 0, name: "Trắng"),
-          //   ProductOption(price: 0, stock: 0, name: "Đen")
-          // ]),
-          // ProductVariant(label: "Kích thước", options: [
-          //   ProductOption(price: 0, stock: 0, name: "S"),
-          //   ProductOption(price: 0, stock: 0, name: "M"),
-          //   ProductOption(price: 0, stock: 0, name: "L")
-          // ]),
-        ],
-        shopId: '',
-        isViolated: false,
-        isHidden: false,
-        hasVariantImages: false);
+      id: '',
+      name: '',
+      quantitySold: 0,
+      description: '',
+      averageRating: 0,
+      variants: [
+        // ProductVariant(label: "Màu sắc", options: [
+        //   ProductOption(price: 0, stock: 0, name: "Trắng"),
+        //   ProductOption(price: 0, stock: 0, name: "Đen")
+        // ]),
+        // ProductVariant(label: "Kích thước", options: [
+        //   ProductOption(price: 0, stock: 0, name: "S"),
+        //   ProductOption(price: 0, stock: 0, name: "M"),
+        //   ProductOption(price: 0, stock: 0, name: "L")
+        // ]),
+      ],
+      shopId: '',
+      isViolated: false,
+      isHidden: false,
+      hasVariantImages: false,
+      shippingMethods: [],
+    );
+    product.shippingMethods.addAll(ShippingMethod.defaultMethods);
+
     super.initState();
   }
 
@@ -146,6 +150,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (_category == "Chọn ngành hàng") {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Vui lòng chọn ngành hàng của sản phẩm")),
+      );
+      return;
+    }
+    if (!(product.shippingMethods[0].isEnabled ||
+        product.shippingMethods[1].isEnabled ||
+        product.shippingMethods[0].isEnabled)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "Vui lòng kích hoạt ít nhất 1 phương thức vận chuyển cho sản phẩm")),
       );
       return;
     }
@@ -695,46 +709,82 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       ],
                     ),
                   ),
-
-                  // Phí vận chuyển
-                  // Container(
-                  //   color: Colors.white,
-                  //   padding: const EdgeInsets.all(16),
-                  //   child: Row(
-                  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //     children: [
-                  //       const Text(
-                  //         "Phí vận chuyển (Cân nặng/Kích thước) *",
-                  //         style: TextStyle(
-                  //             fontSize: 16, fontWeight: FontWeight.w500),
-                  //       ),
-                  //       GestureDetector(
-                  //         onTap: () {
-                  //           // Logic cài đặt phí vận chuyển
-                  //           setState(() {
-                  //             _shippingInfo = "Đã cài đặt"; // Ví dụ
-                  //           });
-                  //         },
-                  //         child: Row(
-                  //           children: [
-                  //             Text(
-                  //               _shippingInfo,
-                  //               style: TextStyle(
-                  //                 fontSize: 16,
-                  //                 color: _shippingInfo == "Cân nặng/Kích thước"
-                  //                     ? Colors.grey
-                  //                     : Colors.black,
-                  //               ),
-                  //             ),
-                  //             const SizedBox(width: 5),
-                  //             const Icon(Icons.arrow_forward_ios,
-                  //                 size: 16, color: Colors.grey),
-                  //           ],
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
+                  const SizedBox(height: 10),
+                  //Vận chuyển
+                  GestureDetector(
+                    onTap: () async {
+                      final updatedProduct = await Navigator.pushNamed(
+                        context,
+                        DeliveryCostScreen.routeName,
+                        arguments: {'user': user, 'product': product},
+                      ) as Product;
+                      setState(() {
+                        product = updatedProduct as Product;
+                        if (product.hasWeightVariant) {
+                          _shipController.text = '0';
+                        } else {
+                          _shipController.text = product.weight.toString();
+                        }
+                      });
+                    },
+                    child: Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                IconHelper.truck,
+                                height: 25,
+                                width: 25,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              const Text(
+                                "Phí vận chuyển ",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                "*",
+                                style:
+                                    TextStyle(color: Colors.red, fontSize: 16),
+                              ),
+                              SizedBox(
+                                width: 150,
+                                child: TextFormField(
+                                  readOnly: true,
+                                  textAlign: TextAlign.end,
+                                  controller: _shipController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    hintText: "Đặt",
+                                    hintStyle: TextStyle(color: Colors.grey),
+                                    border: InputBorder.none,
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "Vui lòng chọn cân nặng";
+                                    }
+                                    if (int.tryParse(value) == null) {
+                                      return "Cân nặng không hợp lệ";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Icon(Icons.arrow_forward_ios,
+                              size: 16, color: Colors.grey),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -766,7 +816,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     margin: const EdgeInsets.only(bottom: 5),
                     child: const Icon(
                       Icons.arrow_back,
-                      color: Colors.black,
+                      color: Colors.brown,
                       size: 24,
                     ),
                   ),

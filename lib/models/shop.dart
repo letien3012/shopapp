@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/address.dart';
+import 'package:luanvan/models/shipping_method.dart';
 
 class Shop {
   final String? shopId;
@@ -15,6 +16,7 @@ class Shop {
   final String? description;
   final bool isClose;
   final bool isLocked;
+  final List<ShippingMethod> shippingMethods;
 
   Shop({
     this.shopId,
@@ -29,6 +31,7 @@ class Shop {
     this.description,
     required this.isClose,
     required this.isLocked,
+    required this.shippingMethods,
   });
 
   Shop copyWith({
@@ -44,6 +47,7 @@ class Shop {
     String? description,
     bool? isClose,
     bool? isLocked,
+    List<ShippingMethod>? shippingMethods,
   }) {
     return Shop(
       shopId: shopId ?? this.shopId,
@@ -58,6 +62,7 @@ class Shop {
       description: description ?? this.description,
       isClose: isClose ?? this.isClose,
       isLocked: isLocked ?? this.isLocked,
+      shippingMethods: shippingMethods ?? this.shippingMethods,
     );
   }
 
@@ -79,6 +84,9 @@ class Shop {
       description: map['description'] as String?,
       isClose: map['isClose'] as bool,
       isLocked: map['isLocked'] as bool,
+      shippingMethods: (map['shippingMethods'] as List<dynamic>? ?? [])
+          .map((e) => ShippingMethod.fromMap(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -99,6 +107,9 @@ class Shop {
       description: data['description'] as String?,
       isClose: data['isClose'] as bool,
       isLocked: data['isLocked'] as bool,
+      shippingMethods: (data['shippingMethods'] as List<dynamic>? ?? [])
+          .map((e) => ShippingMethod.fromMap(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -116,6 +127,8 @@ class Shop {
       'description': description,
       'isClose': isClose,
       'isLocked': isLocked,
+      'shippingMethods':
+          shippingMethods.map((method) => method.toMap()).toList(),
     };
   }
 
@@ -130,6 +143,6 @@ class Shop {
         'addresses: $addresses, phoneNumber: $phoneNumber, email: $email, '
         'submittedAt: $submittedAt, avatarUrl: $avatarUrl, '
         'backgroundImageUrl: $backgroundImageUrl, description: $description, '
-        'isClose: $isClose, isLocked: $isLocked)';
+        'isClose: $isClose, isLocked: $isLocked, shippingMethods: $shippingMethods)';
   }
 }

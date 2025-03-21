@@ -5,8 +5,8 @@ class Cart {
   String userId;
   Map<String, int> productIdAndQuantity;
   List<String> listShopId;
-  Map<String, int> productVariantIndexes;
-  Map<String, int> productOptionIndexes;
+  Map<String, int?> productVariantIndexes;
+  Map<String, int?> productOptionIndexes;
 
   Cart({
     required this.id,
@@ -22,8 +22,8 @@ class Cart {
     String? userId,
     Map<String, int>? productIdAndQuantity,
     List<String>? listShopId,
-    Map<String, int>? productVariantIndexes,
-    Map<String, int>? productOptionIndexes,
+    Map<String, int?>? productVariantIndexes,
+    Map<String, int?>? productOptionIndexes,
   }) {
     return Cart(
       id: id ?? this.id,
@@ -55,9 +55,9 @@ class Cart {
           Map<String, int>.from(map['productIdAndQuantity'] ?? {}),
       listShopId: List<String>.from(map['listShopId'] ?? []),
       productVariantIndexes:
-          Map<String, int>.from(map['productVariantIndexes'] ?? {}),
+          Map<String, int?>.from(map['productVariantIndexes'] ?? {}),
       productOptionIndexes:
-          Map<String, int>.from(map['productOptionIndexes'] ?? {}),
+          Map<String, int?>.from(map['productOptionIndexes'] ?? {}),
     );
   }
 
@@ -70,9 +70,9 @@ class Cart {
           Map<String, int>.from(firestoreData['productIdAndQuantity'] ?? {}),
       listShopId: List<String>.from(firestoreData['listShopId'] ?? []),
       productVariantIndexes:
-          Map<String, int>.from(firestoreData['productVariantIndexes'] ?? {}),
+          Map<String, int?>.from(firestoreData['productVariantIndexes'] ?? {}),
       productOptionIndexes:
-          Map<String, int>.from(firestoreData['productOptionIndexes'] ?? {}),
+          Map<String, int?>.from(firestoreData['productOptionIndexes'] ?? {}),
     );
   }
 
@@ -84,4 +84,15 @@ class Cart {
   @override
   String toString() =>
       'Cart(id: $id, userId: $userId, productIdAndQuantity: $productIdAndQuantity, listShopId: $listShopId, productVariantIndexes: $productVariantIndexes, productOptionIndexes: $productOptionIndexes)';
+
+  static Cart initial() {
+    return Cart(
+      id: '',
+      userId: '',
+      productIdAndQuantity: {},
+      listShopId: [],
+      productVariantIndexes: {},
+      productOptionIndexes: {},
+    );
+  }
 }

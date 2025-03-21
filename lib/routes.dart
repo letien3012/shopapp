@@ -23,6 +23,7 @@ import 'package:luanvan/ui/shop/product_manager/delivery_cost_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_variant_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/set_variant_info_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/ship_manager_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/change_shop_info_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
@@ -83,6 +84,7 @@ final Map<String, WidgetBuilder> routes = {
   EditProductScreen.routeName: (context) => EditProductScreen(),
   AddCategoryScreen.routeName: (context) => AddCategoryScreen(),
   AddVariantScreen.routeName: (context) => AddVariantScreen(),
+  SetVariantInfoScreen.routeName: (context) => SetVariantInfoScreen(),
   EditVariantScreen.routeName: (context) => EditVariantScreen(),
   SettingShopScreen.routeName: (context) => SettingShopScreen(),
   ChangeShopInfoScreen.routeName: (context) => ChangeShopInfoScreen(),

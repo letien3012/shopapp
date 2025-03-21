@@ -2,13 +2,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/models/address.dart';
+import 'package:luanvan/blocs/user/user_bloc.dart';
+import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
@@ -16,10 +19,12 @@ import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
+import 'package:intl/intl.dart'; // Thêm import intl
 
 class MyProductScreen extends StatefulWidget {
   const MyProductScreen({super.key});
   static String routeName = "my_product";
+
   @override
   State<MyProductScreen> createState() => _MyProductScreenState();
 }
@@ -27,18 +32,35 @@ class MyProductScreen extends StatefulWidget {
 class _MyProductScreenState extends State<MyProductScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late UserInfoModel user;
   late Shop shop;
   final ScrollController _scrollController = ScrollController();
+  final NumberFormat _numberFormat =
+      NumberFormat("#,###", "vi_VN"); // Định dạng số với dấu chấm
+
   @override
   void initState() {
     super.initState();
+    _initializeData();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         _scrollToSelectedTab();
       }
     });
+  }
+
+  void _initializeData() {
+    final authState = context.read<AuthBloc>().state;
+    print(authState);
+    if (authState is AuthAuthenticated) {
+      context.read<ShopBloc>().add(FetchShopEvent(authState.user.uid));
+    }
+    final shopState = context.read<ShopBloc>().state;
+    if (shopState is ShopLoaded) {
+      context
+          .read<ProductBloc>()
+          .add(FetchProductEventByShopId(shopState.shop.shopId!));
+    }
   }
 
   void _scrollToSelectedTab() {
@@ -60,7 +82,6 @@ class _MyProductScreenState extends State<MyProductScreen>
     Navigator.of(context).pushNamed(
       EditProductScreen.routeName,
       arguments: {
-        'user': user,
         'product': product,
       },
     );
@@ -72,60 +93,65 @@ class _MyProductScreenState extends State<MyProductScreen>
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _tabController.dispose();
     super.dispose();
   }
 
   @override
+  void didChangeDependencies() {
+    _initializeData();
+    super.didChangeDependencies();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
-    context.read<ShopBloc>().add(FetchShopEvent(user.id));
-    return Scaffold(body: BlocBuilder<ShopBloc, ShopState>(
-      builder: (context, shopState) {
-        if (shopState is ShopLoading) {
-          return _buildLoading();
-        } else if (shopState is ShopLoaded) {
-          context
-              .read<ProductBloc>()
-              .add(FetchProductEventByShopId(shopState.shop.shopId!));
-          return BlocBuilder<ProductBloc, ProductState>(
-            builder: (context, productState) {
-              if (productState is ProductLoading) return _buildLoading();
-              if (productState is ListProductLoaded) {
-                return _buildShopContent(
-                    context, shopState.shop, productState.listProduct);
-              } else if (productState is ProductError) {
-                return _buildError(productState.message);
-              }
-              return _buildInitializing();
-            },
-          );
-        } else if (shopState is ShopError) {
-          return _buildError(shopState.message);
-        }
-        return _buildInitializing();
+    return Scaffold(
+        body: BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) _initializeData();
       },
+      child: BlocBuilder<ShopBloc, ShopState>(
+        builder: (context, shopState) {
+          if (shopState is ShopLoading) {
+            return _buildLoading();
+          } else if (shopState is ShopLoaded) {
+            return BlocBuilder<ProductBloc, ProductState>(
+              builder: (context, productState) {
+                if (productState is ProductLoading) return _buildLoading();
+
+                if (productState is ListProductLoaded) {
+                  return _buildShopContent(
+                      context, shopState.shop, productState.listProduct);
+                } else if (productState is ProductError) {
+                  return _buildError(productState.message);
+                }
+                return _buildInitializing();
+              },
+            );
+          } else if (shopState is ShopError) {
+            return _buildError(shopState.message);
+          }
+          return _buildInitializing();
+        },
+      ),
     ));
   }
 
-  // Trạng thái đang tải
   Widget _buildLoading() {
     return const Center(child: CircularProgressIndicator());
   }
 
-  // Trạng thái lỗi
   Widget _buildError(String message) {
     return Center(child: Text('Error: $message'));
   }
 
-  // Trạng thái khởi tạo
   Widget _buildInitializing() {
     return const Center(child: Text('Đang khởi tạo'));
   }
 
   Widget _buildShopContent(
       BuildContext context, Shop shop, List<Product> listProduct) {
-    // Lọc danh sách sản phẩm theo từng trạng thái
     final inStockProducts = listProduct
         .where((product) =>
             !product.isViolated &&
@@ -187,21 +213,20 @@ class _MyProductScreenState extends State<MyProductScreen>
                     ),
                   ),
                 ),
-                // TabBarView
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildProductList(inStockProducts), // Còn hàng
+                      _buildProductList(inStockProducts),
                       outOfStockProducts.isEmpty
                           ? _buildEmptyTab("Không có sản phẩm hết hàng")
-                          : _buildProductList(outOfStockProducts), // Hết hàng
+                          : _buildProductList(outOfStockProducts),
                       hiddenProducts.isEmpty
                           ? _buildEmptyTab("Không có sản phẩm đã ẩn")
-                          : _buildProductList(hiddenProducts), // Đã ẩn
+                          : _buildProductList(hiddenProducts),
                       violatedProducts.isEmpty
                           ? _buildEmptyTab("Không có sản phẩm vi phạm")
-                          : _buildProductList(violatedProducts), // Đã xóa
+                          : _buildProductList(violatedProducts),
                     ],
                   ),
                 ),
@@ -209,7 +234,6 @@ class _MyProductScreenState extends State<MyProductScreen>
             ),
           ),
         ),
-        // AppBar
         Align(
           alignment: Alignment.topCenter,
           child: Column(
@@ -280,8 +304,9 @@ class _MyProductScreenState extends State<MyProductScreen>
             color: Colors.white,
             child: GestureDetector(
               onTap: () {
-                Navigator.of(context)
-                    .pushNamed(AddProductScreen.routeName, arguments: user);
+                Navigator.of(context).pushNamed(
+                  AddProductScreen.routeName,
+                );
               },
               child: Container(
                 margin: const EdgeInsets.all(10),
@@ -328,11 +353,10 @@ class _MyProductScreenState extends State<MyProductScreen>
                 onTap: () {
                   Navigator.pushNamed(
                       context, DetailsProductShopScreen.routeName,
-                      arguments: {'product': product});
+                      arguments: product);
                 },
                 child: Row(
                   children: [
-                    // Hình ảnh sản phẩm
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
@@ -369,8 +393,8 @@ class _MyProductScreenState extends State<MyProductScreen>
                           const SizedBox(height: 5),
                           Text(
                             product.variants.isNotEmpty
-                                ? "₫${product.getMinOptionPrice()} - ₫${product.getMaxOptionPrice()}"
-                                : "₫0",
+                                ? "₫${_numberFormat.format(product.getMinOptionPrice())} - ₫${_numberFormat.format(product.getMaxOptionPrice())}"
+                                : "₫${_numberFormat.format(product.price ?? 0)}",
                             style: const TextStyle(
                               fontSize: 16,
                               color: Colors.red,
@@ -437,7 +461,6 @@ class _MyProductScreenState extends State<MyProductScreen>
                 ],
               ),
               const SizedBox(height: 10),
-              // Nút hành động
               Row(
                 children: [
                   _buildActionButton(
@@ -464,7 +487,6 @@ class _MyProductScreenState extends State<MyProductScreen>
     );
   }
 
-  // Nút hành động (Ẩn, Sửa, Xóa)
   Widget _buildActionButton(
       String label, Color bgColor, Color textColor, VoidCallback onTap) {
     return Material(
@@ -491,7 +513,6 @@ class _MyProductScreenState extends State<MyProductScreen>
     );
   }
 
-  // Tab rỗng (khi không có sản phẩm)
   Widget _buildEmptyTab(String message) {
     return Center(
       child: Text(

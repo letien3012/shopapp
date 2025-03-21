@@ -6,8 +6,6 @@ import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/shop/shop_manager/change_shop_info_screen.dart';
-import 'package:luanvan/ui/user/change_info/change_phone.dart';
-import 'package:luanvan/ui/user/change_infomation_user.dart';
 
 class SettingShopScreen extends StatefulWidget {
   const SettingShopScreen({super.key});
@@ -18,7 +16,6 @@ class SettingShopScreen extends StatefulWidget {
 }
 
 class _SettingShopScreenState extends State<SettingShopScreen> {
-  TextEditingController _userNameController = TextEditingController();
   bool isClose = false;
   // Shop shop = Shop(
   //   userId: '',

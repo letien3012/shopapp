@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
@@ -24,62 +27,36 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
   final GlobalKey _details = GlobalKey();
   int _currentImage = 0;
   bool _isExpanded = false;
+
   Color _appBarColor = Colors.transparent;
   Color _logoColor = Colors.white;
-  late Product product;
-  // late Shop shop;
+  Color _searchBarColor = Colors.transparent;
+  Color _searchIconColor = Colors.transparent;
+  Color _textSearchColor = Colors.transparent;
+  Product product = Product(
+    id: '',
+    name: '',
+    quantitySold: 0,
+    description: '',
+    averageRating: 0,
+    variants: [],
+    shopId: '',
+    shippingMethods: [],
+  );
   @override
   void initState() {
-    product = Product(
-        id: '',
-        name: 'name',
-        quantitySold: 0,
-        description: '',
-        averageRating: 0,
-        variants: [],
-        shopId: '',
-        imageUrl: [],
-        shippingMethods: []);
-    // shop = Shop(
-    //   userId: '',
-    //   name: '',
-    //   address: Address(
-    //     addressLine: '',
-    //     city: '',
-    //     district: '',
-    //     ward: '',
-    //     isDefault: false,
-    //     receiverName: '',
-    //     receiverPhone: '',
-    //   ),
-    //   phoneNumber: '',
-    //   email: '',
-    //   submittedAt: DateTime.now(),
-    //   isClose: false,
-    //   isLocked: false,
-    // );
     super.initState();
-    Future.microtask(() {
-      final arg =
-          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-      product = arg['product'] as Product;
-      if (product.id.isNotEmpty) {
-        context.read<ShopBloc>().add(FetchShopEventByShopId(product.shopId));
-      }
-    });
 
     _imageController.addListener(() {
       setState(() {
         _currentImage = _imageController.page!.round();
       });
     });
-    _appBarScrollController.addListener(onAppBarScroll);
   }
 
   @override
   void dispose() {
     _imageController.dispose();
-    _appBarScrollController.dispose();
     super.dispose();
   }
 
@@ -88,15 +65,24 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
       setState(() {
         _appBarColor = Colors.white;
         _logoColor = Colors.brown;
+        _searchBarColor = Colors.grey[200]!;
+        _searchIconColor = Colors.grey[500]!;
+        _textSearchColor = Colors.grey[500]!;
       });
     } else if (_appBarScrollController.offset >= 250.0) {
       setState(() {
         _appBarColor = Colors.white.withOpacity(0.7);
         _logoColor = Colors.white.withOpacity(0.7);
+        _searchBarColor = Colors.white.withOpacity(0.5);
+        _searchIconColor = Colors.grey.withOpacity(0.3);
+        _textSearchColor = Colors.grey.withOpacity(0.3);
       });
     } else {
       _appBarColor = Colors.transparent;
       _logoColor = Colors.white;
+      _searchBarColor = Colors.transparent;
+      _searchIconColor = Colors.transparent;
+      _textSearchColor = Colors.transparent;
     }
   }
 
@@ -164,9 +150,9 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                (product.variants[0].options[0].name.isNotEmpty)
+                (product.variants.isNotEmpty)
                     ? 'đ${formatPrice(product.getMinOptionPrice())} - đ${formatPrice(product.getMaxOptionPrice())}'
-                    : 'đ${formatPrice(product.variants[0].options[0].price)}',
+                    : 'đ${formatPrice(product.price!)}',
                 style: const TextStyle(
                   fontSize: 20,
                   color: Color.fromARGB(255, 151, 14, 4),
@@ -604,6 +590,92 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
     );
   }
 
+  Widget _buildSkeletonImageSlider() {
+    return Container(
+      height: 410,
+      color: Colors.grey[200],
+      child: Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _buildSkeletonProductInfo() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(height: 20, width: 100, color: Colors.grey[300]),
+          SizedBox(height: 10),
+          Container(
+              height: 14, width: double.infinity, color: Colors.grey[300]),
+          SizedBox(height: 5),
+          Container(height: 14, width: 200, color: Colors.grey[300]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonReviews() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(height: 16, width: 50, color: Colors.grey[300]),
+              SizedBox(width: 10),
+              Container(height: 16, width: 100, color: Colors.grey[300]),
+            ],
+          ),
+          SizedBox(height: 10),
+          Container(
+              height: 100, width: double.infinity, color: Colors.grey[200]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonShopInfo() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(10),
+      child: Row(
+        children: [
+          Container(height: 60, width: 60, color: Colors.grey[300]),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(height: 16, width: 150, color: Colors.grey[300]),
+                SizedBox(height: 5),
+                Container(height: 14, width: 100, color: Colors.grey[300]),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonProductDetails() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(height: 16, width: 120, color: Colors.grey[300]),
+          SizedBox(height: 10),
+          Container(
+              height: 100, width: double.infinity, color: Colors.grey[200]),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAppBar() {
     return Positioned(
       child: AnimatedContainer(
@@ -640,7 +712,6 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
             const SizedBox(width: 10),
             Row(
               children: [
@@ -681,18 +752,46 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
 
   @override
   Widget build(BuildContext context) {
+    product = ModalRoute.of(context)!.settings.arguments as Product;
+    context.read<ShopBloc>().add(FetchShopEventByShopId(product.shopId));
     return Scaffold(
-      body: BlocBuilder<ShopBloc, ShopState>(
-        builder: (context, state) {
-          if (state is ShopLoading) return _buildLoading();
-          if (state is ShopLoaded) {
-            return _buildDetailScreen(context, product, state.shop);
-          }
-          if (state is ShopError) {
-            return _buildError(state.message);
-          }
-          return _buildInitializing();
-        },
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            controller: _appBarScrollController,
+            child: Column(
+              children: [
+                _buildImageSlider(product),
+                _buildProductInfo(product),
+                _buildSepherated(context),
+                _buildReviewsSection(product),
+                _buildSepherated(context),
+                BlocConsumer<ShopBloc, ShopState>(
+                  listener: (context, state) {
+                    if (state is ShopError) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content:
+                                Text('Lỗi tải cửa hàng: ${state.message}')),
+                      );
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is ShopLoading) {
+                      return _buildSkeletonShopInfo(); // Skeleton loading
+                    } else if (state is ShopLoaded) {
+                      return _buildShopInfo(context, state.shop, []);
+                    }
+                    return _buildSkeletonShopInfo(); // Mặc định hiển thị skeleton
+                  },
+                ),
+                _buildSepherated(context),
+                _buildProductDetails(product),
+              ],
+            ),
+          ),
+          _buildAppBar()
+        ],
       ),
     );
   }
@@ -701,36 +800,11 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
     return const Center(child: CircularProgressIndicator());
   }
 
-  // Trạng thái lỗi
   Widget _buildError(String message) {
     return Center(child: Text('Error: $message'));
   }
 
-  // Trạng thái khởi tạo
   Widget _buildInitializing() {
     return const Center(child: Text('Đang khởi tạo'));
-  }
-
-  Widget _buildDetailScreen(BuildContext context, Product product, Shop shop) {
-    return Stack(
-      children: [
-        SingleChildScrollView(
-          controller: _appBarScrollController,
-          child: Column(
-            children: [
-              _buildImageSlider(product),
-              _buildProductInfo(product),
-              _buildSepherated(context),
-              _buildReviewsSection(product),
-              _buildSepherated(context),
-              _buildShopInfo(context, shop, []),
-              _buildSepherated(context),
-              _buildProductDetails(product),
-            ],
-          ),
-        ),
-        _buildAppBar(),
-      ],
-    );
   }
 }

@@ -26,13 +26,16 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
   bool enableImageForVariant = false;
   int groupOptionCount = 0;
 
+  // Thêm controller cho BottomSheet
+  final TextEditingController _batchPriceController = TextEditingController();
+  final TextEditingController _batchStockController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
       product = ModalRoute.of(context)!.settings.arguments as Product;
       enableImageForVariant = product.hasVariantImages;
-      // Tính groupOptionCount với kiểm tra rỗng
       if (product.variants.isNotEmpty) {
         groupOptionCount = product.variants.length == 2
             ? product.variants[0].options.length *
@@ -48,7 +51,6 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
   }
 
   void _initializeControllers() {
-    // Khởi tạo các controller và focus node dựa trên groupOptionCount
     _priceOptionControllers = List.generate(
       groupOptionCount,
       (index) => TextEditingController(
@@ -70,7 +72,6 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
     _priceOptionErrors = List.generate(groupOptionCount, (_) => null);
     _stockOptionErrors = List.generate(groupOptionCount, (_) => null);
 
-    // Thêm listener cho focus nodes
     for (int i = 0; i < groupOptionCount; i++) {
       _priceFocusNodes[i].addListener(() => _handlePriceFocusChange(i));
       _stockFocusNodes[i].addListener(() => _handleStockFocusChange(i));
@@ -91,6 +92,8 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
     for (var focusNode in _stockFocusNodes) {
       focusNode.dispose();
     }
+    _batchPriceController.dispose();
+    _batchStockController.dispose();
     super.dispose();
   }
 
@@ -214,7 +217,6 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
     if (!_validateDataBeforeSave()) return false;
 
     try {
-      // Đảm bảo optionInfos có đủ phần tử
       while (product.optionInfos.length < groupOptionCount) {
         product.optionInfos.add(OptionInfo(
             price: 0,
@@ -224,7 +226,6 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
                 : null));
       }
 
-      // Cập nhật optionInfos với giá và kho mới theo thứ tự hiển thị mới
       for (int i = 0; i < groupOptionCount; i++) {
         final price = _validatePrice(
             _priceOptionControllers[i].text, _priceOptionControllers[i]);
@@ -246,6 +247,106 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
       );
       return false;
     }
+  }
+
+  // Hàm hiển thị BottomSheet để thay đổi hàng loạt
+  void _showBatchUpdateBottomSheet() {
+    _batchPriceController.clear();
+    _batchStockController.clear();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Thay đổi hàng loạt",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _batchPriceController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: "Giá (VNĐ)",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _batchStockController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: "Kho hàng",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context); // Đóng BottomSheet
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey,
+                      ),
+                      child: const Text("Hủy"),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Áp dụng giá và kho hàng loạt
+                        final batchPrice = _validatePrice(
+                            _batchPriceController.text, _batchPriceController);
+                        final batchStock = _validateStock(
+                            _batchStockController.text, _batchStockController);
+
+                        setState(() {
+                          for (int i = 0; i < groupOptionCount; i++) {
+                            _priceOptionControllers[i].text =
+                                batchPrice.toString();
+                            _stockOptionControllers[i].text =
+                                batchStock.toString();
+                            if (product.optionInfos.length > i) {
+                              product.optionInfos[i] = product.optionInfos[i]
+                                  .copyWith(
+                                      price: batchPrice, stock: batchStock);
+                            }
+                          }
+                        });
+                        Navigator.pop(context); // Đóng BottomSheet
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.brown,
+                      ),
+                      child: const Text(
+                        "Áp dụng",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -279,172 +380,218 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
                           ),
                         )
                       else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.zero,
-                          itemCount: groupOptionCount,
-                          itemBuilder: (BuildContext context, int index) {
-                            // Tạo tên hiển thị cho từng tùy chọn hoặc sự kết hợp
-                            String optionName = '';
-                            int firstVariantIndex;
-                            if (product.variants.length == 1) {
-                              optionName =
-                                  product.variants[0].options[index].name;
-                              firstVariantIndex = index;
-                            } else if (product.variants.length == 2) {
-                              int secondVariantOptionsLength =
-                                  product.variants[1].options.length;
-                              int i = index % secondVariantOptionsLength;
-                              int j = index ~/ secondVariantOptionsLength;
-                              optionName =
-                                  "${product.variants[0].options[j].name}  ${product.variants[1].options[i].name}";
-                              firstVariantIndex =
-                                  j; // Chỉ lấy hình ảnh từ variant đầu tiên
-                            } else {
-                              return const SizedBox
-                                  .shrink(); // Không có variant
-                            }
-
-                            return Container(
-                              padding: const EdgeInsets.all(10),
-                              margin: const EdgeInsets.symmetric(vertical: 5),
-                              color: Colors.white,
-                              child: Column(
+                        Column(
+                          children: [
+                            // Thêm nút "Thay đổi hàng loạt"
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      if (enableImageForVariant &&
-                                          product.variants.isNotEmpty) ...[
-                                        Container(
-                                            height: 50,
-                                            width: 40,
-                                            color: Colors.grey[300],
-                                            child: product
-                                                    .variants[0]
-                                                    .options[firstVariantIndex]
-                                                    .imageUrl!
-                                                    .startsWith('http')
-                                                ? Image.network(
-                                                    product
-                                                        .variants[0]
-                                                        .options[
-                                                            firstVariantIndex]
-                                                        .imageUrl!,
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                : Image.file(
-                                                    File(product
-                                                        .variants[0]
-                                                        .options[
-                                                            firstVariantIndex]
-                                                        .imageUrl!),
-                                                    fit: BoxFit.cover,
-                                                  )),
-                                        const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                            'Đặt đồng giá, số lượng hàng cho tất cả phân loại'),
                                       ],
-                                      Text(
-                                        optionName,
-                                        style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    children: [
-                                      const Expanded(child: Text('Giá')),
-                                      const SizedBox(
-                                        width: 10,
-                                      ),
-                                      const Expanded(child: Text('Kho hàng')),
-                                    ],
+                                  const SizedBox(
+                                    width: 10,
                                   ),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextField(
-                                          keyboardType: const TextInputType
-                                              .numberWithOptions(decimal: true),
-                                          maxLength: 10,
-                                          textAlign: TextAlign.start,
-                                          textAlignVertical:
-                                              TextAlignVertical.center,
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(2),
-                                              borderSide: BorderSide(
-                                                  width: 1, color: Colors.grey),
-                                            ),
-                                            counterText: '',
-                                            contentPadding:
-                                                const EdgeInsets.only(
-                                                    left: 10, bottom: 15),
-                                            errorText:
-                                                _priceOptionErrors[index],
-                                          ),
-                                          controller:
-                                              _priceOptionControllers[index],
-                                          focusNode: _priceFocusNodes[index],
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _priceOptionErrors[index] = null;
-                                            });
-                                          },
-                                          style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black),
-                                          maxLines: 1,
-                                        ),
+                                  TextButton(
+                                    onPressed: _showBatchUpdateBottomSheet,
+                                    child: const Text(
+                                      "Thay đổi hàng loạt",
+                                      style: TextStyle(
+                                        color: Colors.brown,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      const SizedBox(
-                                        width: 10,
-                                      ),
-                                      Expanded(
-                                        child: TextField(
-                                          keyboardType: TextInputType.number,
-                                          maxLength: 10,
-                                          textAlign: TextAlign.start,
-                                          textAlignVertical:
-                                              TextAlignVertical.center,
-                                          decoration: InputDecoration(
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(2),
-                                              borderSide: BorderSide(
-                                                  width: 1, color: Colors.grey),
-                                            ),
-                                            counterText: '',
-                                            contentPadding:
-                                                const EdgeInsets.only(
-                                                    bottom: 15, left: 10),
-                                            errorText:
-                                                _stockOptionErrors[index],
-                                          ),
-                                          controller:
-                                              _stockOptionControllers[index],
-                                          focusNode: _stockFocusNodes[index],
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _stockOptionErrors[index] = null;
-                                            });
-                                          },
-                                          style: const TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black),
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ],
                               ),
-                            );
-                          },
+                            ),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              itemCount: groupOptionCount,
+                              itemBuilder: (BuildContext context, int index) {
+                                String optionName = '';
+                                int firstVariantIndex;
+                                if (product.variants.length == 1) {
+                                  optionName =
+                                      product.variants[0].options[index].name;
+                                  firstVariantIndex = index;
+                                } else if (product.variants.length == 2) {
+                                  int secondVariantOptionsLength =
+                                      product.variants[1].options.length;
+                                  int i = index % secondVariantOptionsLength;
+                                  int j = index ~/ secondVariantOptionsLength;
+                                  optionName =
+                                      "${product.variants[0].options[j].name}  ${product.variants[1].options[i].name}";
+                                  firstVariantIndex = j;
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+
+                                return Container(
+                                  padding: const EdgeInsets.all(10),
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 5),
+                                  color: Colors.white,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          if (enableImageForVariant &&
+                                              product.variants.isNotEmpty) ...[
+                                            Container(
+                                                height: 50,
+                                                width: 40,
+                                                color: Colors.grey[300],
+                                                child: product
+                                                        .variants[0]
+                                                        .options[
+                                                            firstVariantIndex]
+                                                        .imageUrl!
+                                                        .startsWith('http')
+                                                    ? Image.network(
+                                                        product
+                                                            .variants[0]
+                                                            .options[
+                                                                firstVariantIndex]
+                                                            .imageUrl!,
+                                                        fit: BoxFit.cover,
+                                                      )
+                                                    : Image.file(
+                                                        File(product
+                                                            .variants[0]
+                                                            .options[
+                                                                firstVariantIndex]
+                                                            .imageUrl!),
+                                                        fit: BoxFit.cover,
+                                                      )),
+                                            const SizedBox(width: 10),
+                                          ],
+                                          Text(
+                                            optionName,
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          const Expanded(child: Text('Giá')),
+                                          const SizedBox(width: 10),
+                                          const Expanded(
+                                              child: Text('Kho hàng')),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: TextField(
+                                              keyboardType: const TextInputType
+                                                  .numberWithOptions(
+                                                  decimal: true),
+                                              maxLength: 10,
+                                              textAlign: TextAlign.start,
+                                              textAlignVertical:
+                                                  TextAlignVertical.center,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(2),
+                                                  borderSide: BorderSide(
+                                                      width: 1,
+                                                      color: Colors.grey),
+                                                ),
+                                                counterText: '',
+                                                contentPadding:
+                                                    const EdgeInsets.only(
+                                                        left: 10, bottom: 15),
+                                                errorText:
+                                                    _priceOptionErrors[index],
+                                              ),
+                                              controller:
+                                                  _priceOptionControllers[
+                                                      index],
+                                              focusNode:
+                                                  _priceFocusNodes[index],
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _priceOptionErrors[index] =
+                                                      null;
+                                                });
+                                              },
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black),
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: TextField(
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              maxLength: 10,
+                                              textAlign: TextAlign.start,
+                                              textAlignVertical:
+                                                  TextAlignVertical.center,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(2),
+                                                  borderSide: BorderSide(
+                                                      width: 1,
+                                                      color: Colors.grey),
+                                                ),
+                                                counterText: '',
+                                                contentPadding:
+                                                    const EdgeInsets.only(
+                                                        bottom: 15, left: 10),
+                                                errorText:
+                                                    _stockOptionErrors[index],
+                                              ),
+                                              controller:
+                                                  _stockOptionControllers[
+                                                      index],
+                                              focusNode:
+                                                  _stockFocusNodes[index],
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _stockOptionErrors[index] =
+                                                      null;
+                                                });
+                                              },
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black),
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                     ],
                   ),

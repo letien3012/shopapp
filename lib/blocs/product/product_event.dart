@@ -23,11 +23,6 @@ class FetchProductEventById extends ProductEvent {
   FetchProductEventById(this.productId);
 }
 
-class FetchProductEventByShopId extends ProductEvent {
-  String shopId;
-  FetchProductEventByShopId(this.shopId);
-}
-
 class FetchProductEventByProductId extends ProductEvent {
   String productId;
   FetchProductEventByProductId(this.productId);

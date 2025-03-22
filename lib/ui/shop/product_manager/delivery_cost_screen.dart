@@ -8,11 +8,8 @@ import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/product.dart';
-import 'package:luanvan/models/product_option.dart';
-import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/models/shipping_calculator.dart';
 import 'package:luanvan/models/shop.dart';
-import 'package:luanvan/models/user_info_model.dart';
 import 'package:intl/intl.dart';
 
 class DeliveryCostScreen extends StatefulWidget {

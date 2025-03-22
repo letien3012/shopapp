@@ -1,37 +1,20 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/services/product_service.dart';
 
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final ProductService _productService;
-  ProductBloc(this._productService) : super(ProductInitial()) {
-    on<FetchListProductEvent>(_onLoadProducts);
-    on<FetchProductEventByShopId>(_onFetchProductByShopId);
+  final ListProductBloc _listProductBloc;
+  ProductBloc(this._productService, this._listProductBloc)
+      : super(ProductInitial()) {
     on<FetchProductEventByProductId>(_onFetchProductByProductId);
     on<AddProductEvent>(_onAddProduct);
     on<DeleteProductByIdEvent>(_onDeleteProduct);
     on<UpdateProductEvent>(_onUpdateProduct);
-  }
-
-  void _onLoadProducts(
-      FetchListProductEvent event, Emitter<ProductState> emit) {
-    emit(ProductLoading());
-    try {} catch (e) {
-      emit(ProductError(e.toString()));
-    }
-  }
-
-  Future<void> _onFetchProductByShopId(
-      FetchProductEventByShopId event, Emitter<ProductState> emit) async {
-    emit(ProductLoading());
-    try {
-      final listProduct =
-          await _productService.fetchProductByShopId(event.shopId);
-      emit(ListProductLoaded(listProduct));
-    } catch (e) {
-      emit(ProductError(e.toString()));
-    }
   }
 
   Future<void> _onFetchProductByProductId(
@@ -52,7 +35,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     emit(ProductLoading());
     try {
       await _productService.addProduct(event.product);
-      emit(ProductLoaded(event.product));
+      _listProductBloc.add(FetchListProductEventByShopId(event.product.shopId));
+      emit(ProductInitial());
     } catch (e) {
       emit(ProductError(e.toString()));
     }
@@ -62,10 +46,11 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       DeleteProductByIdEvent event, Emitter<ProductState> emit) async {
     emit(ProductLoading());
     try {
+      final product =
+          await _productService.fetchProductByProductId(event.productId);
       await _productService.deleteProduct(event.productId);
-      final listproduct =
-          await _productService.fetchProductByShopId(event.shopId);
-      emit(ListProductLoaded(listproduct));
+      _listProductBloc.add(FetchListProductEventByShopId(product.shopId));
+      emit(ProductInitial());
     } catch (e) {
       emit(ProductError(e.toString()));
     }
@@ -76,9 +61,11 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     emit(ProductLoading());
     try {
       await _productService.UpdateProduct(event.product);
-      final listproduct =
-          await _productService.fetchProductByShopId(event.product.shopId);
-      emit(ListProductLoaded(listproduct));
+      // final listproduct =
+      //     await _productService.fetchProductByShopId(event.product.shopId);
+      _listProductBloc.add(FetchListProductEventByShopId(event.product.shopId));
+      await Future.delayed(Duration(milliseconds: 100));
+      emit(ProductLoaded(event.product));
     } catch (e) {
       emit(ProductError(e.toString()));
     }

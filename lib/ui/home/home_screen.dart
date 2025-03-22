@@ -8,6 +8,9 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
@@ -45,9 +48,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context
-          .read<ProductBloc>()
-          .add(FetchProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
+      // context
+      //     .read<ListProductBloc>()
+      //     .add(FetchListProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
@@ -70,15 +73,15 @@ class _HomeScreenState extends State<HomeScreen> {
         if (authState is AuthLoading) return _buildLoading();
         if (authState is AuthAuthenticated) {
           context
-              .read<ProductBloc>()
-              .add(FetchProductEventByShopId('2Lw9i4fKbZO9x8L4Yieh'));
+              .read<ListProductBloc>()
+              .add(FetchListProductEventByShopId('2Lw9i4fKbZO9x8L4Yieh'));
 
-          return BlocBuilder<ProductBloc, ProductState>(
+          return BlocBuilder<ListProductBloc, ListProductState>(
             builder: (context, productState) {
-              if (productState is ProductLoading) return _buildLoading();
+              if (productState is ListProductLoading) return _buildLoading();
               if (productState is ListProductLoaded) {
                 return _buildHomeScreen(context, productState.listProduct);
-              } else if (productState is ProductError) {
+              } else if (productState is ListProductError) {
                 return _buildError(productState.message);
               }
               return _buildInitializing();

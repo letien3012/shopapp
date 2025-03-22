@@ -2,24 +2,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:luanvan/blocs/auth/auth_bloc.dart';
-import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
-import 'package:luanvan/blocs/shop/shop_bloc.dart';
-import 'package:luanvan/blocs/shop/shop_event.dart';
-import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/blocs/user/user_bloc.dart';
-import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
-import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
-import 'package:intl/intl.dart'; // Thêm import intl
+import 'package:intl/intl.dart';
 
 class MyProductScreen extends StatefulWidget {
   const MyProductScreen({super.key});
@@ -36,31 +31,23 @@ class _MyProductScreenState extends State<MyProductScreen>
   final ScrollController _scrollController = ScrollController();
   final NumberFormat _numberFormat =
       NumberFormat("#,###", "vi_VN"); // Định dạng số với dấu chấm
-
+  String shopId = '';
   @override
   void initState() {
     super.initState();
-    _initializeData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      shopId = ModalRoute.of(context)!.settings.arguments as String;
+      context
+          .read<ListProductBloc>()
+          .add(FetchListProductEventByShopId(shopId));
+    });
+
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         _scrollToSelectedTab();
       }
     });
-  }
-
-  void _initializeData() {
-    final authState = context.read<AuthBloc>().state;
-    print(authState);
-    if (authState is AuthAuthenticated) {
-      context.read<ShopBloc>().add(FetchShopEvent(authState.user.uid));
-    }
-    final shopState = context.read<ShopBloc>().state;
-    if (shopState is ShopLoaded) {
-      context
-          .read<ProductBloc>()
-          .add(FetchProductEventByShopId(shopState.shop.shopId!));
-    }
   }
 
   void _scrollToSelectedTab() {
@@ -99,43 +86,31 @@ class _MyProductScreenState extends State<MyProductScreen>
   }
 
   @override
-  void didChangeDependencies() {
-    _initializeData();
-    super.didChangeDependencies();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthAuthenticated) _initializeData();
-      },
-      child: BlocBuilder<ShopBloc, ShopState>(
-        builder: (context, shopState) {
-          if (shopState is ShopLoading) {
-            return _buildLoading();
-          } else if (shopState is ShopLoaded) {
-            return BlocBuilder<ProductBloc, ProductState>(
-              builder: (context, productState) {
-                if (productState is ProductLoading) return _buildLoading();
-
-                if (productState is ListProductLoaded) {
-                  return _buildShopContent(
-                      context, shopState.shop, productState.listProduct);
-                } else if (productState is ProductError) {
-                  return _buildError(productState.message);
-                }
-                return _buildInitializing();
-              },
-            );
-          } else if (shopState is ShopError) {
-            return _buildError(shopState.message);
+      body: BlocListener<ProductBloc, ProductState>(
+        listener: (context, state) {
+          if (state is ProductLoaded) {
+            final shopId = ModalRoute.of(context)!.settings.arguments as String;
+            context
+                .read<ListProductBloc>()
+                .add(FetchListProductEventByShopId(shopId));
           }
-          return _buildInitializing();
         },
+        child: BlocBuilder<ListProductBloc, ListProductState>(
+          builder: (context, productState) {
+            if (productState is ListProductLoading) {
+              return _buildLoading();
+            } else if (productState is ListProductLoaded) {
+              return _buildShopContent(context, productState.listProduct);
+            } else if (productState is ListProductError) {
+              return _buildError(productState.message);
+            }
+            return _buildInitializing();
+          },
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildLoading() {
@@ -150,8 +125,7 @@ class _MyProductScreenState extends State<MyProductScreen>
     return const Center(child: Text('Đang khởi tạo'));
   }
 
-  Widget _buildShopContent(
-      BuildContext context, Shop shop, List<Product> listProduct) {
+  Widget _buildShopContent(BuildContext context, List<Product> listProduct) {
     final inStockProducts = listProduct
         .where((product) =>
             !product.isViolated &&
@@ -306,6 +280,7 @@ class _MyProductScreenState extends State<MyProductScreen>
               onTap: () {
                 Navigator.of(context).pushNamed(
                   AddProductScreen.routeName,
+                  arguments: shopId,
                 );
               },
               child: Container(
@@ -392,8 +367,11 @@ class _MyProductScreenState extends State<MyProductScreen>
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            product.variants.isNotEmpty
-                                ? "₫${_numberFormat.format(product.getMinOptionPrice())} - ₫${_numberFormat.format(product.getMaxOptionPrice())}"
+                            (product.variants.isNotEmpty)
+                                ? (product.getMinOptionPrice() !=
+                                        product.getMaxOptionPrice())
+                                    ? "₫${_numberFormat.format(product.getMinOptionPrice())} - ₫${_numberFormat.format(product.getMaxOptionPrice())}"
+                                    : "₫${_numberFormat.format(product.getMinOptionPrice())}"
                                 : "₫${_numberFormat.format(product.price ?? 0)}",
                             style: const TextStyle(
                               fontSize: 16,

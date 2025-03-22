@@ -230,7 +230,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
                   child: InkWell(
                     onTap: () {
                       Navigator.of(context).pushNamed(MyProductScreen.routeName,
-                          arguments: user);
+                          arguments: shop.shopId);
                     },
                     splashColor: Colors.transparent.withOpacity(0.2),
                     highlightColor: Colors.transparent.withOpacity(0.1),

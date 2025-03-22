@@ -11,8 +11,6 @@ import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/product.dart';
-import 'package:luanvan/models/product_option.dart';
-import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
@@ -32,7 +30,7 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
-  late UserInfoModel user;
+  String shopId = '';
   late Product product;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
@@ -196,8 +194,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
-    user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
-    context.read<ShopBloc>().add(FetchShopEvent(user.id));
+    shopId = ModalRoute.of(context)!.settings.arguments as String;
+    context.read<ShopBloc>().add(FetchShopEventByShopId(shopId));
     return Scaffold(body: BlocBuilder<ShopBloc, ShopState>(
       builder: (context, shopState) {
         if (shopState is ShopLoading) {
@@ -708,7 +706,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       final updatedProduct = await Navigator.pushNamed(
                         context,
                         DeliveryCostScreen.routeName,
-                        arguments: {'user': user, 'product': product},
+                        arguments: {'product': product},
                       ) as Product;
                       setState(() {
                         product = updatedProduct;

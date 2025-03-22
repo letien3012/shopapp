@@ -19,8 +19,7 @@ class ShopService {
     final querySnapshot =
         await firebaseFirestore.collection('shops').doc(shopId).get();
 
-    final Shop shop = Shop.fromFirestore(
-        querySnapshot as DocumentSnapshot<Map<String, dynamic>>);
+    final Shop shop = Shop.fromFirestore(querySnapshot);
     return shop;
   }
 

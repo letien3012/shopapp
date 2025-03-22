@@ -563,7 +563,6 @@ class _EditVariantScreenState extends State<EditVariantScreen> {
                                             : <MapEntry<int, ProductOption>>[])
                                         .map((entry) {
                                       int optIndex = entry.key;
-                                      ProductOption value = entry.value;
 
                                       return Stack(
                                         children: [

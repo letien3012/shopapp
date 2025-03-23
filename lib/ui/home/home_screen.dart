@@ -125,74 +125,78 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(
                     height: 90,
                   ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * .25,
-                    width: MediaQuery.of(context).size.width,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                            child: CarouselSlider(
-                                carouselController: _bannercontroller,
-                                items: imgList
-                                    .map((item) => Image.network(
-                                          item,
-                                          fit: BoxFit.cover,
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              .25,
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                        ))
-                                    .toList(),
-                                options: CarouselOptions(
-                                  autoPlay: true,
-                                  enlargeCenterPage: true,
-                                  enableInfiniteScroll: true,
-                                  viewportFraction: 1,
-                                  onPageChanged: (index, reason) {
-                                    setState(() {
-                                      bannerCurrentPage = index;
-                                    });
-                                  },
-                                ))),
-                        Positioned(
-                          bottom: MediaQuery.of(context).size.height * .02,
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                imgList.length,
-                                (index) {
-                                  bool isSelected = bannerCurrentPage == index;
-                                  return GestureDetector(
-                                    onTap: () {
-                                      _bannercontroller.animateToPage(index);
+                  StatefulBuilder(builder: (context, setState) {
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height * .25,
+                      width: MediaQuery.of(context).size.width,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                              child: CarouselSlider(
+                                  carouselController: _bannercontroller,
+                                  items: imgList
+                                      .map((item) => Image.network(
+                                            item,
+                                            fit: BoxFit.cover,
+                                            height: MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                .25,
+                                            width: MediaQuery.of(context)
+                                                .size
+                                                .width,
+                                          ))
+                                      .toList(),
+                                  options: CarouselOptions(
+                                    autoPlay: true,
+                                    enlargeCenterPage: true,
+                                    enableInfiniteScroll: true,
+                                    viewportFraction: 1,
+                                    onPageChanged: (index, reason) {
+                                      setState(() {
+                                        bannerCurrentPage = index;
+                                      });
                                     },
-                                    child: AnimatedContainer(
-                                      width: 8,
-                                      height: 8,
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: 3),
-                                      decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? Colors.brown
-                                              : Colors.white,
-                                          shape: BoxShape.circle),
-                                      duration:
-                                          const Duration(milliseconds: 300),
-                                      curve: Curves.ease,
-                                    ),
-                                  );
-                                },
+                                  ))),
+                          Positioned(
+                            bottom: MediaQuery.of(context).size.height * .02,
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  imgList.length,
+                                  (index) {
+                                    bool isSelected =
+                                        bannerCurrentPage == index;
+                                    return GestureDetector(
+                                      onTap: () {
+                                        _bannercontroller.animateToPage(index);
+                                      },
+                                      child: AnimatedContainer(
+                                        width: 8,
+                                        height: 8,
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 3),
+                                        decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? Colors.brown
+                                                : Colors.white,
+                                            shape: BoxShape.circle),
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                        curve: Curves.ease,
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
+                        ],
+                      ),
+                    );
+                  }),
                   Container(
                     height: 10,
                     width: double.infinity,

@@ -468,15 +468,40 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   const SizedBox(height: 10),
                   // Ngành hàng
                   GestureDetector(
-                    onTap: () async {
-                      final result = await Navigator.pushNamed(
-                          context, AddCategoryScreen.routeName,
-                          arguments: _category) as String;
-                      if (result.isNotEmpty) {
-                        setState(() {
-                          _category = result;
-                        });
+                    onTap: () {
+                      if (_nameController.text.isEmpty ||
+                          _descriptionController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Vui lòng nhập tên và mô tả sản phẩm trước khi chọn ngành hàng'),
+                          ),
+                        );
+                        return;
                       }
+                      Navigator.pushNamed(
+                        context,
+                        AddCategoryScreen.routeName,
+                        arguments: {
+                          'selectedCategory': _category,
+                          'product': Product(
+                            id: '',
+                            shopId: '',
+                            name: _nameController.text,
+                            description: _descriptionController.text,
+                            quantitySold: 0,
+                            averageRating: 0,
+                            variants: [],
+                            shippingMethods: [],
+                          ),
+                        },
+                      ).then((value) {
+                        if (value != null) {
+                          setState(() {
+                            _category = value as String;
+                          });
+                        }
+                      });
                     },
                     child: Container(
                       color: Colors.white,

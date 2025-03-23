@@ -26,6 +26,7 @@ import 'package:luanvan/ui/item/review_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/ui/widgets/add_to_cart.dart';
+import 'package:luanvan/ui/widgets/image_viewer.dart';
 
 class DetaiItemScreen extends StatefulWidget {
   const DetaiItemScreen({super.key});
@@ -180,16 +181,28 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
       width: double.infinity,
       child: Stack(
         children: [
-          PageView.builder(
-            controller: _imageController,
-            scrollDirection: Axis.horizontal,
-            itemCount: product.imageUrl.length,
-            itemBuilder: (context, index) {
-              return Image.network(
-                product.imageUrl[index],
-                fit: BoxFit.cover,
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ImageViewer(
+                    imageUrls: product.imageUrl,
+                    initialIndex: _currentImage,
+                  ),
+                ),
               );
             },
+            child: PageView.builder(
+              controller: _imageController,
+              scrollDirection: Axis.horizontal,
+              itemCount: product.imageUrl.length,
+              itemBuilder: (context, index) {
+                return Image.network(
+                  product.imageUrl[index],
+                  fit: BoxFit.cover,
+                );
+              },
+            ),
           ),
           Positioned(
             right: 20,
@@ -953,15 +966,15 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
-                          if (product.variants.length == 1 &&
-                              product.variants[0].options.length == 1) {
+                          if (product.variants.isEmpty ||
+                              product.getTotalOptionStock() == 1) {
                             context.read<CartBloc>().add(AddCartEvent(
                                 product.id,
                                 _quantityAddToCart,
                                 userId,
                                 product.shopId,
-                                0,
-                                0));
+                                -1,
+                                -1));
                           } else {
                             showAddToCart(context, product);
                           }
@@ -1005,344 +1018,6 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     );
   }
 
-  // void showAddToCart(BuildContext context, Product product) {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     backgroundColor: Colors.white,
-  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  //     builder: (context) => SingleChildScrollView(
-  //       padding: EdgeInsets.only(
-  //         bottom: MediaQuery.of(context).viewInsets.bottom,
-  //       ),
-  //       child: Column(
-  //         children: [
-  //           Padding(
-  //             padding: const EdgeInsets.all(10),
-  //             child: Row(
-  //               children: [
-  //                 Container(
-  //                   decoration: BoxDecoration(
-  //                     borderRadius: BorderRadius.circular(10),
-  //                     border: Border.all(color: Colors.grey, width: 0.6),
-  //                   ),
-  //                   child: ClipRRect(
-  //                     borderRadius: BorderRadius.circular(10),
-  //                     child: Image.network(
-  //                       width: 110,
-  //                       height: 110,
-  //                       fit: BoxFit.cover,
-  //                       product.imageUrl[0],
-  //                     ),
-  //                   ),
-  //                 ),
-  //                 const SizedBox(width: 10),
-  //                 Expanded(
-  //                   child: SizedBox(
-  //                     height: 110,
-  //                     child: Column(
-  //                       mainAxisAlignment: MainAxisAlignment.end,
-  //                       crossAxisAlignment: CrossAxisAlignment.start,
-  //                       children: [
-  //                         Wrap(
-  //                           crossAxisAlignment: WrapCrossAlignment.center,
-  //                           children: [
-  //                             Text(
-  //                               (product.variants[0].label.isNotEmpty)
-  //                                   ? 'đ${formatPrice(product.getMinOptionPrice())} - '
-  //                                   : 'đ${formatPrice(product.variants[0].options[0].price)}',
-  //                               style: const TextStyle(
-  //                                   fontSize: 18,
-  //                                   fontWeight: FontWeight.bold,
-  //                                   color: Color.fromARGB(255, 151, 14, 4)),
-  //                               maxLines: 1,
-  //                               overflow: TextOverflow.ellipsis,
-  //                             ),
-  //                             Text(
-  //                               (product.variants[0].label.isNotEmpty)
-  //                                   ? 'đ${formatPrice(product.getMaxOptionPrice())}'
-  //                                   : '',
-  //                               style: const TextStyle(
-  //                                   fontSize: 18,
-  //                                   fontWeight: FontWeight.bold,
-  //                                   color: Color.fromARGB(255, 151, 14, 4)),
-  //                               maxLines: 1,
-  //                               overflow: TextOverflow.ellipsis,
-  //                             ),
-  //                           ],
-  //                         ),
-  //                         const SizedBox(height: 10),
-  //                         Text('Kho: ${product.getTotalOptionStock()}',
-  //                             style: TextStyle(
-  //                                 fontSize: 16, fontWeight: FontWeight.w400)),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //           Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Container(
-  //                   height: 0.5,
-  //                   width: double.infinity,
-  //                   color: Colors.grey[300]),
-  //               Container(
-  //                 padding: const EdgeInsets.all(10),
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Text(product.variants[0].label,
-  //                         style: const TextStyle(fontWeight: FontWeight.w500)),
-  //                     const SizedBox(height: 10),
-  //                     Wrap(
-  //                       spacing: 8,
-  //                       runSpacing: 8,
-  //                       children: List.generate(
-  //                           product.variants[0].options.length, (index) {
-  //                         return GestureDetector(
-  //                           onTap: () {
-  //                             setState(() {
-  //                               selectedIndexVariant1 = index;
-  //                               print(selectedIndexVariant1);
-  //                             });
-  //                           },
-  //                           child: IntrinsicWidth(
-  //                             child: Container(
-  //                               constraints: BoxConstraints(maxHeight: 45),
-  //                               padding: const EdgeInsets.symmetric(
-  //                                   horizontal: 10, vertical: 10),
-  //                               decoration: BoxDecoration(
-  //                                 borderRadius: BorderRadius.circular(5),
-  //                                 color: Colors.grey[200],
-  //                                 border: index == selectedIndexVariant1
-  //                                     ? Border.all(
-  //                                         width: 1, color: Colors.brown)
-  //                                     : null,
-  //                               ),
-  //                               child: Row(
-  //                                 mainAxisAlignment: MainAxisAlignment.center,
-  //                                 children: [
-  //                                   if (product.hasVariantImages)
-  //                                     Image.network(
-  //                                       product.variants[0].options[index]
-  //                                           .imageUrl!,
-  //                                       width: 35,
-  //                                       height: 35,
-  //                                       fit: BoxFit.contain,
-  //                                     ),
-  //                                   Text(
-  //                                     product.variants[0].options[index].name,
-  //                                     style: TextStyle(
-  //                                         fontSize: 13,
-  //                                         color: index == selectedIndexVariant1
-  //                                             ? Colors.brown
-  //                                             : Colors.black),
-  //                                   ),
-  //                                 ],
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         );
-  //                       }),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //           if (product.variants.length == 2)
-  //             Column(
-  //               children: [
-  //                 Container(
-  //                     height: 0.5,
-  //                     width: double.infinity,
-  //                     color: Colors.grey[400]),
-  //                 Container(
-  //                   padding: const EdgeInsets.all(10),
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: [
-  //                       Text(
-  //                         product.variants[1].label,
-  //                         style: const TextStyle(fontWeight: FontWeight.w500),
-  //                       ),
-  //                       const SizedBox(height: 10),
-  //                       Wrap(
-  //                         spacing: 8,
-  //                         runSpacing: 8,
-  //                         children: List.generate(
-  //                             product.variants[1].options.length, (index) {
-  //                           return IntrinsicWidth(
-  //                             child: Container(
-  //                               height: 45,
-  //                               padding: const EdgeInsets.all(5),
-  //                               decoration: BoxDecoration(
-  //                                   borderRadius: BorderRadius.circular(5),
-  //                                   color: Colors.grey[200]),
-  //                               child: Row(
-  //                                 mainAxisAlignment: MainAxisAlignment.center,
-  //                                 children: [
-  //                                   Text(product
-  //                                       .variants[1].options[index].name),
-  //                                 ],
-  //                               ),
-  //                             ),
-  //                           );
-  //                         }),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           Column(
-  //             children: [
-  //               Container(
-  //                   height: 0.5,
-  //                   width: double.infinity,
-  //                   color: Colors.grey[400]),
-  //               Padding(
-  //                 padding: const EdgeInsets.all(10),
-  //                 child: Row(
-  //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                   children: [
-  //                     const Text("Số lượng",
-  //                         style: TextStyle(fontWeight: FontWeight.w500)),
-  //                     Container(
-  //                       height: 30,
-  //                       width: 100,
-  //                       decoration: BoxDecoration(
-  //                           border: Border.all(color: Colors.grey, width: 1),
-  //                           borderRadius: BorderRadius.circular(8)),
-  //                       child: Row(
-  //                         mainAxisAlignment: MainAxisAlignment.center,
-  //                         children: [
-  //                           Expanded(
-  //                             child: GestureDetector(
-  //                               onTap: () {
-  //                                 if (_quantityAddToCart > 1) {
-  //                                   setState(() {
-  //                                     _quantityAddToCart--;
-  //                                     _quantityController.text =
-  //                                         _quantityAddToCart.toString();
-  //                                   });
-  //                                 }
-  //                               },
-  //                               child: Container(
-  //                                 height: double.infinity,
-  //                                 decoration: const BoxDecoration(
-  //                                     border: Border(
-  //                                         right: BorderSide(
-  //                                             color: Colors.grey, width: 1))),
-  //                                 child: Icon(FontAwesomeIcons.minus,
-  //                                     color: Colors.grey[700], size: 13),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           Expanded(
-  //                             flex: 2,
-  //                             child: Container(
-  //                               alignment: Alignment.center,
-  //                               height: 20,
-  //                               child: TextFormField(
-  //                                 controller: _quantityController,
-  //                                 decoration: const InputDecoration(
-  //                                   border: OutlineInputBorder(
-  //                                       borderSide: BorderSide.none),
-  //                                   contentPadding: EdgeInsets.zero,
-  //                                 ),
-  //                                 onChanged: (value) {
-  //                                   int? quantity = int.tryParse(value);
-  //                                   if (quantity != null) {
-  //                                     if (quantity <=
-  //                                         product
-  //                                             .variants[0].options[0].stock) {
-  //                                       setState(() {
-  //                                         _quantityAddToCart = quantity;
-  //                                         _quantityController.text =
-  //                                             _quantityAddToCart.toString();
-  //                                       });
-  //                                     } else {
-  //                                       setState(() {
-  //                                         _quantityAddToCart = quantity ~/ 10;
-  //                                         _quantityController.text =
-  //                                             _quantityAddToCart.toString();
-  //                                       });
-  //                                     }
-  //                                   } else {
-  //                                     setState(() {
-  //                                       _quantityController.text =
-  //                                           _quantityAddToCart.toString();
-  //                                     });
-  //                                   }
-  //                                 },
-  //                                 keyboardType:
-  //                                     const TextInputType.numberWithOptions(),
-  //                                 textAlign: TextAlign.center,
-  //                                 textAlignVertical: TextAlignVertical.center,
-  //                                 cursorWidth: 1,
-  //                                 cursorHeight: 13,
-  //                                 style: const TextStyle(fontSize: 13),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                           Expanded(
-  //                             child: GestureDetector(
-  //                               onTap: () {
-  //                                 if (_quantityAddToCart <
-  //                                     product.variants[0].options[0].stock) {
-  //                                   setState(() {
-  //                                     _quantityAddToCart++;
-  //                                     _quantityController.text =
-  //                                         _quantityAddToCart.toString();
-  //                                   });
-  //                                 }
-  //                               },
-  //                               child: Container(
-  //                                 height: double.infinity,
-  //                                 decoration: const BoxDecoration(
-  //                                     border: Border(
-  //                                         left: BorderSide(
-  //                                             color: Colors.grey, width: 1))),
-  //                                 child: Icon(FontAwesomeIcons.plus,
-  //                                     color: Colors.grey[700], size: 13),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //           Container(
-  //               height: 5, width: double.infinity, color: Colors.grey[200]),
-  //           Container(
-  //             height: 50,
-  //             decoration: BoxDecoration(
-  //                 color: Colors.grey[300],
-  //                 borderRadius: BorderRadius.circular(10)),
-  //             alignment: Alignment.center,
-  //             margin: const EdgeInsets.all(10),
-  //             child: GestureDetector(
-  //               onTap: () {
-  //                 // Thêm logic thêm vào giỏ hàng tại đây nếu cần
-  //                 Navigator.pop(context);
-  //               },
-  //               child: const Text("Thêm vào giỏ hàng",
-  //                   style: TextStyle(fontSize: 16, color: Colors.black38)),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
   void showAddToCart(BuildContext context, Product product) {
     showModalBottomSheet(
       context: context,

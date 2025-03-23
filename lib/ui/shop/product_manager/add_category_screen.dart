@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:luanvan/models/product.dart';
 
 class AddCategoryScreen extends StatefulWidget {
   const AddCategoryScreen({super.key});
@@ -10,8 +11,8 @@ class AddCategoryScreen extends StatefulWidget {
 }
 
 class _AddCategoryScreenState extends State<AddCategoryScreen> {
-  // Danh sách các ngành hàng lớn (List<String>)
-  final List<String> categories = [
+  // Danh sách các ngành hàng lớn
+  final List<String> _allCategories = [
     "Thời Trang Nam",
     "Thời Trang Nữ",
     "Điện Thoại & Phụ Kiện",
@@ -86,12 +87,108 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     "Đồ Dùng Cho Bé Sơ Sinh",
   ];
 
+  // Map từ khóa với ngành hàng tương ứng
+  final Map<String, List<String>> _keywordCategories = {
+    'quần': ['Thời Trang Nam', 'Thời Trang Nữ', 'Thời Trang Trẻ Em'],
+    'áo': ['Thời Trang Nam', 'Thời Trang Nữ', 'Thời Trang Trẻ Em'],
+    'giày': ['Giày Dép Nam', 'Giày Dép Nữ', 'Giày Thể Thao'],
+    'điện thoại': ['Điện Thoại & Phụ Kiện'],
+    'laptop': ['Máy tính & Laptop'],
+    'sách': ['Sách, Báo & Tạp Chí', 'Nhà Sách Online'],
+    'thực phẩm': ['Thực Phẩm & Đồ Uống'],
+    'mỹ phẩm': ['Sức Khỏe & Sắc Đẹp'],
+    'đồ chơi': ['Đồ Chơi & Trò Chơi', 'Đồ Chơi Giáo Dục'],
+    'camera': ['Máy Ảnh & Máy Quay Phim'],
+    'túi': ['Túi Xách'],
+    'đồng hồ': ['Đồng Hồ'],
+    'trang sức': ['Trang Sức'],
+    'nội thất': ['Đồ Nội Thất'],
+    'thiết bị': ['Thiết Bị Điện Tử'],
+    'phụ kiện': ['Phụ Kiện Thời Trang'],
+    'thể thao': ['Thể Thao & Du Lịch', 'Quần Áo Thể Thao'],
+  };
+
+  // Danh sách hiển thị sau khi tìm kiếm
+  List<String> categories = [];
+  List<String> suggestedCategories = [];
+
+  // Controller cho ô tìm kiếm
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    categories = _allCategories;
+    _searchController.addListener(() {
+      filterCategories(_searchController.text);
+    });
+
+    // Đợi build context sẵn sàng
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      final product = args['product'] as Product?;
+      print(product);
+      // Đề xuất ngành hàng nếu có product
+      if (product != null) {
+        suggestedCategories =
+            _suggestCategories(product.name, product.description ?? '');
+        // Đưa các ngành hàng được đề xuất lên đầu danh sách
+        setState(() {
+          categories = [
+            ...suggestedCategories,
+            ..._allCategories.where((c) => !suggestedCategories.contains(c))
+          ];
+        });
+      }
+    });
+  }
+
+  // Hàm đề xuất ngành hàng dựa trên tên và mô tả
+  List<String> _suggestCategories(String name, String description) {
+    final Set<String> suggestions = {};
+    final String searchText = '$name $description'.toLowerCase();
+
+    _keywordCategories.forEach((keyword, categories) {
+      if (searchText.contains(keyword.toLowerCase())) {
+        suggestions.addAll(categories);
+      }
+    });
+
+    return suggestions.toList();
+  }
+
+  // Hàm lọc danh sách theo từ khóa tìm kiếm
+  void filterCategories(String keyword) {
+    setState(() {
+      if (keyword.isEmpty) {
+        categories = _allCategories;
+      } else {
+        categories = _allCategories
+            .where((category) =>
+                category.toLowerCase().contains(keyword.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
   // Lưu trạng thái ngành hàng được chọn
   String? selectedCategory;
 
   @override
   Widget build(BuildContext context) {
-    selectedCategory = ModalRoute.of(context)!.settings.arguments as String;
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    selectedCategory = args['selectedCategory'] as String;
+
+    // Đưa ngành hàng đã chọn lên đầu nếu có
+    if (selectedCategory != null && selectedCategory != "Chọn ngành hàng") {
+      categories = [
+        selectedCategory!,
+        ...categories.where((category) => category != selectedCategory),
+      ];
+    }
+
     return Scaffold(
       body: Stack(
         children: [
@@ -105,6 +202,20 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (suggestedCategories.isNotEmpty) ...[
+                    const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Text(
+                        "Đề xuất cho sản phẩm của bạn",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.brown,
+                        ),
+                      ),
+                    ),
+                  ],
                   // Tiêu đề "Danh mục Ngành hàng"
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -195,12 +306,36 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  SizedBox(
-                    height: 40,
-                    child: Text(
-                      "Chọn ngành hàng",
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w500),
+                  Expanded(
+                    child: Container(
+                      height: 40,
+                      margin: const EdgeInsets.only(bottom: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          filterCategories(value);
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Tìm kiếm ngành hàng...',
+                          prefixIcon: Icon(Icons.search, color: Colors.grey),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 10),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.clear, color: Colors.grey),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    filterCategories('');
+                                  },
+                                )
+                              : null,
+                        ),
+                      ),
                     ),
                   ),
                 ],

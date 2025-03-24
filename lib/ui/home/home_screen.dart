@@ -11,9 +11,6 @@ import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
-import 'package:luanvan/blocs/product/product_bloc.dart';
-import 'package:luanvan/blocs/product/product_event.dart';
-import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
@@ -37,25 +34,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int bannerCurrentPage = 0;
   final CarouselSliderController _bannercontroller = CarouselSliderController();
-  Cart cart = Cart(
-      id: '',
-      userId: '',
-      productIdAndQuantity: {},
-      listShopId: [],
-      productOptionIndexes: {},
-      productVariantIndexes: {});
+  Cart cart = Cart(id: '', userId: '', shops: []);
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // context
-      //     .read<ListProductBloc>()
-      //     .add(FetchListProductEventByShopId('jW50X0fTOAvVyeb6Wubx'));
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
-        final cartState = context.read<CartBloc>().state;
-        if (cartState is CartLoaded) cart = cartState.cart;
       }
     });
   }
@@ -373,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     width: 30,
                                     color: Colors.white,
                                   )),
-                              cart.productIdAndQuantity.length != 0
+                              cart.totalItems != 0
                                   ? Positioned(
                                       left: 15,
                                       top: 5,
@@ -388,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               width: 1.5, color: Colors.white),
                                         ),
                                         child: Text(
-                                          "${cart.productIdAndQuantity.length}",
+                                          "${cart.totalItems}",
                                           style: TextStyle(
                                               fontSize: 10,
                                               color: Colors.white),

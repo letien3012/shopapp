@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/models/shipping_method.dart';
+import 'package:intl/intl.dart';
 
 class Product {
   String id;
@@ -247,5 +248,24 @@ class Product {
   int getTotalOptionsCount() {
     if (variants.isEmpty) return 0;
     return variants.fold(0, (total, variant) => total + variant.options.length);
+  }
+
+  String getFormattedPriceText() {
+    if (variants.isEmpty) {
+      return formatPrice(price!);
+    }
+
+    double minPrice = getMinOptionPrice();
+    double maxPrice = getMaxOptionPrice();
+
+    if (minPrice == maxPrice) {
+      return formatPrice(minPrice);
+    }
+    return '${formatPrice(minPrice)} - ${formatPrice(maxPrice)}';
+  }
+
+  String formatPrice(double price) {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return formatter.format(price.toInt());
   }
 }

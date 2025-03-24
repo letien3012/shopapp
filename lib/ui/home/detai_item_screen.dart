@@ -176,55 +176,128 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
         child: Center(child: Text("Không có hình ảnh")),
       );
     }
-    return SizedBox(
-      height: 410,
-      width: double.infinity,
-      child: Stack(
-        children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ImageViewer(
-                    imageUrls: product.imageUrl,
-                    initialIndex: _currentImage,
+
+    // Tạo danh sách tất cả hình ảnh bao gồm cả hình ảnh phân loại
+    List<String> allImages = List.from(product.imageUrl);
+    if (product.hasVariantImages && product.variants.isNotEmpty) {
+      allImages.addAll(
+        product.variants[0].options
+            .where((option) => option.imageUrl != null)
+            .map((option) => option.imageUrl!)
+            .toList(),
+      );
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 410,
+          width: double.infinity,
+          child: Stack(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ImageViewer(
+                        imageUrls: allImages,
+                        initialIndex: _currentImage,
+                      ),
+                    ),
+                  );
+                },
+                child: PageView.builder(
+                  controller: _imageController,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: allImages.length,
+                  itemBuilder: (context, index) {
+                    return Image.network(
+                      allImages[index],
+                      fit: BoxFit.cover,
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                right: 20,
+                bottom: 20,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(221, 31, 30, 30),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  width: 50,
+                  height: 25,
+                  child: Center(
+                    child: Text(
+                      '${_currentImage + 1}/${allImages.length}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
-              );
-            },
-            child: PageView.builder(
-              controller: _imageController,
+              ),
+            ],
+          ),
+        ),
+        if (product.hasVariantImages && product.variants.isNotEmpty)
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '${product.variants[0].options.length.toString()} phân loại có sẵn',
+              textAlign: TextAlign.start,
+            ),
+          ),
+        if (product.hasVariantImages && product.variants.isNotEmpty)
+          Container(
+            color: Colors.white,
+            height: 80,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: product.imageUrl.length,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              itemCount: product.variants[0].options.length,
               itemBuilder: (context, index) {
-                return Image.network(
-                  product.imageUrl[index],
-                  fit: BoxFit.cover,
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _currentImage = product.imageUrl.length + index;
+                      _imageController.animateToPage(
+                        _currentImage,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    });
+                  },
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    margin: const EdgeInsets.symmetric(horizontal: 5),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color:
+                            _currentImage == (product.imageUrl.length + index)
+                                ? Colors.brown
+                                : Colors.grey.shade300,
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.network(
+                        product.variants[0].options[index].imageUrl!,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
           ),
-          Positioned(
-            right: 20,
-            bottom: 20,
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(221, 31, 30, 30),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              width: 50,
-              height: 25,
-              child: Center(
-                child: Text(
-                  '${_currentImage + 1}/${product.imageUrl.length}',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -240,11 +313,12 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                (product.variants.isNotEmpty)
-                    ? 'đ${formatPrice(product.getMinOptionPrice())} - đ${formatPrice(product.getMaxOptionPrice())}'
-                    : 'đ${formatPrice(product.price!)}',
+                product.variants.isNotEmpty
+                    ? 'đ${product.getFormattedPriceText()}'
+                    : 'đ${product.formatPrice(product.price!)}',
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                   color: Color.fromARGB(255, 151, 14, 4),
                 ),
               ),
@@ -842,55 +916,53 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                ClipOval(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).pushNamed(CartScreen.routeName);
-                      },
-                      splashColor: Colors.transparent.withOpacity(0.1),
-                      highlightColor: Colors.transparent.withOpacity(0.1),
-                      child: SizedBox(
-                        height: 40,
-                        width: 50,
-                        child: Stack(
-                          children: [
-                            Container(
-                                height: 40,
-                                width: 40,
-                                alignment: Alignment.center,
-                                child: SvgPicture.asset(
-                                  IconHelper.cartIcon,
-                                  height: 30,
-                                  width: 30,
-                                  color: _logoColor,
-                                )),
-                            cart.productIdAndQuantity.length != 0
-                                ? Positioned(
-                                    left: 15,
-                                    top: 5,
-                                    child: Container(
-                                      height: 18,
-                                      width: 30,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.red,
-                                        border: Border.all(
-                                            width: 1.5, color: Colors.white),
-                                      ),
-                                      child: Text(
-                                        "${cart.productIdAndQuantity.length}",
-                                        style: TextStyle(
-                                            fontSize: 10, color: Colors.white),
-                                      ),
-                                    ),
-                                  )
-                                : Container()
-                          ],
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).pushNamed(CartScreen.routeName);
+                  },
+                  child: SizedBox(
+                    height: 40,
+                    width: 60,
+                    child: Stack(
+                      children: [
+                        ClipOval(
+                          child: Container(
+                              color: Colors.black12,
+                              height: 40,
+                              width: 40,
+                              alignment: Alignment.center,
+                              child: SvgPicture.asset(
+                                IconHelper.cartIcon,
+                                height: 30,
+                                width: 30,
+                                color: _logoColor,
+                              )),
                         ),
-                      ),
+                        cart.totalItems != 0
+                            ? Positioned(
+                                right: 15,
+                                top: 5,
+                                child: Container(
+                                  height: 20,
+                                  width: 30,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        width: 1.5, color: Colors.white),
+                                  ),
+                                  child: Text(
+                                    '${cart.totalItems}',
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              )
+                            : Container()
+                      ],
                     ),
                   ),
                 ),
@@ -967,14 +1039,20 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                       child: GestureDetector(
                         onTap: () {
                           if (product.variants.isEmpty ||
-                              product.getTotalOptionStock() == 1) {
+                              (product.variants.length == 2 &&
+                                  product.variants.every((variant) =>
+                                      variant.options.length <= 1)) ||
+                              (product.variants.length == 1 &&
+                                  product.variants[0].options.length <= 1)) {
                             context.read<CartBloc>().add(AddCartEvent(
                                 product.id,
                                 _quantityAddToCart,
                                 userId,
                                 product.shopId,
-                                -1,
-                                -1));
+                                null,
+                                null,
+                                null,
+                                null));
                           } else {
                             showAddToCart(context, product);
                           }

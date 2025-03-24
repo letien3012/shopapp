@@ -25,6 +25,15 @@ class _EditVariantScreenState extends State<EditVariantScreen> {
   late List<List<FocusNode>> _labelFocusNodes;
   bool enableImageForVariant = false;
 
+  // Add helper methods for ID generation
+  String _generateVariantId() {
+    return 'VAR${_variants.length + 1}';
+  }
+
+  String _generateOptionId(int variantIndex) {
+    return 'OPT${variantIndex + 1}_${_options[variantIndex].length + 1}';
+  }
+
   final List<TextEditingController> _valueControllers = [
     TextEditingController(),
     TextEditingController()
@@ -114,8 +123,9 @@ class _EditVariantScreenState extends State<EditVariantScreen> {
   void _addValue(int variantIndex) {
     setState(() {
       if (_valueControllers[variantIndex].text.isNotEmpty) {
-        _options[variantIndex]
-            .add(ProductOption(name: _valueControllers[variantIndex].text));
+        _options[variantIndex].add(ProductOption(
+            id: _generateOptionId(variantIndex),
+            name: _valueControllers[variantIndex].text));
         _labelOptionControllers[variantIndex].add(
             TextEditingController(text: _valueControllers[variantIndex].text));
         _labelFocusNodes[variantIndex]
@@ -125,7 +135,8 @@ class _EditVariantScreenState extends State<EditVariantScreen> {
         if (variantIndex == 0 && enableImageForVariant) _imageUrls.add('');
         _valueControllers[variantIndex].clear();
       } else {
-        _options[variantIndex].add(ProductOption(name: ''));
+        _options[variantIndex]
+            .add(ProductOption(id: _generateOptionId(variantIndex), name: ''));
         _labelOptionControllers[variantIndex]
             .add(TextEditingController(text: ''));
         final newFocusNode = FocusNode()..addListener(_handleFocusChange);
@@ -190,7 +201,8 @@ class _EditVariantScreenState extends State<EditVariantScreen> {
       return;
     }
     setState(() {
-      _variants.add(ProductVariant(label: "Phân loại mới", options: []));
+      _variants.add(ProductVariant(
+          id: _generateVariantId(), label: "Phân loại mới", options: []));
       _options.add([]);
       _labelOptionControllers.add([]);
       _labelFocusNodes.add([]);

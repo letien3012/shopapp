@@ -46,371 +46,524 @@ class _AddToCartBottomSheetState extends State<AddToCartBottomSheet> {
     return formatter.format(price.toInt());
   }
 
+  int get maxStock {
+    if (widget.product.variants.isEmpty) {
+      return widget.product.quantity ?? 0;
+    }
+
+    if (widget.product.variants.length == 1 && selectedIndexVariant1 != -1) {
+      if (selectedIndexVariant1 >= widget.product.optionInfos.length) {
+        return widget.product.quantity ?? 0;
+      }
+      return widget.product.optionInfos[selectedIndexVariant1].stock;
+    }
+
+    if (widget.product.variants.length > 1) {
+      if (selectedIndexVariant1 != -1 && selectedIndexVariant2 != -1) {
+        int optionInfoIndex =
+            selectedIndexVariant1 * widget.product.variants[1].options.length +
+                selectedIndexVariant2;
+        if (optionInfoIndex >= widget.product.optionInfos.length) {
+          return widget.product.quantity ?? 0;
+        }
+        return widget.product.optionInfos[optionInfoIndex].stock;
+      } else if (selectedIndexVariant1 != -1) {
+        // Khi đã chọn variant đầu tiên, lấy tổng số lượng kho của variant thứ 2
+        int totalStock = 0;
+        for (int i = 0; i < widget.product.variants[1].options.length; i++) {
+          int optionInfoIndex = selectedIndexVariant1 *
+                  widget.product.variants[1].options.length +
+              i;
+          if (optionInfoIndex < widget.product.optionInfos.length) {
+            totalStock += widget.product.optionInfos[optionInfoIndex].stock;
+          }
+        }
+        return totalStock;
+      }
+    }
+
+    return widget.product.getTotalOptionStock();
+  }
+
+  void _updateQuantity(int newQuantity) {
+    if (newQuantity > 0) {
+      setState(() {
+        _quantityAddToCart = newQuantity > maxStock ? maxStock : newQuantity;
+        _quantityController.text = _quantityAddToCart.toString();
+      });
+    } else {
+      setState(() {
+        _quantityAddToCart = 1;
+        _quantityController.text = '1';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(10),
+          // Header with product image and price
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Colors.grey[300]!),
+              ),
+            ),
             child: Row(
               children: [
                 Container(
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey, width: 0.6),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      width: 110,
-                      height: 110,
-                      fit: BoxFit.cover,
-                      widget.product.imageUrl[0],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: SizedBox(
-                    height: 110,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              (widget.product.variants.isNotEmpty)
-                                  ? 'đ${formatPrice(widget.product.getMinOptionPrice())} - '
-                                  : 'đ${formatPrice(widget.product.price!)}',
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color.fromARGB(255, 151, 14, 4)),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              (widget.product.variants[0].label.isNotEmpty)
-                                  ? 'đ${formatPrice(widget.product.getMaxOptionPrice())}'
-                                  : '',
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color.fromARGB(255, 151, 14, 4)),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text('Kho: ${widget.product.getTotalOptionStock()}',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w400)),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                  height: 0.5, width: double.infinity, color: Colors.grey[300]),
-              Container(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.product.variants[0].label,
-                        style: const TextStyle(fontWeight: FontWeight.w500)),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: List.generate(
-                          widget.product.variants[0].options.length, (index) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedIndexVariant1 = index;
-                            });
-                          },
-                          child: IntrinsicWidth(
-                            child: Container(
-                              constraints: const BoxConstraints(
-                                  maxHeight: 45, minWidth: 60),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 10),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(8),
+                    child: widget.product.imageUrl.isNotEmpty
+                        ? Image.network(
+                            widget.product.hasVariantImages &&
+                                    selectedIndexVariant1 != -1 &&
+                                    widget
+                                            .product
+                                            .variants[0]
+                                            .options[selectedIndexVariant1]
+                                            .imageUrl !=
+                                        null
+                                ? widget.product.variants[0]
+                                    .options[selectedIndexVariant1].imageUrl!
+                                : widget.product.imageUrl[0],
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
                                 color: Colors.grey[200],
-                                border: index == selectedIndexVariant1
-                                    ? Border.all(
-                                        width: 1, color: Colors.brown[700]!)
-                                    : null,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (widget.product.hasVariantImages)
-                                    Image.network(
-                                      widget.product.variants[0].options[index]
-                                          .imageUrl!,
-                                      width: 35,
-                                      height: 35,
-                                      fit: BoxFit.fitHeight,
-                                    ),
-                                  if (widget.product.hasVariantImages)
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                  Text(
-                                    widget.product.variants[0].options[index]
-                                        .name,
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        color: index == selectedIndexVariant1
-                                            ? Colors.brown[500]
-                                            : Colors.black),
-                                  ),
-                                ],
-                              ),
-                            ),
+                                child: const Icon(Icons.image_not_supported),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.image_not_supported),
                           ),
-                        );
-                      }),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          if (widget.product.variants.length == 2)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                    height: 0.5,
-                    width: double.infinity,
-                    color: Colors.grey[400]),
-                Container(
-                  padding: const EdgeInsets.all(10),
+                const SizedBox(width: 12),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.product.variants[1].label,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        _getPriceText(),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 151, 14, 4),
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: List.generate(
-                            widget.product.variants[1].options.length, (index) {
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedIndexVariant2 = index;
-                              });
-                            },
-                            child: IntrinsicWidth(
-                              child: Container(
-                                constraints: const BoxConstraints(
-                                    maxHeight: 45, minWidth: 60),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 10),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  color: Colors.grey[200],
-                                  border: index == selectedIndexVariant2
-                                      ? Border.all(
-                                          width: 1, color: Colors.brown[700]!)
-                                      : null,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      widget.product.variants[1].options[index]
-                                          .name,
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          color: index == selectedIndexVariant2
-                                              ? Colors.brown[500]
-                                              : Colors.black),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
+                      const SizedBox(height: 4),
+                      Text(
+                        _getStockText(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-          Column(
-            children: [
+          ),
+
+          // Variants selection
+          if (widget.product.variants.isNotEmpty) ...[
+            Container(
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey[300]!),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.product.variants[0].label,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(
+                      widget.product.variants[0].options.length,
+                      (index) => _buildVariantOption(index, 0),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (widget.product.variants.length > 1) ...[
               Container(
-                  height: 0.5, width: double.infinity, color: Colors.grey[400]),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey[300]!),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Số lượng",
-                        style: TextStyle(fontWeight: FontWeight.w500)),
-                    Container(
-                      height: 30,
-                      width: 100,
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey, width: 1),
-                          borderRadius: BorderRadius.circular(8)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                if (_quantityAddToCart > 1) {
-                                  setState(() {
-                                    _quantityAddToCart--;
-                                    _quantityController.text =
-                                        _quantityAddToCart.toString();
-                                  });
-                                }
-                              },
-                              child: Container(
-                                height: double.infinity,
-                                decoration: const BoxDecoration(
-                                    border: Border(
-                                        right: BorderSide(
-                                            color: Colors.grey, width: 1))),
-                                child: Icon(FontAwesomeIcons.minus,
-                                    color: Colors.grey[700], size: 13),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Container(
-                              alignment: Alignment.center,
-                              height: 20,
-                              child: TextFormField(
-                                controller: _quantityController,
-                                decoration: const InputDecoration(
-                                  border: OutlineInputBorder(
-                                      borderSide: BorderSide.none),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                onChanged: (value) {
-                                  int? quantity = int.tryParse(value);
-                                  if (quantity != null) {
-                                    if (quantity <= 1) {
-                                      setState(() {
-                                        _quantityAddToCart = quantity;
-                                        _quantityController.text =
-                                            _quantityAddToCart.toString();
-                                      });
-                                    } else {
-                                      setState(() {
-                                        _quantityAddToCart = quantity ~/ 10;
-                                        _quantityController.text =
-                                            _quantityAddToCart.toString();
-                                      });
-                                    }
-                                  } else {
-                                    setState(() {
-                                      _quantityController.text =
-                                          _quantityAddToCart.toString();
-                                    });
-                                  }
-                                },
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(),
-                                textAlign: TextAlign.center,
-                                textAlignVertical: TextAlignVertical.center,
-                                cursorWidth: 1,
-                                cursorHeight: 13,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                if (_quantityAddToCart < 1) {
-                                  setState(() {
-                                    _quantityAddToCart++;
-                                    _quantityController.text =
-                                        _quantityAddToCart.toString();
-                                  });
-                                }
-                              },
-                              child: Container(
-                                height: double.infinity,
-                                decoration: const BoxDecoration(
-                                    border: Border(
-                                        left: BorderSide(
-                                            color: Colors.grey, width: 1))),
-                                child: Icon(FontAwesomeIcons.plus,
-                                    color: Colors.grey[700], size: 13),
-                              ),
-                            ),
-                          ),
-                        ],
+                    Text(
+                      widget.product.variants[1].label,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(
+                        widget.product.variants[1].options.length,
+                        (index) => _buildVariantOption(index, 1),
                       ),
                     ),
                   ],
                 ),
               ),
             ],
-          ),
-          Container(height: 5, width: double.infinity, color: Colors.grey[200]),
+          ],
+
+          // Quantity selector
           Container(
-            height: 50,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10)),
-            alignment: Alignment.center,
-            margin: const EdgeInsets.all(10),
-            child: GestureDetector(
-              onTap: () {
-                // Thêm logic thêm vào giỏ hàng tại đây nếu cần
-                if (widget.parentContext.read<AuthBloc>().state
-                    is AuthAuthenticated) {
-                  String userId = (widget.parentContext.read<AuthBloc>().state
-                          as AuthAuthenticated)
-                      .user
-                      .uid;
-                  widget.parentContext.read<CartBloc>().add(AddCartEvent(
-                        widget.product.id,
-                        _quantityAddToCart,
-                        userId,
-                        widget.product.shopId,
-                        selectedIndexVariant1,
-                        0,
-                      ));
-                }
-                Navigator.pop(context);
-              },
-              child: const Text("Thêm vào giỏ hàng",
-                  style: TextStyle(fontSize: 16, color: Colors.black38)),
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Colors.grey[300]!),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Số lượng",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Container(
+                  height: 36,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildQuantityButton(
+                        icon: Icons.remove,
+                        onPressed: () {
+                          if (_quantityAddToCart > 1) {
+                            _updateQuantity(_quantityAddToCart - 1);
+                          }
+                        },
+                      ),
+                      Container(
+                        width: 50,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border(
+                            left: BorderSide(color: Colors.grey[300]!),
+                            right: BorderSide(color: Colors.grey[300]!),
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _quantityController,
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.only(bottom: 10),
+                          ),
+                          onChanged: (value) {
+                            int? quantity = int.tryParse(value);
+                            if (quantity != null) {
+                              _updateQuantity(quantity);
+                            }
+                          },
+                        ),
+                      ),
+                      _buildQuantityButton(
+                        icon: Icons.add,
+                        onPressed: () {
+                          if (_quantityAddToCart < maxStock) {
+                            _updateQuantity(_quantityAddToCart + 1);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Add to cart button
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
+            child: ElevatedButton(
+              onPressed: _isValidSelection()
+                  ? () {
+                      if (widget.parentContext.read<AuthBloc>().state
+                          is AuthAuthenticated) {
+                        String userId = (widget.parentContext
+                                .read<AuthBloc>()
+                                .state as AuthAuthenticated)
+                            .user
+                            .uid;
+                        widget.parentContext.read<CartBloc>().add(AddCartEvent(
+                              widget.product.id,
+                              _quantityAddToCart,
+                              userId,
+                              widget.product.shopId,
+                              selectedIndexVariant1 != -1
+                                  ? widget.product.variants[0].id
+                                  : null,
+                              selectedIndexVariant1 != -1
+                                  ? widget.product.variants[0]
+                                      .options[selectedIndexVariant1].id
+                                  : null,
+                              widget.product.variants.length > 1 &&
+                                      selectedIndexVariant2 != -1
+                                  ? widget.product.variants[1].id
+                                  : null,
+                              widget.product.variants.length > 1 &&
+                                      selectedIndexVariant2 != -1
+                                  ? widget.product.variants[1]
+                                      .options[selectedIndexVariant2].id
+                                  : null,
+                            ));
+                      }
+                      Navigator.pop(context);
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.brown,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              child: const Text(
+                "Thêm vào giỏ hàng",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildVariantOption(int index, int variantIndex) {
+    final isSelected = variantIndex == 0
+        ? index == selectedIndexVariant1
+        : index == selectedIndexVariant2;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (variantIndex == 0) {
+            selectedIndexVariant1 = isSelected ? -1 : index;
+          } else {
+            selectedIndexVariant2 = isSelected ? -1 : index;
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          border: Border.all(
+            color: isSelected ? Colors.brown : Colors.grey[300]!,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.product.hasVariantImages && variantIndex == 0) ...[
+              widget.product.variants[variantIndex].options[index].imageUrl !=
+                      null
+                  ? Image.network(
+                      widget.product.variants[variantIndex].options[index]
+                          .imageUrl!,
+                      width: 24,
+                      height: 24,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 24,
+                          height: 24,
+                          color: Colors.grey[200],
+                          child:
+                              const Icon(Icons.image_not_supported, size: 16),
+                        );
+                      },
+                    )
+                  : Container(
+                      width: 24,
+                      height: 24,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.image_not_supported, size: 16),
+                    ),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              widget.product.variants[variantIndex].options[index].name,
+              style: TextStyle(
+                color: isSelected ? Colors.brown : Colors.black,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuantityButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        child: Icon(icon, size: 20),
+      ),
+    );
+  }
+
+  bool _isValidSelection() {
+    if (widget.product.variants.isEmpty) return true;
+    if (widget.product.variants.length == 1) return selectedIndexVariant1 != -1;
+    return selectedIndexVariant1 != -1 && selectedIndexVariant2 != -1;
+  }
+
+  String _getPriceText() {
+    if (widget.product.variants.isEmpty) {
+      return 'đ${formatPrice(widget.product.price!)}';
+    }
+
+    if (widget.product.variants.length == 1 && selectedIndexVariant1 != -1) {
+      if (selectedIndexVariant1 >= widget.product.optionInfos.length) {
+        return 'đ${formatPrice(widget.product.price!)}';
+      }
+      return 'đ${formatPrice(widget.product.optionInfos[selectedIndexVariant1].price)}';
+    }
+
+    if (widget.product.variants.length > 1) {
+      if (selectedIndexVariant1 != -1 && selectedIndexVariant2 != -1) {
+        int optionInfoIndex =
+            selectedIndexVariant1 * widget.product.variants[1].options.length +
+                selectedIndexVariant2;
+        if (optionInfoIndex >= widget.product.optionInfos.length) {
+          return 'đ${formatPrice(widget.product.price!)}';
+        }
+        return 'đ${formatPrice(widget.product.optionInfos[optionInfoIndex].price)}';
+      } else if (selectedIndexVariant1 != -1) {
+        // Khi đã chọn variant đầu tiên, hiển thị giá min-max của variant thứ 2
+        List<double> prices = [];
+        for (int i = 0; i < widget.product.variants[1].options.length; i++) {
+          int optionInfoIndex = selectedIndexVariant1 *
+                  widget.product.variants[1].options.length +
+              i;
+          if (optionInfoIndex < widget.product.optionInfos.length) {
+            prices.add(widget.product.optionInfos[optionInfoIndex].price);
+          }
+        }
+        if (prices.isEmpty) {
+          return 'đ${formatPrice(widget.product.price!)}';
+        }
+        double minPrice = prices.reduce((a, b) => a < b ? a : b);
+        double maxPrice = prices.reduce((a, b) => a > b ? a : b);
+        if (minPrice == maxPrice) {
+          return 'đ${formatPrice(minPrice)}';
+        }
+        return 'đ${formatPrice(minPrice)} - đ${formatPrice(maxPrice)}';
+      }
+    }
+
+    double minPrice = widget.product.getMinOptionPrice();
+    double maxPrice = widget.product.getMaxOptionPrice();
+
+    if (minPrice == maxPrice) {
+      return 'đ${formatPrice(minPrice)}';
+    }
+    return 'đ${formatPrice(minPrice)} - đ${formatPrice(maxPrice)}';
+  }
+
+  String _getStockText() {
+    if (widget.product.variants.isEmpty) {
+      return 'Kho: ${widget.product.quantity}';
+    }
+
+    if (widget.product.variants.length == 1 && selectedIndexVariant1 != -1) {
+      if (selectedIndexVariant1 >= widget.product.optionInfos.length) {
+        return 'Kho: ${widget.product.quantity}';
+      }
+      return 'Kho: ${widget.product.optionInfos[selectedIndexVariant1].stock}';
+    }
+
+    if (widget.product.variants.length > 1) {
+      if (selectedIndexVariant1 != -1 && selectedIndexVariant2 != -1) {
+        int optionInfoIndex =
+            selectedIndexVariant1 * widget.product.variants[1].options.length +
+                selectedIndexVariant2;
+        if (optionInfoIndex >= widget.product.optionInfos.length) {
+          return 'Kho: ${widget.product.quantity}';
+        }
+        return 'Kho: ${widget.product.optionInfos[optionInfoIndex].stock}';
+      } else if (selectedIndexVariant1 != -1) {
+        // Khi đã chọn variant đầu tiên, hiển thị tổng số lượng kho của variant thứ 2
+        int totalStock = 0;
+        for (int i = 0; i < widget.product.variants[1].options.length; i++) {
+          int optionInfoIndex = selectedIndexVariant1 *
+                  widget.product.variants[1].options.length +
+              i;
+          if (optionInfoIndex < widget.product.optionInfos.length) {
+            totalStock += widget.product.optionInfos[optionInfoIndex].stock;
+          }
+        }
+        return 'Kho: $totalStock';
+      }
+    }
+
+    return 'Kho: ${widget.product.getTotalOptionStock()}';
   }
 }

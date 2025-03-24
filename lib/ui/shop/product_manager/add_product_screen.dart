@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,8 @@ import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shipping_method.dart';
@@ -62,6 +65,61 @@ class _AddProductScreenState extends State<AddProductScreen> {
     product.shippingMethods.addAll(ShippingMethod.defaultMethods);
 
     super.initState();
+  }
+
+  Future<void> _showAddSuccessDialog() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (BuildContext context) {
+        Timer(Duration(seconds: 1), () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        });
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          contentPadding: EdgeInsets.zero,
+          content: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.black87,
+            ),
+            width: 200,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  IconHelper.check,
+                  height: 40,
+                  width: 40,
+                  color: Colors.white,
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Thêm sản phẩm thành công",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actionsPadding: EdgeInsets.zero, // Xóa padding mặc định của actions
+          actions: [], // Không cần nút, tự động đóng
+        );
+      },
+    );
   }
 
   void showImagePickMethod(BuildContext context) {
@@ -188,7 +246,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
       product.imageUrl = _listImageUrl;
       product.shopId = shopId;
       context.read<ProductBloc>().add(AddProductEvent(product));
-      Navigator.of(context).pop();
+      _showAddSuccessDialog();
+
+      // Fetch lại danh sách sản phẩm sau khi thêm thành công
+      context
+          .read<ListProductBloc>()
+          .add(FetchListProductEventByShopId(shopId));
+
+      Future.delayed(Duration(seconds: 1), () {
+        Navigator.of(context).pop();
+      });
     }
   }
 
@@ -784,7 +851,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     ),
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
-                                        return "Vui lòng chọn cân nặng";
+                                        return "Vui lòng thiết lập phí vận chuyển";
+                                      }
+                                      // Kiểm tra cân nặng
+                                      if (!product.hasWeightVariant &&
+                                          product.weight == null) {
+                                        return "Vui lòng thiết lập cân nặng";
+                                      }
+                                      // Kiểm tra phương thức vận chuyển
+                                      if (!(product
+                                              .shippingMethods[0].isEnabled ||
+                                          product
+                                              .shippingMethods[1].isEnabled ||
+                                          product
+                                              .shippingMethods[2].isEnabled)) {
+                                        return "Vui lòng bật ít nhất 1 phương thức vận chuyển";
                                       }
                                       return null;
                                     },

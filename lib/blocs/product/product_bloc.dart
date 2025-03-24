@@ -50,7 +50,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
           await _productService.fetchProductByProductId(event.productId);
       await _productService.deleteProduct(event.productId);
       _listProductBloc.add(FetchListProductEventByShopId(product.shopId));
-      emit(ProductInitial());
+      emit(ProductLoaded(product));
     } catch (e) {
       emit(ProductError(e.toString()));
     }

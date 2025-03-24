@@ -1,79 +1,76 @@
 import 'dart:convert';
+import 'package:luanvan/models/cart_item.dart';
+import 'package:luanvan/models/cart_shop.dart';
 
 class Cart {
-  String id;
-  String userId;
-  Map<String, int> productIdAndQuantity;
-  List<String> listShopId;
-  Map<String, int?> productVariantIndexes;
-  Map<String, int?> productOptionIndexes;
+  final String id;
+  final String userId;
+  List<CartShop> shops;
 
   Cart({
     required this.id,
     required this.userId,
-    required this.productIdAndQuantity,
-    required this.listShopId,
-    required this.productVariantIndexes,
-    required this.productOptionIndexes,
+    this.shops = const [],
   });
 
   Cart copyWith({
     String? id,
     String? userId,
-    Map<String, int>? productIdAndQuantity,
-    List<String>? listShopId,
-    Map<String, int?>? productVariantIndexes,
-    Map<String, int?>? productOptionIndexes,
+    List<CartShop>? shops,
   }) {
     return Cart(
       id: id ?? this.id,
       userId: userId ?? this.userId,
-      productIdAndQuantity: productIdAndQuantity ?? this.productIdAndQuantity,
-      listShopId: listShopId ?? this.listShopId,
-      productVariantIndexes:
-          productVariantIndexes ?? this.productVariantIndexes,
-      productOptionIndexes: productOptionIndexes ?? this.productOptionIndexes,
+      shops: shops ?? this.shops,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return <String, dynamic>{
+    return {
       'id': id,
       'userId': userId,
-      'productIdAndQuantity': productIdAndQuantity,
-      'listShopId': listShopId,
-      'productVariantIndexes': productVariantIndexes,
-      'productOptionIndexes': productOptionIndexes,
+      'shops': shops.map((shop) => shop.toMap()).toList(),
     };
   }
 
   factory Cart.fromMap(Map<String, dynamic> map) {
     return Cart(
-      id: map['id'] as String,
-      userId: map['userId'] as String,
-      productIdAndQuantity:
-          Map<String, int>.from(map['productIdAndQuantity'] ?? {}),
-      listShopId: List<String>.from(map['listShopId'] ?? []),
-      productVariantIndexes:
-          Map<String, int?>.from(map['productVariantIndexes'] ?? {}),
-      productOptionIndexes:
-          Map<String, int?>.from(map['productOptionIndexes'] ?? {}),
+      id: map['id']?.toString() ?? '',
+      userId: map['userId']?.toString() ?? '',
+      shops: map['shops'] != null && map['shops'] is List
+          ? (map['shops'] as List)
+              .map((shopMap) =>
+                  CartShop.fromMap(shopMap as Map<String, dynamic>))
+              .toList()
+          : [],
     );
   }
 
-  factory Cart.fromFirestore(
-      Map<String, dynamic> firestoreData, String documentId) {
-    return Cart(
-      id: documentId,
-      userId: firestoreData['userId'] as String? ?? '',
-      productIdAndQuantity:
-          Map<String, int>.from(firestoreData['productIdAndQuantity'] ?? {}),
-      listShopId: List<String>.from(firestoreData['listShopId'] ?? []),
-      productVariantIndexes:
-          Map<String, int?>.from(firestoreData['productVariantIndexes'] ?? {}),
-      productOptionIndexes:
-          Map<String, int?>.from(firestoreData['productOptionIndexes'] ?? {}),
-    );
+  int get totalItems {
+    return shops.fold(0, (sum, shop) => sum + shop.totalItems);
+  }
+
+  bool get isEmpty => shops.isEmpty;
+
+  bool hasProduct(String productId) {
+    return shops.any((shop) => shop.items.containsKey(productId));
+  }
+
+  CartItem? getProduct(String productId) {
+    for (var shop in shops) {
+      if (shop.items.containsKey(productId)) {
+        return shop.items[productId];
+      }
+    }
+    return null;
+  }
+
+  CartShop? getShop(String shopId) {
+    try {
+      return shops.firstWhere((shop) => shop.shopId == shopId);
+    } catch (e) {
+      return null;
+    }
   }
 
   String toJson() => json.encode(toMap());
@@ -82,17 +79,13 @@ class Cart {
       Cart.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
-  String toString() =>
-      'Cart(id: $id, userId: $userId, productIdAndQuantity: $productIdAndQuantity, listShopId: $listShopId, productVariantIndexes: $productVariantIndexes, productOptionIndexes: $productOptionIndexes)';
+  String toString() => 'Cart(id: $id, userId: $userId, shops: $shops)';
 
   static Cart initial() {
     return Cart(
       id: '',
       userId: '',
-      productIdAndQuantity: {},
-      listShopId: [],
-      productVariantIndexes: {},
-      productOptionIndexes: {},
+      shops: [],
     );
   }
 }

@@ -121,8 +121,9 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
   void _addValue(int variantIndex) {
     setState(() {
       if (_valueControllers[variantIndex].text.isNotEmpty) {
-        _options[variantIndex]
-            .add(ProductOption(name: _valueControllers[variantIndex].text));
+        _options[variantIndex].add(ProductOption(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            name: _valueControllers[variantIndex].text));
         _labelOptionControllers[variantIndex].add(
             TextEditingController(text: _valueControllers[variantIndex].text));
 
@@ -135,7 +136,8 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
           _imageFiles.add(XFile(''));
         _valueControllers[variantIndex].clear();
       } else {
-        _options[variantIndex].add(ProductOption(name: ''));
+        _options[variantIndex].add(ProductOption(
+            id: DateTime.now().millisecondsSinceEpoch.toString(), name: ''));
         _labelOptionControllers[variantIndex]
             .add(TextEditingController(text: ''));
 
@@ -216,7 +218,10 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
       return;
     }
     setState(() {
-      _variants.add(ProductVariant(label: "Phân loại mới", options: []));
+      _variants.add(ProductVariant(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          label: "Phân loại mới",
+          options: []));
       _options.add([]);
       _labelOptionControllers.add([]);
 
@@ -226,8 +231,8 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
 
       _labelControllers.add(TextEditingController(text: "Phân loại mới"));
       _labelErrors.add(null);
-      isEditVariant.add(false); // Thêm trạng thái chỉnh sửa cho variant mới
-      _addValue(_variants.length - 1); // Thêm ít nhất 1 ProductOption
+      isEditVariant.add(false);
+      _addValue(_variants.length - 1);
     });
   }
 

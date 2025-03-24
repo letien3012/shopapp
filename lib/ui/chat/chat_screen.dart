@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
@@ -9,6 +10,7 @@ import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
 import 'package:luanvan/models/chat_room.dart';
 import 'package:luanvan/ui/chat/chat_detail_screen.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -47,7 +49,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     SingleChildScrollView(
                       child: Container(
                         constraints: BoxConstraints(
-                          minHeight: MediaQuery.of(context).size.height,
+                          minHeight: MediaQuery.of(context).size.height - 90,
                         ),
                         width: MediaQuery.of(context).size.width,
                         color: Colors.grey[200],
@@ -58,12 +60,54 @@ class _ChatScreenState extends State<ChatScreen> {
                             if (chatState is ChatLoading)
                               const Center(child: CircularProgressIndicator())
                             else if (chatState is ChatRoomsLoaded)
-                              _buildChatRoomList(context, chatState.chatRooms)
+                              chatState.chatRooms.isEmpty
+                                  ? Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          SvgPicture.asset(
+                                            IconHelper.chatbubblequestion,
+                                            width: 100,
+                                            height: 100,
+                                            color: Colors.grey[400],
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            'Không có lịch sử Chat',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : _buildChatRoomList(
+                                      context, chatState.chatRooms)
                             else if (chatState is ChatError)
                               Center(child: Text(chatState.message))
                             else
-                              const Center(
-                                  child: Text('Không có phòng chat nào')),
+                              Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.chat_bubble_outline,
+                                      size: 100,
+                                      color: Colors.grey[400],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Không có lịch sử Chat',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),

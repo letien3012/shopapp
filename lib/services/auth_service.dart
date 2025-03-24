@@ -34,14 +34,12 @@ class AuthService {
         await cartCollection.where('userId', isEqualTo: userId).limit(1).get();
 
     if (querySnapshot.docs.isEmpty) {
-      final newCartId = cartCollection.doc().id; // Tạo ID tự động
+      final newCartId = cartCollection.doc().id;
       final newCart = Cart(
-          id: newCartId,
-          userId: userId,
-          productIdAndQuantity: {},
-          listShopId: [],
-          productVariantIndexes: {},
-          productOptionIndexes: {});
+        id: newCartId,
+        userId: userId,
+        shops: [],
+      );
       await cartCollection.doc(newCartId).set(newCart.toMap());
     }
   }

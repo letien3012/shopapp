@@ -1,11 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/product.dart';
-import 'package:luanvan/models/product_option.dart';
-import 'package:luanvan/models/product_variant.dart';
 
 class SetVariantInfoScreen extends StatefulWidget {
   const SetVariantInfoScreen({super.key});
@@ -35,6 +31,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
     super.initState();
     Future.microtask(() {
       product = ModalRoute.of(context)!.settings.arguments as Product;
+      print(product.optionInfos);
       enableImageForVariant = product.hasVariantImages;
       if (product.variants.isNotEmpty) {
         groupOptionCount = product.variants.length == 2
@@ -44,6 +41,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
       } else {
         groupOptionCount = 0;
       }
+
       setState(() {
         _initializeControllers();
       });
@@ -217,15 +215,6 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
     if (!_validateDataBeforeSave()) return false;
 
     try {
-      while (product.optionInfos.length < groupOptionCount) {
-        product.optionInfos.add(OptionInfo(
-            price: 0,
-            stock: 0,
-            weight: product.optionInfos.isNotEmpty
-                ? product.optionInfos[0].weight
-                : null));
-      }
-
       for (int i = 0; i < groupOptionCount; i++) {
         final price = _validatePrice(
             _priceOptionControllers[i].text, _priceOptionControllers[i]);
@@ -234,7 +223,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
         product.optionInfos[i] =
             product.optionInfos[i].copyWith(price: price, stock: stock);
       }
-
+      print(product.optionInfos);
       product = product.copyWith(hasVariantImages: enableImageForVariant);
 
       ScaffoldMessenger.of(context).showSnackBar(

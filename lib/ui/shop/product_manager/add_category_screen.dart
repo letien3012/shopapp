@@ -11,7 +11,6 @@ class AddCategoryScreen extends StatefulWidget {
 }
 
 class _AddCategoryScreenState extends State<AddCategoryScreen> {
-  // Danh sách các ngành hàng lớn
   final List<String> _allCategories = [
     "Thời Trang Nam",
     "Thời Trang Nữ",

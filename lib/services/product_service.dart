@@ -4,7 +4,9 @@ import 'package:luanvan/models/product.dart';
 class ProductService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
   Future<void> addProduct(Product product) async {
-    await firebaseFirestore.collection('products').add(product.toMap());
+    final docRef =
+        await firebaseFirestore.collection('products').add(product.toMap());
+    await docRef.update({'id': docRef.id});
   }
 
   Future<List<Product>> fetchProductByShopId(String shopId) async {
@@ -32,6 +34,16 @@ class ProductService {
     product = Product.fromFirestore(querySnapshot);
 
     return product;
+  }
+
+  Future<List<Product>> fetchProductsByListProductId(
+      List<String> productIds) async {
+    final response = await firebaseFirestore
+        .collection('products')
+        .where('id', whereIn: productIds)
+        .get();
+
+    return response.docs.map((doc) => Product.fromFirestore(doc)).toList();
   }
 
   Future<void> deleteProduct(String productId) async {

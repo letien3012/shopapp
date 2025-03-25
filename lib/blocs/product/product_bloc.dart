@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/services/product_service.dart';
@@ -15,6 +14,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<AddProductEvent>(_onAddProduct);
     on<DeleteProductByIdEvent>(_onDeleteProduct);
     on<UpdateProductEvent>(_onUpdateProduct);
+    on<ResetProductEvent>(_onResetProduct);
+  }
+  void _onResetProduct(ResetProductEvent event, Emitter<ProductState> emit) {
+    emit(ProductInitial());
   }
 
   Future<void> _onFetchProductByProductId(

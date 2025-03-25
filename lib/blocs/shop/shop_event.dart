@@ -22,3 +22,5 @@ class HideShopEvent extends ShopEvent {
   final String shopId;
   HideShopEvent(this.shopId);
 }
+
+class ResetShopEvent extends ShopEvent {}

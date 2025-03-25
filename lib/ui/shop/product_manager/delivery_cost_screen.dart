@@ -52,18 +52,6 @@ class _DeliveryCostScreenState extends State<DeliveryCostScreen> {
       product = args['product'] as Product;
       hasWeightVariant = product.hasWeightVariant;
 
-      // Đảm bảo product.optionInfos có đủ phần tử
-      int groupOptionCount = product.getTotalOptionsCount();
-      while (product.optionInfos.length < groupOptionCount) {
-        product.optionInfos.add(OptionInfo(
-          price: 0,
-          stock: 0,
-          weight: product.optionInfos.isNotEmpty
-              ? product.optionInfos[0].weight
-              : null,
-        ));
-      }
-
       // Khởi tạo trọng lượng từ optionInfos
       if (hasWeightVariant && product.optionInfos.isNotEmpty) {
         _weightControllers = {
@@ -522,7 +510,7 @@ class _DeliveryCostScreenState extends State<DeliveryCostScreen> {
                                       isEconomyEnabledProduct ? price[0] : '',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[600],
+                                        color: Colors.red,
                                       ),
                                     ),
                                   ],

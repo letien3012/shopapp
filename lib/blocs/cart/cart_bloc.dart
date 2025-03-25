@@ -6,16 +6,20 @@ import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/cart_shop.dart';
 import 'package:luanvan/services/cart_service.dart';
 
-// Bloc
 class CartBloc extends Bloc<CartEvent, CartState> {
   final CartService _cartService;
 
   CartBloc(this._cartService) : super(CartInitial()) {
     on<FetchCartEventUserId>(_onLoadCart);
     on<AddCartEvent>(_onAddCart);
+    on<UpdateQuantityEvent>(_onUpdateQuantity);
     on<UpdateCartEvent>(_onUpdateCart);
     on<DeleteCartProductEvent>(_onDeleteCartProduct);
     on<DeleteCartShopEvent>(_onDeleteCartShop);
+    on<ResetCartEvent>(_onResetCart);
+  }
+  void _onResetCart(ResetCartEvent event, Emitter<CartState> emit) {
+    emit(CartInitial());
   }
 
   Future<void> _onLoadCart(
@@ -42,35 +46,67 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     }
   }
 
+  bool _isSameItem(CartItem item1, CartItem item2) {
+    return item1.productId == item2.productId &&
+        item1.variantId1 == item2.variantId1 &&
+        item1.optionId1 == item2.optionId1 &&
+        item1.variantId2 == item2.variantId2 &&
+        item1.optionId2 == item2.optionId2;
+  }
+
   Future<void> _onAddCart(AddCartEvent event, Emitter<CartState> emit) async {
     emit(CartLoading());
     try {
       final currentCart = await _cartService.getCartByUserId(event.userId);
-      // Create new cart item
-      final newItem = CartItem(
-        productId: event.productId,
-        quantity: event.quantity,
-        variantId1: event.variantId1,
-        optionId1: event.optionId1,
-      );
-
-      // Get or create shop
       final shop = currentCart!.getShop(event.shopId) ??
           CartShop(
             shopId: event.shopId,
             items: {},
           );
-      print(shop.shopId);
+
+      final newItem = CartItem(
+        productId: event.productId,
+        quantity: event.quantity,
+        variantId1: event.variantId1,
+        optionId1: event.optionId1,
+        variantId2: event.variantId2,
+        optionId2: event.optionId2,
+      );
+
       // Update shop items
       final updatedItems = Map<String, CartItem>.from(shop.items);
-      if (updatedItems.containsKey(event.productId)) {
-        final existingItem = updatedItems[event.productId]!;
-        updatedItems[event.productId] = existingItem.copyWith(
-          quantity: existingItem.quantity + event.quantity,
-        );
-      } else {
-        updatedItems[event.productId] = newItem;
+      print('Initial items count: ${updatedItems.length}');
+
+      // Hàm tạo key tổng hợp
+      String getItemKey(CartItem item) {
+        return '${item.productId}_${item.variantId1 ?? ''}_${item.optionId1 ?? ''}_${item.variantId2 ?? ''}_${item.optionId2 ?? ''}';
       }
+
+      // Tìm item hiện có
+      CartItem? existingItem;
+      String? existingKey;
+      for (var entry in updatedItems.entries) {
+        if (_isSameItem(entry.value, newItem)) {
+          existingItem = entry.value;
+          existingKey = entry.key;
+          break;
+        }
+      }
+
+      if (existingItem != null && existingKey != null) {
+        // Nếu item đã tồn tại, cập nhật số lượng
+        updatedItems[existingKey] = existingItem.copyWith(
+          quantity: existingItem.quantity + newItem.quantity,
+        );
+        print('Updated quantity for key: $existingKey');
+      } else {
+        // Nếu không tồn tại, thêm newItem với key tổng hợp
+        final newKey = getItemKey(newItem);
+        updatedItems[newKey] = newItem;
+        print('Added new item with key: $newKey');
+      }
+
+      print('Updated items count: ${updatedItems.length}');
 
       // Update shop
       final updatedShop = shop.copyWith(items: updatedItems);
@@ -81,10 +117,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           updatedShops.indexWhere((shop) => shop.shopId == event.shopId);
 
       if (existingShopIndex != -1) {
-        // Update existing shop
         updatedShops[existingShopIndex] = updatedShop;
       } else {
-        // Add new shop
         updatedShops.add(updatedShop);
       }
 
@@ -95,6 +129,40 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     } catch (e) {
       emit(CartError(e.toString()));
     }
+  }
+
+  Future<void> _onUpdateQuantity(
+      UpdateQuantityEvent event, Emitter<CartState> emit) async {
+    try {
+      final currentCart = await _cartService.getCartByUserId(event.userId);
+      final shop = currentCart!.shops.firstWhere(
+        (element) => element.shopId == event.shopId,
+      );
+
+      if (shop.items.containsKey(event.itemId)) {
+        // Update item quantity
+        final updatedItems = Map<String, CartItem>.from(shop.items);
+        final item = updatedItems[event.itemId]!;
+        updatedItems[event.itemId] = item.copyWith(quantity: event.quantity);
+
+        // Update shop
+        final updatedShop = shop.copyWith(items: updatedItems);
+
+        // Update cart shops
+        final updatedShops = List<CartShop>.from(currentCart.shops);
+        final existingShopIndex =
+            updatedShops.indexWhere((shop) => shop.shopId == event.shopId);
+        if (existingShopIndex != -1) {
+          updatedShops[existingShopIndex] = updatedShop;
+        } else {
+          updatedShops.add(updatedShop);
+        }
+
+        // Create new cart
+        final newCart = currentCart.copyWith(shops: updatedShops);
+        await _cartService.updateCart(newCart);
+      }
+    } catch (e) {}
   }
 
   Future<void> _onUpdateCart(

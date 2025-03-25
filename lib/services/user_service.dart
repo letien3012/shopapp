@@ -33,8 +33,14 @@ class UserService {
   }
 
   Future<void> registrationSeller(Shop sellerRegistration) async {
-    await firebaseFirestore.collection('shops').add(sellerRegistration.toMap());
-
+    DocumentReference shopRef = await firebaseFirestore
+        .collection('shops')
+        .add(sellerRegistration.toMap());
+    String shopId = shopRef.id;
+    await firebaseFirestore
+        .collection('shops')
+        .doc(shopId)
+        .update({'shopId': shopId});
     await firebaseFirestore
         .collection('users')
         .doc(sellerRegistration.userId)

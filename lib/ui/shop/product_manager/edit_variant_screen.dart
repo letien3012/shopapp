@@ -12,7 +12,7 @@ import 'package:luanvan/ui/shop/product_manager/set_variant_info_screen.dart';
 
 class EditVariantScreen extends StatefulWidget {
   const EditVariantScreen({super.key});
-  static const String routeName = "add_variant";
+  static const String routeName = "edit_variant";
 
   @override
   State<EditVariantScreen> createState() => _EditVariantScreenState();

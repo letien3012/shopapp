@@ -5,18 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
-import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/models/shop.dart';
-import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
@@ -234,14 +232,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
         }
       }
       if (product.getTotalOptionsCount() == 0) {
-        // Nếu không có phân loại, lưu giá và kho vào product và optionInfos
+        // Nếu không có phân loại, lưu giá và kho vào product
         double price = double.parse(_priceController.text);
         int stock = int.parse(_stockController.text);
         product.price = price;
         product.quantity = stock;
-        product.optionInfos = [
-          OptionInfo(price: price, stock: stock, weight: product.weight)
-        ];
       }
       product.imageUrl = _listImageUrl;
       product.shopId = shopId;
@@ -637,8 +632,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 product.quantity?.toString() ?? '';
                           } else {
                             // Nếu có phân loại, hiển thị giá và kho từ optionInfos
-                            _priceController.text =
-                                "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
+                            if (product.getMinOptionPrice() !=
+                                product.getMaxOptionPrice()) {
+                              _priceController.text =
+                                  "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
+                            } else {
+                              _priceController.text =
+                                  "${product.getMinOptionPrice()}";
+                            }
                             _stockController.text =
                                 "${product.getTotalOptionStock()}";
                           }

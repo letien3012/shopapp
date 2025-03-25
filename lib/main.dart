@@ -6,8 +6,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
+import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/di.dart';
@@ -92,6 +94,12 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<ChatBloc>(
           create: (context) => ChatBloc(ChatService()),
+        ),
+        BlocProvider<ProductCartBloc>(
+          create: (context) => ProductCartBloc(ProductService()),
+        ),
+        BlocProvider<ListShopBloc>(
+          create: (context) => ListShopBloc(ShopService()),
         ),
       ],
       child: MaterialApp(

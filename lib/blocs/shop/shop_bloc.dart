@@ -12,6 +12,7 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
     on<FetchShopEventByShopId>(_onFetchShopByShopId);
     on<UpdateShopEvent>(_onUpdateShop);
     on<HideShopEvent>(_onHideShop);
+    on<ResetShopEvent>((event, emit) => emit(ShopInitial()));
   }
   Future<void> _onFetchShop(
       FetchShopEvent event, Emitter<ShopState> emit) async {

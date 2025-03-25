@@ -29,3 +29,5 @@ class FetchProductEventByProductId extends ProductEvent {
 }
 
 class FetchListProductEvent extends ProductEvent {}
+
+class ResetProductEvent extends ProductEvent {}

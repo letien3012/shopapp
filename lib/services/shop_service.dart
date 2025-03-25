@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/shop.dart';
-import 'package:luanvan/models/user_info_model.dart';
 
 class ShopService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
@@ -21,6 +20,19 @@ class ShopService {
 
     final Shop shop = Shop.fromFirestore(querySnapshot);
     return shop;
+  }
+
+  Future<List<Shop>> fetchListShopByShopId(List<String> shopIds) async {
+    final response = await firebaseFirestore
+        .collection('shops')
+        .where('shopId', whereIn: shopIds)
+        .get();
+
+    return response.docs
+        .map(
+          (e) => Shop.fromFirestore(e),
+        )
+        .toList();
   }
 
   Future<void> updateShop(Shop shop) async {

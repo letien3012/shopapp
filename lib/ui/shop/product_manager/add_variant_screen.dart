@@ -1,9 +1,7 @@
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/product.dart';
@@ -45,11 +43,13 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
     super.initState();
     Future.microtask(() {
       product = ModalRoute.of(context)!.settings.arguments as Product;
+
       setState(() {
         // Lấy dữ liệu từ product
         _variants = product.variants.isNotEmpty
             ? product.variants.map((variant) => variant.copyWith()).toList()
             : [];
+
         _labelControllers = _variants
             .map((val) => TextEditingController(text: val.label))
             .toList();
@@ -132,8 +132,9 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
 
         _labelOptionErrors[variantIndex].add(null);
 
-        if (variantIndex == 0 && enableImageForVariant)
+        if (variantIndex == 0 && enableImageForVariant) {
           _imageFiles.add(XFile(''));
+        }
         _valueControllers[variantIndex].clear();
       } else {
         _options[variantIndex].add(ProductOption(
@@ -312,6 +313,8 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
           }
         }
       }
+
+      if (_variants.isEmpty) isValid = false;
     });
     return isValid;
   }
@@ -951,14 +954,14 @@ class _AddVariantScreenState extends State<AddVariantScreen> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _saveData,
+                          onPressed: _variants.isNotEmpty ? _saveData : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.brown,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             "Tiếp: Chỉnh kho và giá bán",
                             style: TextStyle(fontSize: 16, color: Colors.white),
                           ),

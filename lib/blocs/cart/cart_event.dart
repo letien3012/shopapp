@@ -34,6 +34,28 @@ class UpdateCartEvent extends CartEvent {
   });
 }
 
+class UpdateQuantityEvent extends CartEvent {
+  final String userId;
+  final String itemId;
+  final int quantity;
+  final String shopId;
+  final String? variant1Id;
+  final String? option1Id;
+  final String? variant2Id;
+  final String? option2Id;
+
+  UpdateQuantityEvent(
+    this.userId,
+    this.itemId,
+    this.quantity,
+    this.shopId, {
+    this.variant1Id,
+    this.option1Id,
+    this.variant2Id,
+    this.option2Id,
+  });
+}
+
 class DeleteProductCartEvent extends CartEvent {
   final String productId;
 
@@ -74,3 +96,5 @@ class DeleteCartShopEvent extends CartEvent {
 
   DeleteCartShopEvent(this.shopId);
 }
+
+class ResetCartEvent extends CartEvent {}

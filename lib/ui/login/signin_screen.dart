@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_event.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/login/forgotpw_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
@@ -193,19 +196,31 @@ class _SigninScreenState extends State<SigninScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ClipOval(
-                      child: Container(
-                        height: 60,
-                        width: 60,
-                        child: Image.asset(ImageHelper.facebook_logo),
+                    GestureDetector(
+                      onTap: () {
+                        context
+                            .read<AuthBloc>()
+                            .add(LoginInWithFacebookEvent());
+                      },
+                      child: ClipOval(
+                        child: SizedBox(
+                          height: 60,
+                          width: 60,
+                          child: Image.asset(ImageHelper.facebook_logo),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 30),
-                    ClipOval(
-                      child: Container(
-                        height: 60,
-                        width: 60,
-                        child: Image.asset(ImageHelper.google_logo),
+                    GestureDetector(
+                      onTap: () {
+                        context.read<AuthBloc>().add(LoginWithGoogleEvent());
+                      },
+                      child: ClipOval(
+                        child: SizedBox(
+                          height: 60,
+                          width: 60,
+                          child: Image.asset(ImageHelper.google_logo),
+                        ),
                       ),
                     ),
                   ],

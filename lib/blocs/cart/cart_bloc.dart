@@ -168,40 +168,50 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     } catch (e) {}
   }
 
+  // Future<void> _onUpdateCart(
+  //     UpdateCartEvent event, Emitter<CartState> emit) async {
+  //   try {
+  //     if (state is CartLoaded) {
+  //       final currentState = state as CartLoaded;
+  //       final currentCart = currentState.cart;
+  //       final shop = currentCart.getShop(event.shopId);
+
+  //       if (shop != null && shop.items.containsKey(event.productId)) {
+  //         // Update item quantity
+  //         final updatedItems = Map<String, CartItem>.from(shop.items);
+  //         final item = updatedItems[event.productId]!;
+  //         updatedItems[event.productId] =
+  //             item.copyWith(quantity: event.quantity);
+
+  //         // Update shop
+  //         final updatedShop = shop.copyWith(items: updatedItems);
+
+  //         // Update cart shops
+  //         final updatedShops = List<CartShop>.from(currentCart.shops);
+  //         final existingShopIndex =
+  //             updatedShops.indexWhere((shop) => shop.shopId == event.shopId);
+  //         if (existingShopIndex != -1) {
+  //           updatedShops[existingShopIndex] = updatedShop;
+  //         } else {
+  //           updatedShops.add(updatedShop);
+  //         }
+
+  //         // Create new cart
+  //         final newCart = currentCart.copyWith(shops: updatedShops);
+  //         await _cartService.updateCart(newCart);
+  //         emit(CartLoaded(newCart));
+  //       }
+  //     }
+  //   } catch (e) {
+  //     emit(CartError(e.toString()));
+  //   }
+  // }
   Future<void> _onUpdateCart(
       UpdateCartEvent event, Emitter<CartState> emit) async {
     try {
-      if (state is CartLoaded) {
-        final currentState = state as CartLoaded;
-        final currentCart = currentState.cart;
-        final shop = currentCart.getShop(event.shopId);
-
-        if (shop != null && shop.items.containsKey(event.productId)) {
-          // Update item quantity
-          final updatedItems = Map<String, CartItem>.from(shop.items);
-          final item = updatedItems[event.productId]!;
-          updatedItems[event.productId] =
-              item.copyWith(quantity: event.quantity);
-
-          // Update shop
-          final updatedShop = shop.copyWith(items: updatedItems);
-
-          // Update cart shops
-          final updatedShops = List<CartShop>.from(currentCart.shops);
-          final existingShopIndex =
-              updatedShops.indexWhere((shop) => shop.shopId == event.shopId);
-          if (existingShopIndex != -1) {
-            updatedShops[existingShopIndex] = updatedShop;
-          } else {
-            updatedShops.add(updatedShop);
-          }
-
-          // Create new cart
-          final newCart = currentCart.copyWith(shops: updatedShops);
-          await _cartService.updateCart(newCart);
-          emit(CartLoaded(newCart));
-        }
-      }
+      emit(CartLoading());
+      await _cartService.updateCart(event.cart);
+      emit(CartLoaded(event.cart));
     } catch (e) {
       emit(CartError(e.toString()));
     }
@@ -210,37 +220,35 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   Future<void> _onDeleteCartProduct(
       DeleteCartProductEvent event, Emitter<CartState> emit) async {
     try {
-      if (state is CartLoaded) {
-        final currentState = state as CartLoaded;
-        final currentCart = currentState.cart;
-        final shop = currentCart.getShop(event.shopId);
+      emit(CartLoading());
+      final currentCart = await _cartService.getCartByUserId(event.userId);
+      final shop = currentCart!.getShop(event.shopId);
 
-        if (shop != null && shop.items.containsKey(event.itemId)) {
-          // Remove item from shop
-          final updatedItems = Map<String, CartItem>.from(shop.items);
-          updatedItems.remove(event.itemId);
+      if (shop != null && shop.items.containsKey(event.itemId)) {
+        // Remove item from shop
+        final updatedItems = Map<String, CartItem>.from(shop.items);
+        updatedItems.remove(event.itemId);
 
-          // Update shop
-          final updatedShop = shop.copyWith(items: updatedItems);
+        // Update shop
+        final updatedShop = shop.copyWith(items: updatedItems);
 
-          // Update cart shops
-          final updatedShops = List<CartShop>.from(currentCart.shops);
-          final existingShopIndex =
-              updatedShops.indexWhere((shop) => shop.shopId == event.shopId);
-          if (existingShopIndex != -1) {
-            if (updatedItems.isEmpty) {
-              updatedShops.removeAt(existingShopIndex);
-            } else {
-              updatedShops[existingShopIndex] = updatedShop;
-            }
+        // Update cart shops
+        final updatedShops = List<CartShop>.from(currentCart.shops);
+        final existingShopIndex =
+            updatedShops.indexWhere((shop) => shop.shopId == event.shopId);
+        if (existingShopIndex != -1) {
+          if (updatedItems.isEmpty) {
+            updatedShops.removeAt(existingShopIndex);
+          } else {
+            updatedShops[existingShopIndex] = updatedShop;
           }
-
-          // Create new cart
-          final newCart = currentCart.copyWith(shops: updatedShops);
-          await _cartService.updateCart(newCart);
-
-          emit(CartLoaded(newCart));
         }
+
+        // Create new cart
+        final newCart = currentCart.copyWith(shops: updatedShops);
+        await _cartService.updateCart(newCart);
+
+        emit(CartLoaded(newCart));
       }
     } catch (e) {
       emit(CartError(e.toString()));
@@ -250,19 +258,16 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   Future<void> _onDeleteCartShop(
       DeleteCartShopEvent event, Emitter<CartState> emit) async {
     try {
-      if (state is CartLoaded) {
-        final currentState = state as CartLoaded;
-        final currentCart = currentState.cart;
+      emit(CartLoading());
+      final currentCart = await _cartService.getCartByUserId(event.userId);
 
-        // Remove shop from cart
-        final updatedShops = List<CartShop>.from(currentCart.shops);
-        updatedShops.removeWhere((shop) => shop.shopId == event.shopId);
+      // Remove shop from cart
+      final updatedShops = List<CartShop>.from(currentCart!.shops);
+      updatedShops.removeWhere((shop) => shop.shopId == event.shopId);
+      final newCart = currentCart.copyWith(shops: updatedShops);
 
-        // Create new cart
-        final newCart = currentCart.copyWith(shops: updatedShops);
-        await _cartService.updateCart(newCart);
-        emit(CartLoaded(newCart));
-      }
+      await _cartService.updateCart(newCart);
+      emit(CartLoaded(newCart));
     } catch (e) {
       emit(CartError(e.toString()));
     }

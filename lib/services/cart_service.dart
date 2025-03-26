@@ -20,6 +20,7 @@ class CartService {
   }
 
   Future<void> updateCart(Cart cart) async {
+    print(cart.toMap());
     await _firestore.collection('carts').doc(cart.id).update(cart.toMap());
   }
 

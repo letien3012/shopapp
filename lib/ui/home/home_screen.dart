@@ -7,10 +7,12 @@ import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
+import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
 import 'package:luanvan/models/cart.dart';
+import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -33,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int bannerCurrentPage = 0;
   final CarouselSliderController _bannercontroller = CarouselSliderController();
-  Cart cart = Cart(id: '', userId: '', shops: []);
   @override
   void initState() {
     super.initState();
@@ -68,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (authState is AuthAuthenticated) {
           context
               .read<ListProductBloc>()
-              .add(FetchListProductEventByShopId('1mMheQPOWuHzko8IIAKM'));
+              .add(FetchListProductEventByShopId('2Lw9i4fKbZO9x8L4Yieh'));
 
           return BlocBuilder<ListProductBloc, ListProductState>(
             builder: (context, productState) {
@@ -335,56 +336,69 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(
                     width: 10,
                   ),
-                  ClipOval(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.of(context).pushNamed(CartScreen.routeName);
-                        },
-                        splashColor: Colors.transparent.withOpacity(0.1),
-                        highlightColor: Colors.transparent.withOpacity(0.1),
-                        child: SizedBox(
-                          height: 40,
-                          width: 50,
-                          child: Stack(
-                            children: [
-                              Container(
-                                  height: 40,
-                                  width: 40,
-                                  alignment: Alignment.center,
-                                  child: SvgPicture.asset(
-                                    IconHelper.cartIcon,
-                                    height: 30,
-                                    width: 30,
-                                    color: Colors.white,
-                                  )),
-                              cart.totalItems != 0
-                                  ? Positioned(
-                                      left: 15,
-                                      top: 5,
-                                      child: Container(
-                                        height: 18,
-                                        width: 30,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.red,
-                                          border: Border.all(
-                                              width: 1.5, color: Colors.white),
-                                        ),
-                                        child: Text(
-                                          "${cart.totalItems}",
-                                          style: TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.white),
-                                        ),
-                                      ),
-                                    )
-                                  : Container()
-                            ],
+                  InkWell(
+                    onTap: () {
+                      Navigator.of(context).pushNamed(CartScreen.routeName);
+                    },
+                    child: SizedBox(
+                      height: 40,
+                      width: 60,
+                      child: Stack(
+                        children: [
+                          ClipOval(
+                            child: Container(
+                                color: Colors.transparent,
+                                height: 40,
+                                width: 40,
+                                alignment: Alignment.center,
+                                child: SvgPicture.asset(
+                                  IconHelper.cartIcon,
+                                  height: 30,
+                                  width: 30,
+                                  color: Colors.white,
+                                )),
                           ),
-                        ),
+                          (context.read<AuthBloc>().state is AuthAuthenticated)
+                              ? BlocSelector<CartBloc, CartState, String>(
+                                  builder: (BuildContext context, cartItem) {
+                                    if (cartItem != '0') {
+                                      return Positioned(
+                                        right: 15,
+                                        top: 5,
+                                        child: Container(
+                                          height: 20,
+                                          width: 30,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            border: Border.all(
+                                                width: 1.5,
+                                                color: Colors.white),
+                                          ),
+                                          child: Text(
+                                            '$cartItem',
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      return Container();
+                                    }
+                                  },
+                                  selector: (state) {
+                                    if (state is CartLoaded) {
+                                      return state.cart.totalItems.toString();
+                                    }
+                                    return '';
+                                  },
+                                )
+                              : Container()
+                        ],
                       ),
                     ),
                   ),

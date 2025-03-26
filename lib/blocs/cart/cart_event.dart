@@ -1,3 +1,5 @@
+import 'package:luanvan/models/cart.dart';
+
 abstract class CartEvent {}
 
 class AddCartEvent extends CartEvent {
@@ -14,25 +16,25 @@ class AddCartEvent extends CartEvent {
       this.variantId1, this.optionId1, this.variantId2, this.optionId2);
 }
 
-class UpdateCartEvent extends CartEvent {
-  final String productId;
-  final int quantity;
-  final String shopId;
-  final String? variant1Id;
-  final String? option1Id;
-  final String? variant2Id;
-  final String? option2Id;
+// class UpdateCartEvent extends CartEvent {
+//   final String productId;
+//   final int quantity;
+//   final String shopId;
+//   final String? variant1Id;
+//   final String? option1Id;
+//   final String? variant2Id;
+//   final String? option2Id;
 
-  UpdateCartEvent(
-    this.productId,
-    this.quantity,
-    this.shopId, {
-    this.variant1Id,
-    this.option1Id,
-    this.variant2Id,
-    this.option2Id,
-  });
-}
+//   UpdateCartEvent(
+//     this.productId,
+//     this.quantity,
+//     this.shopId, {
+//     this.variant1Id,
+//     this.option1Id,
+//     this.variant2Id,
+//     this.option2Id,
+//   });
+// }
 
 class UpdateQuantityEvent extends CartEvent {
   final String userId;
@@ -85,16 +87,23 @@ class UpdateProductVariantEvent extends CartEvent {
 }
 
 class DeleteCartProductEvent extends CartEvent {
+  final String userId;
   final String itemId;
   final String shopId;
 
-  DeleteCartProductEvent(this.itemId, this.shopId);
+  DeleteCartProductEvent(this.itemId, this.shopId, this.userId);
 }
 
 class DeleteCartShopEvent extends CartEvent {
+  final String userId;
   final String shopId;
 
-  DeleteCartShopEvent(this.shopId);
+  DeleteCartShopEvent(this.shopId, this.userId);
+}
+
+class UpdateCartEvent extends CartEvent {
+  final Cart cart;
+  UpdateCartEvent(this.cart);
 }
 
 class ResetCartEvent extends CartEvent {}

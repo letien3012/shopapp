@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
@@ -14,6 +15,8 @@ import 'package:luanvan/blocs/product_in_cart/product_cart_event.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/cart_item.dart';
+import 'package:luanvan/models/cart_shop.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/cart/shop_item.dart';
 import 'package:luanvan/ui/checkout/check_out_screen.dart';
 
@@ -34,6 +37,7 @@ class _CartScreenState extends State<CartScreen> {
   bool editProduct = false;
   Map<String, TextEditingController> quantityControllers = {};
   final double _maxSwipe = 80;
+  List<String> listItemId = [];
 
   @override
   void initState() {
@@ -53,6 +57,9 @@ class _CartScreenState extends State<CartScreen> {
             .expand((shop) => shop.items.values)
             .map((item) => item.productId)
             .toList();
+        listItemId =
+            cartState.cart.shops.expand((shop) => shop.items.keys).toList();
+
         if (listShopId.isNotEmpty) {
           context
               .read<ListShopBloc>()
@@ -221,11 +228,17 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _deleteProduct(String shopId, String itemId) {
-    context.read<CartBloc>().add(DeleteCartProductEvent(itemId, shopId));
+    final userId =
+        (context.read<AuthBloc>().state as AuthAuthenticated).user.uid;
+    context
+        .read<CartBloc>()
+        .add(DeleteCartProductEvent(itemId, shopId, userId));
   }
 
   void _deleteShop(String shopId) {
-    context.read<CartBloc>().add(DeleteCartShopEvent(shopId));
+    final userId =
+        (context.read<AuthBloc>().state as AuthAuthenticated).user.uid;
+    context.read<CartBloc>().add(DeleteCartShopEvent(shopId, userId));
   }
 
   void onCheckedShopChanged(List<bool> newCheckedShop) {
@@ -521,17 +534,112 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ),
                   editProduct
-                      ? Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          height: 45,
-                          width: 60,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(width: 2, color: Colors.brown),
+                      ? GestureDetector(
+                          onTap: () async {
+                            if (await _showConfirmDeleteProductDialog()) {
+                              List<String> shopsToDelete = [];
+                              Map<String, List<String>> productsToDelete = {};
+                              Cart newCart = cart;
+                              for (int i = 0; i < checkedShop.length; i++) {
+                                if (checkedShop[i]) {
+                                  shopsToDelete.add(listShopId[i]);
+                                }
+                                String shopId = listShopId[i];
+                                if (checkedProduct[shopId] != null) {
+                                  for (int j = 0;
+                                      j < checkedProduct[shopId]!.length;
+                                      j++) {
+                                    if (checkedProduct[shopId]![j]) {
+                                      productsToDelete.putIfAbsent(
+                                          shopId, () => []);
+                                      productsToDelete[shopId]!
+                                          .add(listItemId[j]);
+                                    }
+                                  }
+                                }
+                              }
+
+                              for (String shopId in shopsToDelete) {
+                                final updatedShops =
+                                    List<CartShop>.from(cart.shops);
+                                updatedShops.removeWhere(
+                                    (shop) => shop.shopId == shopId);
+                                newCart = newCart.copyWith(shops: updatedShops);
+                              }
+
+                              for (String shopId in productsToDelete.keys) {
+                                if (!shopsToDelete.contains(shopId)) {
+                                  for (String itemId
+                                      in productsToDelete[shopId]!) {
+                                    final shop = newCart.getShop(shopId);
+                                    if (shop != null &&
+                                        shop.items.containsKey(itemId)) {
+                                      final updatedItems =
+                                          Map<String, CartItem>.from(
+                                              shop.items);
+                                      updatedItems.remove(itemId);
+
+                                      final updatedShop =
+                                          shop.copyWith(items: updatedItems);
+                                      final updatedShops =
+                                          List<CartShop>.from(newCart.shops);
+                                      final existingShopIndex =
+                                          updatedShops.indexWhere(
+                                              (shop) => shop.shopId == shopId);
+                                      if (existingShopIndex != -1) {
+                                        if (updatedItems.isEmpty) {
+                                          updatedShops
+                                              .removeAt(existingShopIndex);
+                                        } else {
+                                          updatedShops[existingShopIndex] =
+                                              updatedShop;
+                                        }
+                                      }
+                                      newCart =
+                                          newCart.copyWith(shops: updatedShops);
+                                    }
+                                  }
+                                }
+                              }
+
+                              context
+                                  .read<CartBloc>()
+                                  .add(UpdateCartEvent(newCart));
+                              setState(() {
+                                cart = newCart;
+                                listShopId = newCart.shops
+                                    .map((shop) => shop.shopId)
+                                    .toList();
+                                checkedShop = List.generate(
+                                    listShopId.length, (index) => false);
+                                checkedProduct = {
+                                  for (var shopId in listShopId)
+                                    shopId: List.generate(
+                                        newCart.getShop(shopId)?.items.length ??
+                                            0,
+                                        (index) => false)
+                                };
+                                checkAllProduct = false;
+                                editProduct = false;
+                              });
+                            } else {
+                              setState(() {
+                                editProduct = !editProduct;
+                              });
+                            }
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                            height: 45,
+                            width: 60,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(width: 2, color: Colors.brown),
+                            ),
+                            child: const Text("Xóa",
+                                style: TextStyle(color: Colors.brown)),
                           ),
-                          child: const Text("Xóa",
-                              style: TextStyle(color: Colors.brown)),
                         )
                       : GestureDetector(
                           onTap: () {

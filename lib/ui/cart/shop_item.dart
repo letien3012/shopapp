@@ -37,6 +37,7 @@ class ShopItemWidget extends StatelessWidget {
     required this.onCheckedShopChanged,
     required this.onCheckedProductChanged,
   });
+
   void _updateCheckedShop(List<bool> newCheckedShop) {
     onCheckedShopChanged(newCheckedShop);
   }
@@ -62,13 +63,27 @@ class ShopItemWidget extends StatelessWidget {
           if (cartShop == null) return const SizedBox.shrink();
 
           final shopIndex = cart.shops.indexWhere((s) => s.shopId == shopId);
+          if (shopIndex == -1 || shopIndex >= checkedShop.length) {
+            return const SizedBox
+                .shrink(); // Tránh lỗi nếu shopIndex không hợp lệ
+          }
 
           return BlocBuilder<ListShopBloc, ListShopState>(
             builder: (context, listShopState) {
-              if (listShopState is ListShopLoaded) {
+              if (listShopState is ListShopLoading) {
+                return _buildShopSkeleton();
+              } else if (listShopState is ListShopLoaded) {
                 final shop = listShopState.shops.firstWhere(
                   (element) => element.shopId == shopId,
                 );
+                if (shop == null) {
+                  return const SizedBox
+                      .shrink(); // Không hiển thị nếu shop không tồn tại
+                }
+
+                // Đảm bảo checkedProduct[shopId] được khởi tạo đúng
+                final checkedItems = checkedProduct[shopId] ??
+                    List.generate(cartShop.items.length, (index) => false);
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
@@ -92,12 +107,15 @@ class ShopItemWidget extends StatelessWidget {
                             }),
                             value: checkedShop[shopIndex],
                             onChanged: (bool? newValue) {
-                              checkedShop[shopIndex] = newValue ?? false;
-                              _updateCheckedShop(checkedShop);
-                              checkedProduct[shopId] = List.filled(
+                              final newCheckedShop =
+                                  List<bool>.from(checkedShop);
+                              newCheckedShop[shopIndex] = newValue ?? false;
+                              _updateCheckedShop(newCheckedShop);
+                              final newCheckedProduct =
+                                  Map<String, List<bool>>.from(checkedProduct);
+                              newCheckedProduct[shopId] = List.filled(
                                   cartShop.items.length, newValue ?? false);
-                              _updateCheckedProduct(checkedProduct);
-                              (context as Element).markNeedsBuild();
+                              _updateCheckedProduct(newCheckedProduct);
                             },
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4)),
@@ -133,6 +151,10 @@ class ShopItemWidget extends StatelessWidget {
                       BlocBuilder<ProductCartBloc, ProductCartState>(
                         builder: (context, productCartState) {
                           if (productCartState is ProductCartListLoaded) {
+                            if (cartShop.items.isEmpty) {
+                              return const SizedBox
+                                  .shrink(); // Không hiển thị nếu không có sản phẩm
+                            }
                             return ListView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
@@ -144,26 +166,35 @@ class ShopItemWidget extends StatelessWidget {
                                 final item = cartShop.items[itemId]!;
                                 final controllerKey = '${shopId}_${itemId}';
                                 final controller =
-                                    quantityControllers[controllerKey]!;
+                                    quantityControllers[controllerKey] ??
+                                        TextEditingController(
+                                            text: item.quantity.toString());
 
                                 return ProductItemWidget(
                                   shopId: shopId,
                                   itemId: itemId,
                                   item: item,
                                   controller: controller,
-                                  checked:
-                                      checkedProduct[shopId]![productIndex],
+                                  checked: checkedItems[productIndex],
                                   maxSwipe: maxSwipe,
                                   productCartState: productCartState,
                                   onCheckChanged: (newValue) {
-                                    checkedProduct[shopId]![productIndex] =
+                                    final newCheckedProduct =
+                                        Map<String, List<bool>>.from(
+                                            checkedProduct);
+                                    newCheckedProduct[shopId] ??= List.generate(
+                                        cartShop.items.length,
+                                        (index) => false);
+                                    newCheckedProduct[shopId]![productIndex] =
                                         newValue ?? false;
-                                    _updateCheckedProduct(checkedProduct);
-                                    checkedShop[shopIndex] =
-                                        checkedProduct[shopId]!
+                                    _updateCheckedProduct(newCheckedProduct);
+                                    final allChecked =
+                                        newCheckedProduct[shopId]!
                                             .every((checked) => checked);
-                                    _updateCheckedShop(checkedShop);
-                                    (context as Element).markNeedsBuild();
+                                    final newCheckedShop =
+                                        List<bool>.from(checkedShop);
+                                    newCheckedShop[shopIndex] = allChecked;
+                                    _updateCheckedShop(newCheckedShop);
                                   },
                                   onDeleteProduct: onDeleteProduct,
                                   onUpdateQuantity: onUpdateQuantity,
@@ -181,6 +212,8 @@ class ShopItemWidget extends StatelessWidget {
                     ],
                   ),
                 );
+              } else if (listShopState is ListShopError) {
+                return Text('Error: ${listShopState.message}');
               }
               return _buildShopSkeleton();
             },
@@ -192,6 +225,7 @@ class ShopItemWidget extends StatelessWidget {
   }
 
   Widget _buildShopSkeleton() {
+    // Giữ nguyên hàm _buildShopSkeleton như mã gốc
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),

@@ -20,6 +20,7 @@ import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/add_variant_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/delivery_cost_screen.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -66,57 +67,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _showAddSuccessDialog() async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.transparent,
-      builder: (BuildContext context) {
-        Timer(Duration(seconds: 1), () {
-          if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop();
-          }
-        });
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          contentPadding: EdgeInsets.zero,
-          content: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: Colors.black87,
-            ),
-            width: 200,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SvgPicture.asset(
-                  IconHelper.check,
-                  height: 40,
-                  width: 40,
-                  color: Colors.white,
-                ),
-                SizedBox(height: 10),
-                Text(
-                  "Thêm sản phẩm thành công",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actionsPadding: EdgeInsets.zero, // Xóa padding mặc định của actions
-          actions: [], // Không cần nút, tự động đóng
-        );
-      },
+    await showAlertDialog(
+      context,
+      message: "Thêm sản phẩm thành công",
+      iconPath: IconHelper.check,
+      duration: Duration(seconds: 1),
     );
   }
 

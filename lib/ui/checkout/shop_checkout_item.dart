@@ -7,44 +7,18 @@ import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/models/cart.dart';
-import 'package:luanvan/ui/cart/product_item.dart';
+import 'package:luanvan/ui/checkout/product_checkout_screen.dart';
 
-class ShopItemWidget extends StatelessWidget {
+class ShopCheckoutItem extends StatelessWidget {
   final String shopId;
   final Cart cart;
-  final List<bool> checkedShop;
-  final Map<String, List<bool>> checkedProduct;
-  final Map<String, TextEditingController> quantityControllers;
-  final double maxSwipe;
-  final Function(List<bool>) onCheckedShopChanged;
-  final Function(Map<String, List<bool>>) onCheckedProductChanged;
-  final Function(String, String) onDeleteProduct;
-  final Function(String) onDeleteShop;
-  final Function(String, String, int) onUpdateQuantity;
-  final Future<bool> Function() onShowConfirmDelete;
+  final List<String> listItemId;
 
-  const ShopItemWidget({
+  const ShopCheckoutItem({
     required this.shopId,
     required this.cart,
-    required this.checkedShop,
-    required this.checkedProduct,
-    required this.quantityControllers,
-    required this.maxSwipe,
-    required this.onDeleteProduct,
-    required this.onDeleteShop,
-    required this.onUpdateQuantity,
-    required this.onShowConfirmDelete,
-    required this.onCheckedShopChanged,
-    required this.onCheckedProductChanged,
+    required this.listItemId,
   });
-
-  void _updateCheckedShop(List<bool> newCheckedShop) {
-    onCheckedShopChanged(newCheckedShop);
-  }
-
-  void _updateCheckedProduct(Map<String, List<bool>> newCheckedProduct) {
-    onCheckedProductChanged(newCheckedProduct);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +37,7 @@ class ShopItemWidget extends StatelessWidget {
           if (cartShop == null) return const SizedBox.shrink();
 
           final shopIndex = cart.shops.indexWhere((s) => s.shopId == shopId);
-          if (shopIndex == -1 || shopIndex >= checkedShop.length) {
+          if (shopIndex == -1) {
             return const SizedBox
                 .shrink(); // Tránh lỗi nếu shopIndex không hợp lệ
           }
@@ -77,13 +51,8 @@ class ShopItemWidget extends StatelessWidget {
                   (element) => element.shopId == shopId,
                 );
                 if (shop == null) {
-                  return const SizedBox
-                      .shrink(); // Không hiển thị nếu shop không tồn tại
+                  return const SizedBox.shrink();
                 }
-
-                // Đảm bảo checkedProduct[shopId] được khởi tạo đúng
-                final checkedItems = checkedProduct[shopId] ??
-                    List.generate(cartShop.items.length, (index) => false);
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
@@ -94,51 +63,22 @@ class ShopItemWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Checkbox(
-                            fillColor: WidgetStateProperty.resolveWith<Color>(
-                                (states) {
-                              if (states.contains(WidgetState.selected)) {
-                                return Colors.brown;
-                              }
-                              return Colors.transparent;
-                            }),
-                            value: checkedShop[shopIndex],
-                            onChanged: (bool? newValue) {
-                              final newCheckedShop =
-                                  List<bool>.from(checkedShop);
-                              newCheckedShop[shopIndex] = newValue ?? false;
-                              _updateCheckedShop(newCheckedShop);
-                              final newCheckedProduct =
-                                  Map<String, List<bool>>.from(checkedProduct);
-                              newCheckedProduct[shopId] = List.filled(
-                                  cartShop.items.length, newValue ?? false);
-                              _updateCheckedProduct(newCheckedProduct);
-                            },
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4)),
-                          ),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    shop.name,
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Icon(Icons.keyboard_arrow_right_outlined,
-                                    color: Colors.grey[500]),
-                              ],
-                            ),
-                          ),
-                        ],
+                      Padding(
+                        padding: EdgeInsets.only(top: 10, left: 10, right: 10),
+                        child: Text(
+                          shop.name,
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w500),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 0.8,
+                        color: Colors.grey[200],
                       ),
                       BlocBuilder<ProductCartBloc, ProductCartState>(
                         builder: (context, productCartState) {
@@ -150,47 +90,16 @@ class ShopItemWidget extends StatelessWidget {
                             return ListView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: cartShop.items.length,
-                              padding: EdgeInsets.zero,
+                              itemCount: listItemId.length,
+                              padding: const EdgeInsets.all(10),
                               itemBuilder: (context, productIndex) {
-                                final itemId =
-                                    cartShop.items.keys.elementAt(productIndex);
+                                final itemId = listItemId[productIndex];
                                 final item = cartShop.items[itemId]!;
-                                final controllerKey = '${shopId}_${itemId}';
-                                final controller =
-                                    quantityControllers[controllerKey] ??
-                                        TextEditingController(
-                                            text: item.quantity.toString());
-
-                                return ProductItemWidget(
+                                return ProductCheckoutWidget(
                                   shopId: shopId,
                                   itemId: itemId,
                                   item: item,
-                                  controller: controller,
-                                  checked: checkedItems[productIndex],
-                                  maxSwipe: maxSwipe,
                                   productCartState: productCartState,
-                                  onCheckChanged: (newValue) {
-                                    final newCheckedProduct =
-                                        Map<String, List<bool>>.from(
-                                            checkedProduct);
-                                    newCheckedProduct[shopId] ??= List.generate(
-                                        cartShop.items.length,
-                                        (index) => false);
-                                    newCheckedProduct[shopId]![productIndex] =
-                                        newValue ?? false;
-                                    _updateCheckedProduct(newCheckedProduct);
-                                    final allChecked =
-                                        newCheckedProduct[shopId]!
-                                            .every((checked) => checked);
-                                    final newCheckedShop =
-                                        List<bool>.from(checkedShop);
-                                    newCheckedShop[shopIndex] = allChecked;
-                                    _updateCheckedShop(newCheckedShop);
-                                  },
-                                  onDeleteProduct: onDeleteProduct,
-                                  onUpdateQuantity: onUpdateQuantity,
-                                  onShowConfirmDelete: onShowConfirmDelete,
                                 );
                               },
                             );
@@ -200,6 +109,128 @@ class ShopItemWidget extends StatelessWidget {
                           return const Center(
                               child: CircularProgressIndicator());
                         },
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 0.8,
+                        color: Colors.grey[200],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        height: 40,
+                        child: Row(
+                          children: [
+                            const Text("Lời nhắn cho shop",
+                                style: TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {},
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text("Để lại lời nhắn"),
+                                    SizedBox(width: 5),
+                                    Icon(Icons.arrow_forward_ios, size: 14),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 0.8,
+                        color: Colors.grey[200],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text("Phương thức vận chuyển",
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500)),
+                                GestureDetector(
+                                  onTap: () {},
+                                  child: const Row(
+                                    children: [
+                                      Text("Xem tất cả"),
+                                      SizedBox(width: 5),
+                                      Icon(Icons.arrow_forward_ios, size: 14),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              margin:
+                                  const EdgeInsets.only(top: 10, bottom: 10),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                  color: Colors.green[100]!.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(10)),
+                              child: const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Nhanh",
+                                          style: TextStyle(fontSize: 13)),
+                                      Row(
+                                        children: [
+                                          Text("đ42.500",
+                                              style: TextStyle(fontSize: 13),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Text("Nhận hàng từ 25 tháng 2 - 28 tháng 2",
+                                      style: TextStyle(fontSize: 13),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 0.8,
+                        color: Colors.grey[200],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        height: 40,
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Tổng số tiền (2 sản phẩm)",
+                                style: TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w500)),
+                            Row(
+                              children: [
+                                Text("đ500.000",
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -217,7 +248,6 @@ class ShopItemWidget extends StatelessWidget {
   }
 
   Widget _buildShopSkeleton() {
-    // Giữ nguyên hàm _buildShopSkeleton như mã gốc
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),

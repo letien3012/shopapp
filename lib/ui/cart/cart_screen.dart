@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
@@ -16,9 +15,11 @@ import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/cart_shop.dart';
-import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/cart/shop_item.dart';
 import 'package:luanvan/ui/checkout/check_out_screen.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -33,11 +34,30 @@ class _CartScreenState extends State<CartScreen> {
   List<String> listShopId = [];
   List<bool> checkedShop = [];
   Map<String, List<bool>> checkedProduct = {};
+  Map<String, List<String>> productCheckOut = {};
   bool checkAllProduct = false;
   bool editProduct = false;
   Map<String, TextEditingController> quantityControllers = {};
   final double _maxSwipe = 80;
   List<String> listItemId = [];
+
+  Future<bool> _showConfirmDeleteProductDialog() async {
+    final confirmed = await ConfirmDialog(
+      title: "Bạn có chắc muốn bỏ sản phẩm này?",
+      cancelText: "Không",
+      confirmText: "ĐỒng ý",
+    ).show(context);
+    return confirmed;
+  }
+
+  Future<void> _showAlertDialog() async {
+    await showAlertDialog(
+      context,
+      message: "Bạn chưa chọn sản phẩm nào để mua",
+      iconPath: IconHelper.warning,
+      duration: Duration(seconds: 1),
+    );
+  }
 
   @override
   void initState() {
@@ -153,68 +173,6 @@ class _CartScreenState extends State<CartScreen> {
           .optionInfos[i * product.variants[1].options.length + j].price;
     }
     return 0.0;
-  }
-
-  Future<bool> _showConfirmDeleteProductDialog() async {
-    return await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              actionsPadding: EdgeInsets.zero,
-              titlePadding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(0)),
-              title: const Text("Bạn có chắc muốn bỏ sản phẩm này?"),
-              titleTextStyle: TextStyle(fontSize: 14, color: Colors.black),
-              actions: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        alignment: Alignment.center,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border(
-                              top: BorderSide(width: 0.2, color: Colors.grey),
-                              right:
-                                  BorderSide(width: 0.2, color: Colors.grey)),
-                        ),
-                        child: GestureDetector(
-                          onTap: () => Navigator.of(context).pop(false),
-                          child: Text("Không",
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.black)),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        alignment: Alignment.center,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border(
-                              top: BorderSide(width: 0.2, color: Colors.grey)),
-                        ),
-                        child: GestureDetector(
-                          onTap: () => Navigator.of(context).pop(true),
-                          child: Text(
-                            "Đồng ý",
-                            style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.brown,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            );
-          },
-        ) ??
-        false;
   }
 
   void _updateQuantity(String shopId, String itemId, int newQuantity) {
@@ -643,8 +601,37 @@ class _CartScreenState extends State<CartScreen> {
                         )
                       : GestureDetector(
                           onTap: () {
-                            Navigator.of(context)
-                                .pushNamed(CheckOutScreen.routeName);
+                            if (selectedItemsCount > 0) {
+                              productCheckOut = {};
+                              for (var shopId in checkedProduct.keys) {
+                                if (checkedProduct[shopId] != null) {
+                                  for (int i = 0;
+                                      i < checkedProduct[shopId]!.length;
+                                      i++) {
+                                    if (checkedProduct[shopId]![i]) {
+                                      productCheckOut.putIfAbsent(
+                                          shopId, () => []);
+                                      String itemId = '';
+                                      int j = 0;
+                                      for (var key
+                                          in cart.getShop(shopId)!.items.keys) {
+                                        if (i == j) {
+                                          itemId = key;
+                                        }
+                                        j++;
+                                      }
+                                      productCheckOut[shopId]!.add(itemId);
+                                    }
+                                  }
+                                }
+                              }
+
+                              Navigator.of(context).pushNamed(
+                                  CheckOutScreen.routeName,
+                                  arguments: productCheckOut);
+                            } else {
+                              _showAlertDialog();
+                            }
                           },
                           child: Container(
                             height: 45,

@@ -43,6 +43,6 @@ class CartShop {
     );
   }
 
-  int get totalItems =>
-      items.values.fold(0, (sum, item) => sum + item.quantity);
+  // int get totalItems =>
+  //     items.values.fold(0, (sum, item) => sum + item.quantity);
 }

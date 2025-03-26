@@ -47,7 +47,7 @@ class Cart {
   }
 
   int get totalItems {
-    return shops.fold(0, (sum, shop) => sum + shop.totalItems);
+    return shops.fold(0, (sum, shop) => sum + shop.items.length);
   }
 
   bool get isEmpty => shops.isEmpty;

@@ -11,11 +11,14 @@ import 'package:luanvan/models/product.dart';
 class AddToCartBottomSheet extends StatefulWidget {
   final Product product;
   final BuildContext parentContext;
-
+  final String? optionId1;
+  final String? optionId2;
   const AddToCartBottomSheet({
     Key? key,
     required this.product,
     required this.parentContext,
+    this.optionId1,
+    this.optionId2,
   }) : super(key: key);
 
   @override
@@ -31,6 +34,16 @@ class _AddToCartBottomSheetState extends State<AddToCartBottomSheet> {
   @override
   void initState() {
     super.initState();
+    if (widget.optionId1 != null) {
+      selectedIndexVariant1 = widget.product.variants[0].options.indexWhere(
+        (element) => element.id == widget.optionId1,
+      );
+    }
+    if (widget.optionId2 != null) {
+      selectedIndexVariant2 = widget.product.variants[1].options.indexWhere(
+        (element) => element.id == widget.optionId2,
+      );
+    }
     _quantityController = TextEditingController(text: '1');
   }
 

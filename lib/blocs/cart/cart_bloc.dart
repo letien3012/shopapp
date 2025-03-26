@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
+import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/cart_shop.dart';
@@ -160,7 +161,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
         // Create new cart
         final newCart = currentCart.copyWith(shops: updatedShops);
+
         await _cartService.updateCart(newCart);
+        emit(CartLoaded(newCart));
       }
     } catch (e) {}
   }
@@ -212,10 +215,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         final currentCart = currentState.cart;
         final shop = currentCart.getShop(event.shopId);
 
-        if (shop != null && shop.items.containsKey(event.productId)) {
+        if (shop != null && shop.items.containsKey(event.itemId)) {
           // Remove item from shop
           final updatedItems = Map<String, CartItem>.from(shop.items);
-          updatedItems.remove(event.productId);
+          updatedItems.remove(event.itemId);
 
           // Update shop
           final updatedShop = shop.copyWith(items: updatedItems);
@@ -235,6 +238,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           // Create new cart
           final newCart = currentCart.copyWith(shops: updatedShops);
           await _cartService.updateCart(newCart);
+
           emit(CartLoaded(newCart));
         }
       }

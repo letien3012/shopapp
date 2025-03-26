@@ -85,10 +85,10 @@ class UpdateProductVariantEvent extends CartEvent {
 }
 
 class DeleteCartProductEvent extends CartEvent {
-  final String productId;
+  final String itemId;
   final String shopId;
 
-  DeleteCartProductEvent(this.productId, this.shopId);
+  DeleteCartProductEvent(this.itemId, this.shopId);
 }
 
 class DeleteCartShopEvent extends CartEvent {

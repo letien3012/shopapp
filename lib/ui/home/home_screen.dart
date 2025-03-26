@@ -2,15 +2,11 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
-import 'package:luanvan/blocs/cart/cart_state.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_event.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
@@ -49,6 +45,15 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  String formatPrice(double price) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '',
+      decimalDigits: 0,
+    );
+    return formatter.format(price);
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -63,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (authState is AuthAuthenticated) {
           context
               .read<ListProductBloc>()
-              .add(FetchListProductEventByShopId('2Lw9i4fKbZO9x8L4Yieh'));
+              .add(FetchListProductEventByShopId('1mMheQPOWuHzko8IIAKM'));
 
           return BlocBuilder<ListProductBloc, ListProductState>(
             builder: (context, productState) {
@@ -245,21 +250,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
                                         children: [
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                FontAwesomeIcons.dongSign,
-                                                size: 15,
-                                                color: Colors.red,
-                                              ),
-                                              Text(
-                                                "${listProduct[index].getMinOptionPrice()}",
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    color: Colors.red),
-                                                maxLines: 1,
-                                              ),
-                                            ],
+                                          Text(
+                                            "đ${formatPrice(listProduct[index].getMinOptionPrice())}",
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                color: Color.fromARGB(
+                                                    255, 151, 14, 4)),
+                                            maxLines: 1,
                                           ),
                                           Text(
                                             'Đã bán ${listProduct[index].quantitySold.toString()}',

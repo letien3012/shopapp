@@ -19,9 +19,9 @@ class OptionInfo {
 
   factory OptionInfo.fromMap(Map<String, dynamic> map) {
     return OptionInfo(
-      price: map['price'] as double,
-      stock: map['stock'] as int,
-      weight: map['weight'] as double?,
+      price: double.parse(map['price'].toString()),
+      stock: int.parse(map['stock'].toString()),
+      weight: double.parse(map['weight'].toString()),
     );
   }
 

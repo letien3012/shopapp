@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
@@ -7,36 +8,110 @@ import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/models/cart.dart';
+import 'package:luanvan/models/product.dart';
+import 'package:luanvan/models/shipping_calculator.dart';
+import 'package:luanvan/models/shipping_method.dart';
+import 'package:luanvan/ui/checkout/choice_shipmethod_for_shop_screen.dart';
 import 'package:luanvan/ui/checkout/product_checkout_screen.dart';
 
-class ShopCheckoutItem extends StatelessWidget {
+class ShopCheckoutItem extends StatefulWidget {
   final String shopId;
   final Cart cart;
   final List<String> listItemId;
+  Map<String, List<String>> productCheckOut = {};
+  ShippingMethod shipMethod;
+  List<ShippingMethod> shipMethods = [];
+  final Function(String, ShippingMethod) onShippingMethodChanged;
 
-  const ShopCheckoutItem({
+  ShopCheckoutItem({
     required this.shopId,
     required this.cart,
     required this.listItemId,
+    required this.productCheckOut,
+    required this.shipMethod,
+    required this.shipMethods,
+    required this.onShippingMethodChanged,
   });
+
+  @override
+  State<ShopCheckoutItem> createState() => _ShopCheckoutItemState();
+}
+
+class _ShopCheckoutItemState extends State<ShopCheckoutItem> {
+  late ShippingMethod _selectedShipMethod;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedShipMethod = widget.shipMethod;
+  }
+
+  String formatPrice(double price) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '',
+      decimalDigits: 0,
+    );
+    return formatter.format(price);
+  }
+
+  double calculateMaxWeight(List<Product> products) {
+    double calculatedTotal = 0.0;
+    final cartShop = widget.cart.getShop(widget.shopId);
+    for (var itemId in widget.listItemId) {
+      final item = cartShop!.items[itemId];
+      if (item == null) continue;
+      final product = products.firstWhere(
+        (p) => p.id == item.productId,
+      );
+
+      if (product.id.isNotEmpty) {
+        if (product.variants.isEmpty &&
+            (product.shippingMethods.any(
+              (element) => (element.isEnabled &&
+                  element.name == _selectedShipMethod.name),
+            ))) {
+          if (product.weight! > calculatedTotal) {
+            calculatedTotal = product.weight!;
+          }
+        } else if (product.variants.length > 1) {
+          int i = product.variants[0].options
+              .indexWhere((opt) => opt.id == item.optionId1);
+          int j = product.variants[1].options
+              .indexWhere((opt) => opt.id == item.optionId2);
+          if (i == -1) i = 0;
+          if (j == -1) j = 0;
+          if (product.optionInfos[i * product.variants[1].options.length + j]
+                  .weight! >
+              calculatedTotal) {
+            calculatedTotal = product
+                .optionInfos[i * product.variants[1].options.length + j]
+                .weight!;
+          }
+        }
+      }
+    }
+    return calculatedTotal;
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<CartBloc, CartState>(
       buildWhen: (previous, current) {
         if (previous is CartLoaded && current is CartLoaded) {
-          final prevShop = previous.cart.getShop(shopId);
-          final currShop = current.cart.getShop(shopId);
+          final prevShop = previous.cart.getShop(widget.shopId);
+          final currShop = current.cart.getShop(widget.shopId);
           return prevShop != currShop;
         }
         return true;
       },
       builder: (context, cartState) {
         if (cartState is CartLoaded) {
-          final cartShop = cartState.cart.getShop(shopId);
+          final cartShop = cartState.cart.getShop(widget.shopId);
           if (cartShop == null) return const SizedBox.shrink();
 
-          final shopIndex = cart.shops.indexWhere((s) => s.shopId == shopId);
+          final shopIndex =
+              widget.cart.shops.indexWhere((s) => s.shopId == widget.shopId);
           if (shopIndex == -1) {
             return const SizedBox
                 .shrink(); // Tránh lỗi nếu shopIndex không hợp lệ
@@ -48,7 +123,7 @@ class ShopCheckoutItem extends StatelessWidget {
                 return _buildShopSkeleton();
               } else if (listShopState is ListShopLoaded) {
                 final shop = listShopState.shops.firstWhere(
-                  (element) => element.shopId == shopId,
+                  (element) => element.shopId == widget.shopId,
                 );
                 if (shop == null) {
                   return const SizedBox.shrink();
@@ -84,24 +159,243 @@ class ShopCheckoutItem extends StatelessWidget {
                         builder: (context, productCartState) {
                           if (productCartState is ProductCartListLoaded) {
                             if (cartShop.items.isEmpty) {
-                              return const SizedBox
-                                  .shrink(); // Không hiển thị nếu không có sản phẩm
+                              return const SizedBox.shrink();
                             }
-                            return ListView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: listItemId.length,
-                              padding: const EdgeInsets.all(10),
-                              itemBuilder: (context, productIndex) {
-                                final itemId = listItemId[productIndex];
-                                final item = cartShop.items[itemId]!;
-                                return ProductCheckoutWidget(
-                                  shopId: shopId,
-                                  itemId: itemId,
-                                  item: item,
-                                  productCartState: productCartState,
-                                );
+
+                            List<String> productIdChecked = [];
+                            widget.listItemId.forEach(
+                              (element) => productIdChecked
+                                  .add(cartShop.items[element]!.productId),
+                            );
+                            List<Product> productChecked = [];
+                            productCartState.products.forEach(
+                              (element) {
+                                if (productIdChecked.contains(element.id)) {
+                                  productChecked.add(element);
+                                }
                               },
+                            );
+                            double maxWeight =
+                                calculateMaxWeight(productCartState.products);
+                            DateTime now = DateTime.now();
+                            int estimatedDays =
+                                _selectedShipMethod.estimatedDeliveryDays;
+                            DateTime estimatedDate =
+                                now.add(Duration(days: estimatedDays));
+                            double totalPriceShop = 0.0;
+                            widget.listItemId.forEach((element) {
+                              final item = widget.cart
+                                  .getShop(widget.shopId)!
+                                  .items[element];
+                              final product = productChecked.firstWhere(
+                                (p) => p.id == item!.productId,
+                              );
+
+                              if (product.id.isNotEmpty &&
+                                  (product.shippingMethods.any(
+                                    (element) => (element.isEnabled &&
+                                        element.name ==
+                                            _selectedShipMethod.name),
+                                  ))) {
+                                if (product.variants.isEmpty) {
+                                  totalPriceShop +=
+                                      product.price! * item!.quantity;
+                                } else if (product.variants.length > 1) {
+                                  int i = product.variants[0].options
+                                      .indexWhere(
+                                          (opt) => opt.id == item!.optionId1);
+                                  int j = product.variants[1].options
+                                      .indexWhere(
+                                          (opt) => opt.id == item!.optionId2);
+                                  if (i == -1) i = 0;
+                                  if (j == -1) j = 0;
+                                  totalPriceShop += (product
+                                          .optionInfos[i *
+                                                  product.variants[1].options
+                                                      .length +
+                                              j]
+                                          .price *
+                                      item!.quantity);
+                                }
+                              }
+                            });
+
+                            return Column(
+                              children: [
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: widget.listItemId.length,
+                                  padding: const EdgeInsets.all(10),
+                                  itemBuilder: (context, productIndex) {
+                                    final itemId =
+                                        widget.listItemId[productIndex];
+                                    final item = cartShop.items[itemId]!;
+
+                                    return ProductCheckoutWidget(
+                                      shopId: widget.shopId,
+                                      itemId: itemId,
+                                      item: item,
+                                      productCartState: productCartState,
+                                      shipMethod: _selectedShipMethod,
+                                    );
+                                  },
+                                ),
+                                Container(
+                                  width: double.infinity,
+                                  height: 0.8,
+                                  color: Colors.grey[200],
+                                ),
+                                Container(
+                                  width: double.infinity,
+                                  height: 0.8,
+                                  color: Colors.grey[200],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  child: Column(
+                                    children: [
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text("Phương thức vận chuyển",
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500)),
+                                          GestureDetector(
+                                            onTap: () async {
+                                              final result =
+                                                  await Navigator.pushNamed(
+                                                      context,
+                                                      ChoiceShipmethodForShopScreen
+                                                          .routeName,
+                                                      arguments: {
+                                                    'shopId': widget.shopId,
+                                                    'shipMethod':
+                                                        widget.shipMethods,
+                                                    'selectedMethod':
+                                                        _selectedShipMethod
+                                                  });
+                                              if (result != null &&
+                                                  result is ShippingMethod) {
+                                                setState(() {
+                                                  _selectedShipMethod =
+                                                      result as ShippingMethod;
+                                                });
+                                                widget.onShippingMethodChanged(
+                                                    widget.shopId,
+                                                    _selectedShipMethod);
+                                              }
+                                            },
+                                            child: const Row(
+                                              children: [
+                                                Text("Xem tất cả"),
+                                                SizedBox(width: 5),
+                                                Icon(Icons.arrow_forward_ios,
+                                                    size: 14),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.pushNamed(
+                                              context,
+                                              ChoiceShipmethodForShopScreen
+                                                  .routeName,
+                                              arguments: {
+                                                'shopId': widget.shopId,
+                                                'shipMethod':
+                                                    widget.shipMethods,
+                                                'selectedMethod':
+                                                    _selectedShipMethod
+                                              });
+                                        },
+                                        child: Container(
+                                          margin: const EdgeInsets.only(
+                                              top: 10, bottom: 10),
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                              color: Colors.green[100]!
+                                                  .withOpacity(0.5),
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(_selectedShipMethod.name,
+                                                      style: TextStyle(
+                                                          fontSize: 13)),
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                          "đ${ShippingCalculator.calculateShippingCost(methodName: _selectedShipMethod.name, weight: maxWeight, includeDistanceFactor: false)}",
+                                                          style: TextStyle(
+                                                              fontSize: 13),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                              Text(
+                                                  "Nhận hàng từ ${DateTime.now().day} tháng ${DateTime.now().month} - ${estimatedDate.day} tháng ${estimatedDate.month}",
+                                                  style:
+                                                      TextStyle(fontSize: 13),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  width: double.infinity,
+                                  height: 0.8,
+                                  color: Colors.grey[200],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  height: 40,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                          "Tổng số tiền (${widget.listItemId.length} sản phẩm)",
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500)),
+                                      Row(
+                                        children: [
+                                          Text(
+                                              "đ${formatPrice(totalPriceShop + ShippingCalculator.calculateShippingCost(methodName: _selectedShipMethod.name, weight: maxWeight, includeDistanceFactor: false))}",
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             );
                           } else if (productCartState is ProductCartError) {
                             return Text('Error: ${productCartState.message}');
@@ -109,128 +403,6 @@ class ShopCheckoutItem extends StatelessWidget {
                           return const Center(
                               child: CircularProgressIndicator());
                         },
-                      ),
-                      Container(
-                        width: double.infinity,
-                        height: 0.8,
-                        color: Colors.grey[200],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        height: 40,
-                        child: Row(
-                          children: [
-                            const Text("Lời nhắn cho shop",
-                                style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {},
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Text("Để lại lời nhắn"),
-                                    SizedBox(width: 5),
-                                    Icon(Icons.arrow_forward_ios, size: 14),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: double.infinity,
-                        height: 0.8,
-                        color: Colors.grey[200],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text("Phương thức vận chuyển",
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500)),
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: const Row(
-                                    children: [
-                                      Text("Xem tất cả"),
-                                      SizedBox(width: 5),
-                                      Icon(Icons.arrow_forward_ios, size: 14),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              margin:
-                                  const EdgeInsets.only(top: 10, bottom: 10),
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                  color: Colors.green[100]!.withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text("Nhanh",
-                                          style: TextStyle(fontSize: 13)),
-                                      Row(
-                                        children: [
-                                          Text("đ42.500",
-                                              style: TextStyle(fontSize: 13),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  Text("Nhận hàng từ 25 tháng 2 - 28 tháng 2",
-                                      style: TextStyle(fontSize: 13),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: double.infinity,
-                        height: 0.8,
-                        color: Colors.grey[200],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        height: 40,
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Tổng số tiền (2 sản phẩm)",
-                                style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500)),
-                            Row(
-                              children: [
-                                Text("đ500.000",
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis),
-                              ],
-                            ),
-                          ],
-                        ),
                       ),
                     ],
                   ),

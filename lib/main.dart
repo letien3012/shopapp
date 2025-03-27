@@ -8,8 +8,10 @@ import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
+import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/di.dart';
@@ -17,6 +19,7 @@ import 'package:luanvan/routes.dart';
 import 'package:luanvan/services/auth_service.dart';
 import 'package:luanvan/services/cart_service.dart';
 import 'package:luanvan/services/chat_service.dart';
+import 'package:luanvan/services/order_service.dart';
 import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/shop_service.dart';
 import 'package:luanvan/services/user_service.dart';
@@ -100,6 +103,12 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<ListShopBloc>(
           create: (context) => ListShopBloc(ShopService()),
+        ),
+        BlocProvider<OrderBloc>(
+          create: (context) => OrderBloc(OrderService()),
+        ),
+        BlocProvider<ProductOrderBloc>(
+          create: (context) => ProductOrderBloc(ProductService()),
         ),
       ],
       child: MaterialApp(

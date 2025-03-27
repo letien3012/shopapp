@@ -28,4 +28,7 @@ class IconHelper {
   static const String weight = "${imagePath}weight.svg";
   static const String chatbubblequestion =
       "${imagePath}chat-bubble-question.svg";
+  static const String star_circle = "${imagePath}star_circle.svg";
+  static const String package_box = "${imagePath}package_box.svg";
+  static const String no_order = "${imagePath}no_order.svg";
 }

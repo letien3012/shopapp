@@ -628,7 +628,9 @@ class _CartScreenState extends State<CartScreen> {
 
                               Navigator.of(context).pushNamed(
                                   CheckOutScreen.routeName,
-                                  arguments: productCheckOut);
+                                  arguments: {
+                                    'productCheckOut': productCheckOut,
+                                  });
                             } else {
                               _showAlertDialog();
                             }

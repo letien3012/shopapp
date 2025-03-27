@@ -2,17 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
+import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
+import 'package:luanvan/blocs/order/order_bloc.dart';
+import 'package:luanvan/blocs/order/order_event.dart';
+import 'package:luanvan/blocs/order/order_state.dart';
+import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
+import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/address.dart';
+import 'package:luanvan/models/cart.dart';
+import 'package:luanvan/models/cart_item.dart';
+import 'package:luanvan/models/cart_shop.dart';
+import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/product.dart';
+import 'package:luanvan/models/shipping_calculator.dart';
+import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/checkout/shop_checkout_item.dart';
+import 'package:luanvan/ui/order/order_success_screen.dart';
 import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class CheckOutScreen extends StatefulWidget {
@@ -35,15 +50,244 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   Map<String, List<String>> productCheckOut = {};
   List<String> productIds = [];
   List<String> listShopId = [];
+  double totalShipPrice = 0.0;
+  double totalProductPrice = 0.0;
+  Map<String, ShippingMethod> shipMethod = {};
+  Map<String, List<ShippingMethod>> listShipMethod = {};
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUserAddress();
-      productCheckOut = ModalRoute.of(context)!.settings.arguments
-          as Map<String, List<String>>;
+      final arg = ModalRoute.of(context)!.settings.arguments as Map;
+      productCheckOut = arg['productCheckOut'];
       listShopId = productCheckOut.keys.toList();
+
+      listShopId.forEach((shopId) {
+        listShipMethod[shopId] = [];
+      });
+
+      listShopId.forEach((shopId) {
+        final cartState = context.read<CartBloc>().state;
+        if (cartState is CartLoaded) {
+          final cartShop = cartState.cart.getShop(shopId);
+          if (cartShop == null) return;
+
+          final listItemId = productCheckOut[shopId]!;
+          List<String> productIdChecked = [];
+          listItemId.forEach(
+            (element) =>
+                productIdChecked.add(cartShop.items[element]!.productId),
+          );
+
+          List<Product> productChecked = [];
+          final productCartState = context.read<ProductCartBloc>().state;
+          if (productCartState is ProductCartListLoaded) {
+            productCartState.products.forEach(
+              (element) {
+                if (productIdChecked.contains(element.id)) {
+                  productChecked.add(element);
+                }
+              },
+            );
+
+            if (productChecked.isNotEmpty) {
+              // Kiểm tra và thêm các phương thức vận chuyển khả dụng
+              if (productChecked.every(
+                (element) => element.shippingMethods[0].isEnabled,
+              )) {
+                shipMethod[shopId] = productChecked.first.shippingMethods[0];
+                listShipMethod[shopId]!
+                    .add(productChecked.first.shippingMethods[0]);
+              }
+              if (productChecked.every(
+                (element) => element.shippingMethods[1].isEnabled,
+              )) {
+                if (shipMethod[shopId] == null ||
+                    productChecked
+                            .first.shippingMethods[1].estimatedDeliveryDays <
+                        shipMethod[shopId]!.estimatedDeliveryDays) {
+                  shipMethod[shopId] = productChecked.first.shippingMethods[1];
+                }
+                listShipMethod[shopId]!
+                    .add(productChecked.first.shippingMethods[1]);
+              }
+              if (productChecked.every(
+                (element) => element.shippingMethods[2].isEnabled,
+              )) {
+                if (shipMethod[shopId] == null ||
+                    productChecked
+                            .first.shippingMethods[2].estimatedDeliveryDays <
+                        shipMethod[shopId]!.estimatedDeliveryDays) {
+                  shipMethod[shopId] = productChecked.first.shippingMethods[2];
+                }
+                listShipMethod[shopId]!
+                    .add(productChecked.first.shippingMethods[2]);
+              }
+            }
+
+            // Nếu không có phương thức vận chuyển nào được chọn, sử dụng mặc định
+            if (shipMethod[shopId] == null) {
+              if (productChecked.any(
+                (element) => element.shippingMethods[0].isEnabled,
+              )) {
+                listShipMethod[shopId]!.add(ShippingMethod.defaultMethods[0]);
+                shipMethod[shopId] = ShippingMethod.defaultMethods[0];
+              } else if (productChecked.any(
+                (element) => element.shippingMethods[1].isEnabled,
+              )) {
+                listShipMethod[shopId]!.add(ShippingMethod.defaultMethods[1]);
+                shipMethod[shopId] = ShippingMethod.defaultMethods[1];
+              } else if (productChecked.any(
+                (element) => element.shippingMethods[2].isEnabled,
+              )) {
+                listShipMethod[shopId]!.add(ShippingMethod.defaultMethods[2]);
+                shipMethod[shopId] = ShippingMethod.defaultMethods[2];
+              }
+            }
+          }
+        }
+      });
+
+      _calculateTotalProductPrice();
+      totalShipPrice = calculateTotalShippingFee();
     });
+  }
+
+  String formatPrice(double price) {
+    final formatter = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '',
+      decimalDigits: 0,
+    );
+    return formatter.format(price);
+  }
+
+  double calculateTotalShippingFee() {
+    double totalShippingFee = 0.0;
+    final cartState = context.read<CartBloc>().state;
+    final productCartState = context.read<ProductCartBloc>().state;
+
+    if (cartState is CartLoaded && productCartState is ProductCartListLoaded) {
+      for (var shopId in listShopId) {
+        final cartShop = cartState.cart.getShop(shopId);
+        if (cartShop == null) continue;
+
+        final listItemId = productCheckOut[shopId]!;
+        List<String> productIdChecked = [];
+        listItemId.forEach(
+          (element) => productIdChecked.add(cartShop.items[element]!.productId),
+        );
+
+        List<Product> productChecked = [];
+        productCartState.products.forEach(
+          (element) {
+            if (productIdChecked.contains(element.id)) {
+              productChecked.add(element);
+            }
+          },
+        );
+
+        // Tính maxWeight từ item
+        double maxWeight = 0.0;
+
+        for (var itemId in listItemId) {
+          final item = cartShop!.items[itemId];
+          if (item == null) continue;
+          final product = productCartState.products.firstWhere(
+            (p) => p.id == item.productId,
+          );
+
+          if (product.id.isNotEmpty) {
+            if (product.variants.isEmpty &&
+                (product.shippingMethods.any(
+                  (element) => (element.isEnabled &&
+                      element.name == shipMethod[shopId]!.name),
+                ))) {
+              if (product.weight! > maxWeight) {
+                maxWeight = product.weight!;
+              }
+            } else if (product.variants.length > 1) {
+              int i = product.variants[0].options
+                  .indexWhere((opt) => opt.id == item.optionId1);
+              int j = product.variants[1].options
+                  .indexWhere((opt) => opt.id == item.optionId2);
+              if (i == -1) i = 0;
+              if (j == -1) j = 0;
+              if (product
+                      .optionInfos[i * product.variants[1].options.length + j]
+                      .weight! >
+                  maxWeight) {
+                maxWeight = product
+                    .optionInfos[i * product.variants[1].options.length + j]
+                    .weight!;
+              }
+            }
+          }
+        }
+
+        // Tính phí vận chuyển cho cửa hàng này
+        if (shipMethod[shopId] != null) {
+          totalShippingFee += ShippingCalculator.calculateShippingCost(
+            methodName: shipMethod[shopId]!.name,
+            weight: maxWeight,
+            includeDistanceFactor: false,
+          );
+        }
+      }
+    }
+
+    return totalShippingFee;
+  }
+
+  Future<void> _calculateTotalProductPrice() async {
+    // Đợi dữ liệu từ CartBloc và ProductCartBloc
+    final cartState = context.read<CartBloc>().state;
+    final productCartState = context.read<ProductCartBloc>().state;
+
+    if (cartState is CartLoaded && productCartState is ProductCartListLoaded) {
+      double calculatedTotal = 0.0;
+
+      for (var shopId in listShopId) {
+        final cartShop = cartState.cart.getShop(shopId);
+        if (cartShop == null) continue;
+
+        final listItemId = productCheckOut[shopId]!;
+        for (var itemId in listItemId) {
+          final item = cartShop.items[itemId];
+          if (item == null) continue;
+
+          final product = productCartState.products.firstWhere(
+            (p) => p.id == item.productId,
+          );
+
+          if (product.id.isNotEmpty) {
+            if (product.variants.isEmpty &&
+                (product.shippingMethods.any(
+                  (element) => (element.isEnabled &&
+                      element.name == shipMethod[shopId]!.name),
+                ))) {
+              calculatedTotal += product.price! * item.quantity;
+            } else if (product.variants.length > 1) {
+              int i = product.variants[0].options
+                  .indexWhere((opt) => opt.id == item.optionId1);
+              int j = product.variants[1].options
+                  .indexWhere((opt) => opt.id == item.optionId2);
+              if (i == -1) i = 0;
+              if (j == -1) j = 0;
+              calculatedTotal += (product
+                      .optionInfos[i * product.variants[1].options.length + j]
+                      .price *
+                  item.quantity);
+            }
+          }
+        }
+      }
+
+      setState(() {
+        totalProductPrice = calculatedTotal;
+      });
+    }
   }
 
   Future<void> _checkUserAddress() async {
@@ -106,34 +350,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
         _buildCheckoutAppBar(context),
         _buildCheckoutBottomBar(context),
       ],
-    );
-  }
-
-  // Main Scroll View
-  Widget _buildMainScrollView(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        color: Colors.grey[200],
-        padding:
-            const EdgeInsets.only(left: 10, right: 10, top: 90, bottom: 70),
-        child: Column(
-          children: [
-            _buildAddressSection(context),
-            const SizedBox(height: 10),
-            _buildProductsSection(),
-            _buildPaymentMethodSection(),
-            _buildPaymentDetailsSection(),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.0),
-              child: Text(
-                'Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo điều khoản',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -260,23 +476,34 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
     return BlocBuilder<CartBloc, CartState>(
       builder: (BuildContext context, CartState cartState) {
         if (cartState is CartLoaded) {
-          return ListView.builder(
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount: productCheckOut.length,
-            itemBuilder: (context, index) {
-              if (index >= listShopId.length) {
-                return const SizedBox.shrink();
-              }
-              final shopId = listShopId[index];
-              return ShopCheckoutItem(
-                shopId: shopId,
-                cart: cartState.cart,
-                listItemId: productCheckOut[shopId]!,
+          return BlocBuilder<ProductCartBloc, ProductCartState>(builder:
+              (BuildContext context, ProductCartState productCartState) {
+            if (productCartState is ProductCartListLoaded) {
+              return ListView.builder(
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: productCheckOut.length,
+                itemBuilder: (context, index) {
+                  if (index >= listShopId.length) {
+                    return const SizedBox.shrink();
+                  }
+                  final shopId = listShopId[index];
+
+                  return ShopCheckoutItem(
+                    shopId: shopId,
+                    cart: cartState.cart,
+                    listItemId: productCheckOut[shopId]!,
+                    productCheckOut: productCheckOut,
+                    shipMethod: (shipMethod[shopId]!),
+                    shipMethods: listShipMethod[shopId]!,
+                    onShippingMethodChanged: _updateShippingMethod,
+                  );
+                },
               );
-            },
-          );
+            }
+            return _buildLoading();
+          });
         }
         return _buildLoading();
       },
@@ -352,34 +579,58 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
           const Text("Chi tiết thanh toán",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           const SizedBox(height: 10),
-          _buildPaymentRow("Tổng tiền hàng", "500.000"),
+          _buildPaymentRow("Tổng tiền hàng", totalProductPrice),
           const SizedBox(height: 5),
-          _buildPaymentRow("Tổng tiền phí vận chuyển", "42.500"),
+          _buildPaymentRow("Tổng tiền phí vận chuyển", totalShipPrice),
           const SizedBox(height: 10),
-          _buildPaymentRow("Tổng thanh toán", "542.500", isTotal: true),
+          _buildPaymentRow(
+              "Tổng thanh toán", totalProductPrice + totalShipPrice,
+              isTotal: true),
         ],
       ),
     );
   }
 
-  Widget _buildPaymentRow(String label, String amount, {bool isTotal = false}) {
+  Widget _buildPaymentRow(String label, double amount, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
             style: TextStyle(
                 fontWeight: isTotal ? FontWeight.w500 : FontWeight.normal)),
-        Row(
+        Text('đ${formatPrice(amount)}',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis),
+      ],
+    );
+  }
+
+  // Main Scroll View
+  Widget _buildMainScrollView(BuildContext context) {
+    return SingleChildScrollView(
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        color: Colors.grey[200],
+        padding:
+            const EdgeInsets.only(left: 10, right: 10, top: 90, bottom: 70),
+        child: Column(
           children: [
-            const Icon(FontAwesomeIcons.dongSign, size: 12),
-            Text(amount,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
+            _buildAddressSection(context),
+            const SizedBox(height: 10),
+            _buildProductsSection(),
+            _buildPaymentMethodSection(),
+            _buildPaymentDetailsSection(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.0),
+              child: Text(
+                'Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo điều khoản',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+              ),
+            ),
           ],
         ),
-      ],
+      ),
     );
   }
 
@@ -426,12 +677,12 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Row(
+            Row(
               children: [
                 Text("Tổng thanh toán ",
                     style: TextStyle(color: Colors.black, fontSize: 13)),
                 Icon(FontAwesomeIcons.dongSign, color: Colors.red, size: 15),
-                Text("500.000",
+                Text(formatPrice(totalProductPrice + totalShipPrice),
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -440,8 +691,128 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             ),
             const SizedBox(width: 10),
             GestureDetector(
-              onTap: () =>
-                  Navigator.of(context).pushNamed(CheckOutScreen.routeName),
+              onTap: () {
+                final authState = context.read<AuthBloc>().state;
+                if (authState is AuthAuthenticated) {
+                  final userState = context.read<UserBloc>().state;
+                  if (userState is UserLoaded) {
+                    for (var shopId in listShopId) {
+                      final cartState = context.read<CartBloc>().state;
+                      if (cartState is CartLoaded) {
+                        final cartShop = cartState.cart.getShop(shopId);
+                        if (cartShop == null) continue;
+
+                        final listItemId = productCheckOut[shopId]!;
+                        print(listItemId);
+                        final items = listItemId
+                            .map((itemId) => cartShop.items[itemId]!)
+                            .toList();
+
+                        // Kiểm tra xem phương thức vận chuyển có hợp lệ không
+                        bool isValidShippingMethod = true;
+                        final productCartState =
+                            context.read<ProductCartBloc>().state;
+                        if (productCartState is ProductCartListLoaded) {
+                          for (var item in items) {
+                            final product =
+                                productCartState.products.firstWhere(
+                              (p) => p.id == item.productId,
+                            );
+                            if (!product.shippingMethods.any(
+                              (method) =>
+                                  method.isEnabled &&
+                                  method.name == shipMethod[shopId]?.name,
+                            )) {
+                              isValidShippingMethod = false;
+                              break;
+                            }
+                          }
+                        }
+
+                        if (!isValidShippingMethod) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Phương thức vận chuyển không hợp lệ cho một số sản phẩm'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        final now = DateTime.now();
+                        final estimatedDays =
+                            shipMethod[shopId]?.estimatedDeliveryDays ?? 3;
+                        final estimatedDeliveryDate =
+                            now.add(Duration(days: estimatedDays));
+
+                        // Tạo đơn hàng mới
+                        final order = Order(
+                          id: '', // ID sẽ được Firestore tự động tạo
+                          item: items,
+                          shopId: shopId,
+                          userId: authState.user.uid,
+                          createdAt: now,
+                          receiveAdress: userState.user.addresses
+                              .firstWhere((addr) => addr.isDefault),
+                          totalProductPrice: totalProductPrice,
+                          totalShipFee: totalShipPrice,
+                          totalPrice: totalProductPrice + totalShipPrice,
+                          estimatedDeliveryDate: estimatedDeliveryDate,
+                          shipMethod: shipMethod[shopId]!,
+                        );
+
+                        // Gửi event tạo đơn hàng
+                        context.read<OrderBloc>().add(CreateOrder(order));
+
+                        // Lắng nghe sự kiện OrderCreated để xóa sản phẩm khỏi giỏ hàng
+                        context.read<OrderBloc>().stream.listen((state) {
+                          if (state is OrderCreated) {
+                            // Xóa sản phẩm khỏi giỏ hàng
+                            final updatedItems =
+                                Map<String, CartItem>.from(cartShop.items);
+                            for (var itemId in listItemId) {
+                              updatedItems.remove(itemId);
+                            }
+
+                            if (updatedItems.isEmpty) {
+                              // Nếu không còn sản phẩm nào, xóa shop khỏi giỏ hàng
+                              final updatedShops =
+                                  List<CartShop>.from(cartState.cart.shops);
+                              updatedShops
+                                  .removeWhere((shop) => shop.shopId == shopId);
+                              final newCart =
+                                  cartState.cart.copyWith(shops: updatedShops);
+                              context
+                                  .read<CartBloc>()
+                                  .add(UpdateCartEvent(newCart));
+                            } else {
+                              // Cập nhật lại shop với các sản phẩm còn lại
+                              final updatedShop =
+                                  cartShop.copyWith(items: updatedItems);
+                              final updatedShops =
+                                  List<CartShop>.from(cartState.cart.shops);
+                              final shopIndex = updatedShops
+                                  .indexWhere((shop) => shop.shopId == shopId);
+                              if (shopIndex != -1) {
+                                updatedShops[shopIndex] = updatedShop;
+                              }
+                              final newCart =
+                                  cartState.cart.copyWith(shops: updatedShops);
+                              context
+                                  .read<CartBloc>()
+                                  .add(UpdateCartEvent(newCart));
+                            }
+
+                            // Chuyển đến màn hình thành công
+                            Navigator.pushNamed(
+                                context, OrderSuccessScreen.routeName);
+                          }
+                        });
+                      }
+                    }
+                  }
+                }
+              },
               child: Container(
                 height: 45,
                 width: 110,
@@ -451,9 +822,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Mua hàng ",
-                        style: TextStyle(fontSize: 14, color: Colors.white)),
-                    Text("(0)",
+                    Text("Mua hàng",
                         style: TextStyle(fontSize: 14, color: Colors.white)),
                   ],
                 ),
@@ -484,5 +853,13 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
   Widget _buildMessage(String message) {
     return Center(child: Text(message));
+  }
+
+  void _updateShippingMethod(String shopId, ShippingMethod newMethod) {
+    setState(() {
+      shipMethod[shopId] = newMethod;
+      // Tính toán lại phí vận chuyển
+      totalShipPrice = calculateTotalShippingFee();
+    });
   }
 }

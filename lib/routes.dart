@@ -5,6 +5,7 @@ import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/checkout/add_addressline_screen.dart.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/check_out_screen.dart';
+import 'package:luanvan/ui/checkout/choice_shipmethod_for_shop_screen.dart';
 import 'package:luanvan/ui/checkout/edit_location_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
@@ -16,6 +17,8 @@ import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
 import 'package:luanvan/ui/login/verify_screen.dart';
 import 'package:luanvan/ui/mainscreen.dart';
+import 'package:luanvan/ui/order/order_screen.dart';
+import 'package:luanvan/ui/order/order_success_screen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
@@ -90,4 +93,8 @@ final Map<String, WidgetBuilder> routes = {
   ChangeShopInfoScreen.routeName: (context) => ChangeShopInfoScreen(),
   ShipManagerScreen.routeName: (context) => ShipManagerScreen(),
   DeliveryCostScreen.routeName: (context) => DeliveryCostScreen(),
+  ChoiceShipmethodForShopScreen.routeName: (context) =>
+      ChoiceShipmethodForShopScreen(),
+  OrderSuccessScreen.routeName: (context) => OrderSuccessScreen(),
+  OrderScreen.routeName: (context) => OrderScreen(),
 };

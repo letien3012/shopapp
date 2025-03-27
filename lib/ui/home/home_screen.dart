@@ -11,8 +11,6 @@ import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
-import 'package:luanvan/models/cart.dart';
-import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -69,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (authState is AuthAuthenticated) {
           context
               .read<ListProductBloc>()
-              .add(FetchListProductEventByShopId('1mMheQPOWuHzko8IIAKM'));
+              .add(FetchListProductEventByShopId('2Lw9i4fKbZO9x8L4Yieh'));
 
           return BlocBuilder<ListProductBloc, ListProductState>(
             builder: (context, productState) {

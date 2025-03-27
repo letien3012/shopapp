@@ -7,14 +7,18 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_event.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/cart/cart_bloc.dart';
+import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/user_info_model.dart';
+import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
+import 'package:luanvan/ui/order/order_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
 import 'package:luanvan/ui/shop/sign_shop/start_shop.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
@@ -176,6 +180,7 @@ class _UserScreenState extends State<UserScreen> {
   // Nội dung chính của màn hình người dùng
   Widget _buildUserContent(BuildContext context, UserInfoModel user) {
     return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
       child: Container(
         constraints: BoxConstraints(
           minHeight: MediaQuery.of(context).size.height,
@@ -265,44 +270,68 @@ class _UserScreenState extends State<UserScreen> {
             : SizedBox(),
         Row(
           children: [
-            SizedBox(
-              height: 40,
-              width: 50,
-              child: Stack(
-                children: [
-                  Container(
-                      height: 40,
-                      width: 40,
-                      alignment: Alignment.center,
-                      child: SvgPicture.asset(
-                        IconHelper.cartIcon,
-                        height: 30,
-                        width: 30,
-                        color: Colors.white,
-                      )),
-                  isAuthen
-                      ? Positioned(
-                          left: 15,
-                          top: 5,
-                          child: Container(
-                            height: 18,
+            InkWell(
+              onTap: () {
+                Navigator.of(context).pushNamed(CartScreen.routeName);
+              },
+              child: SizedBox(
+                height: 40,
+                width: 60,
+                child: Stack(
+                  children: [
+                    ClipOval(
+                      child: Container(
+                          color: Colors.transparent,
+                          height: 40,
+                          width: 40,
+                          alignment: Alignment.center,
+                          child: SvgPicture.asset(
+                            IconHelper.cartIcon,
+                            height: 30,
                             width: 30,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.red,
-                              border:
-                                  Border.all(width: 1.5, color: Colors.white),
-                            ),
-                            child: const Text(
-                              "99+",
-                              style:
-                                  TextStyle(fontSize: 10, color: Colors.white),
-                            ),
-                          ),
-                        )
-                      : Container(),
-                ],
+                            color: Colors.white,
+                          )),
+                    ),
+                    (context.read<AuthBloc>().state is AuthAuthenticated)
+                        ? BlocSelector<CartBloc, CartState, String>(
+                            builder: (BuildContext context, cartItem) {
+                              if (cartItem != '0') {
+                                return Positioned(
+                                  right: 15,
+                                  top: 5,
+                                  child: Container(
+                                    height: 20,
+                                    width: 30,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          width: 1.5, color: Colors.white),
+                                    ),
+                                    child: Text(
+                                      '$cartItem',
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                return Container();
+                              }
+                            },
+                            selector: (state) {
+                              if (state is CartLoaded) {
+                                return state.cart.totalItems.toString();
+                              }
+                              return '';
+                            },
+                          )
+                        : Container()
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -502,7 +531,9 @@ class _UserScreenState extends State<UserScreen> {
             children: [
               const Text("Đơn mua", style: TextStyle(fontSize: 14)),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).pushNamed(OrderScreen.routeName);
+                },
                 child: const Row(
                   children: [
                     Text("Xem tất cả"),
@@ -513,27 +544,28 @@ class _UserScreenState extends State<UserScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildOrderIcon(FontAwesome.wallet_solid, "Chờ xác nhận"),
-              _buildOrderIcon(HeroIcons.inbox_stack, "Chờ lấy hàng"),
-              _buildOrderIcon(FontAwesome.truck_solid, "Đang giao hàng"),
-              _buildOrderIcon(Icons.stars_outlined, "Đánh giá"),
+              _buildOrderIcon(IconHelper.wallet, "Chờ xác nhận"),
+              _buildOrderIcon(IconHelper.package_box, "Chờ lấy hàng"),
+              _buildOrderIcon(IconHelper.truck, "Đang giao hàng"),
+              _buildOrderIcon(IconHelper.star_circle, "Đánh giá"),
             ],
           ),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
   // Biểu tượng đơn mua
-  Widget _buildOrderIcon(IconData icon, String label) {
+  Widget _buildOrderIcon(String icon, String label) {
     return GestureDetector(
       child: Column(
         children: [
-          Icon(icon, size: 35),
+          SvgPicture.asset(icon, height: 35, width: 35),
           const SizedBox(height: 5),
           Text(label, style: const TextStyle(fontSize: 12)),
         ],

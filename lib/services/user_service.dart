@@ -10,9 +10,6 @@ class UserService {
         .where('id', isEqualTo: userId)
         .limit(1)
         .get();
-    if (querySnapshot.docs.isNotEmpty) {
-      for (var doc in querySnapshot.docs) {}
-    }
     final UserInfoModel userInfoModel = UserInfoModel.fromFirestore(
         querySnapshot.docs.first.data() as Map<String, dynamic>);
     return userInfoModel;

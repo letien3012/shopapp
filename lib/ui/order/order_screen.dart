@@ -16,12 +16,15 @@ import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/order/shop_order_item.dart';
 
 class OrderScreen extends StatefulWidget {
   static const String routeName = 'order_screen';
 
-  const OrderScreen({super.key});
+  const OrderScreen({
+    super.key,
+  });
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
@@ -41,7 +44,7 @@ class _OrderScreenState extends State<OrderScreen>
     'Trả hàng',
     'Đã hủy',
   ];
-
+  int initialTab = 0;
   @override
   void initState() {
     super.initState();
@@ -54,14 +57,31 @@ class _OrderScreenState extends State<OrderScreen>
         _scrollToSelectedTab();
       }
     });
+
+    // Set initial tab after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)!.settings.arguments;
+      initialTab = args as int;
+      if (initialTab != null) {
+        _tabController.animateTo(initialTab);
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(OrderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _tabController.animateTo(initialTab);
   }
 
   void _scrollToSelectedTab() {
+    if (!_scrollController.hasClients) return;
+
     final RenderBox tabBox = context.findRenderObject() as RenderBox;
     final double tabBarWidth = tabBox.size.width;
     final double selectedTabPosition =
         _tabController.index * (tabBarWidth / _tabs.length);
-    final double offset = selectedTabPosition - (tabBarWidth / 3);
+    final double offset = selectedTabPosition - (tabBarWidth / 4);
 
     _scrollController.animateTo(
       offset.clamp(0.0, _scrollController.position.maxScrollExtent),
@@ -113,25 +133,29 @@ class _OrderScreenState extends State<OrderScreen>
           preferredSize: const Size.fromHeight(48),
           child: Container(
             color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              padding: EdgeInsets.zero,
-              tabAlignment: TabAlignment.start,
-              labelColor: const Color(0xFF8B4513),
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: const Color(0xFF8B4513),
-              indicatorWeight: 3,
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              child: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                padding: EdgeInsets.zero,
+                tabAlignment: TabAlignment.start,
+                labelColor: const Color(0xFF8B4513),
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: const Color(0xFF8B4513),
+                indicatorWeight: 3,
+                labelStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                tabs: _tabs
+                    .map((tab) => Tab(
+                          text: tab,
+                          height: 44,
+                        ))
+                    .toList(),
               ),
-              tabs: _tabs
-                  .map((tab) => Tab(
-                        text: tab,
-                        height: 44,
-                      ))
-                  .toList(),
             ),
           ),
         ),
@@ -202,8 +226,11 @@ class _OrderScreenState extends State<OrderScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SvgPicture.asset(IconHelper.no_order,
-                      width: 350, height: 350),
+                  Image.asset(
+                    ImageHelper.no_order,
+                    width: 300,
+                    height: 300,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'Bạn chưa có đơn hàng nào cả',
@@ -445,14 +472,11 @@ class _OrderScreenState extends State<OrderScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-            child: SvgPicture.asset(
-              IconHelper.no_order,
-              width: 300,
-              height: 250,
-            ),
-          ),
+          // Image.asset(
+          //   ImageHelper.no_order,
+          //   width: 300,
+          //   height: 250,
+          // ),
           Padding(
             padding: const EdgeInsets.all(8),
             child: Column(

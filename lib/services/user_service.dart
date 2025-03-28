@@ -15,6 +15,20 @@ class UserService {
     return userInfoModel;
   }
 
+  Future<List<UserInfoModel>> fetchListUserOrderByUserId(
+      List<String> userIds) async {
+    final QuerySnapshot querySnapshot = await firebaseFirestore
+        .collection('users')
+        .where('id', whereIn: userIds)
+        .get();
+
+    final List<UserInfoModel> userInfoModels = querySnapshot.docs
+        .map((doc) =>
+            UserInfoModel.fromFirestore(doc.data() as Map<String, dynamic>))
+        .toList();
+    return userInfoModels;
+  }
+
   Future<void> updateBasicUserInfo(UserInfoModel user) async {
     await firebaseFirestore
         .collection('users')

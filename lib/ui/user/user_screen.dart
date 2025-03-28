@@ -9,9 +9,13 @@ import 'package:luanvan/blocs/auth/auth_event.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
+import 'package:luanvan/blocs/order/order_bloc.dart';
+import 'package:luanvan/blocs/order/order_event.dart';
+import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
@@ -109,6 +113,7 @@ class _UserScreenState extends State<UserScreen> {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
       context.read<UserBloc>().add(FetchUserEvent(authState.user.uid));
+      context.read<OrderBloc>().add(FetchOrdersByUserId(authState.user.uid));
     }
   }
 
@@ -272,7 +277,12 @@ class _UserScreenState extends State<UserScreen> {
           children: [
             InkWell(
               onTap: () {
-                Navigator.of(context).pushNamed(CartScreen.routeName);
+                final authState = context.read<AuthBloc>().state;
+                if (authState is AuthAuthenticated) {
+                  Navigator.of(context).pushNamed(CartScreen.routeName);
+                } else {
+                  Navigator.of(context).pushNamed(SigninScreen.routeName);
+                }
               },
               child: SizedBox(
                 height: 40,
@@ -335,13 +345,22 @@ class _UserScreenState extends State<UserScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            SvgPicture.asset(
-              IconHelper.chatIcon,
-              color: Colors.white,
-              height: 30,
-              width: 30,
+            InkWell(
+              onTap: () {
+                final authState = context.read<AuthBloc>().state;
+                if (authState is AuthAuthenticated) {
+                  // Xử lý khi đã đăng nhập
+                } else {
+                  Navigator.of(context).pushNamed(SigninScreen.routeName);
+                }
+              },
+              child: SvgPicture.asset(
+                IconHelper.chatIcon,
+                color: Colors.white,
+                height: 30,
+                width: 30,
+              ),
             ),
-            // const Icon(BoxIcons.bx_chat, color: Colors.white, size: 30),
             const SizedBox(width: 10),
           ],
         ),
@@ -532,7 +551,13 @@ class _UserScreenState extends State<UserScreen> {
               const Text("Đơn mua", style: TextStyle(fontSize: 14)),
               GestureDetector(
                 onTap: () {
-                  Navigator.of(context).pushNamed(OrderScreen.routeName);
+                  final authState = context.read<AuthBloc>().state;
+                  if (authState is AuthAuthenticated) {
+                    Navigator.of(context)
+                        .pushNamed(OrderScreen.routeName, arguments: 0);
+                  } else {
+                    Navigator.of(context).pushNamed(SigninScreen.routeName);
+                  }
                 },
                 child: const Row(
                   children: [
@@ -545,14 +570,63 @@ class _UserScreenState extends State<UserScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildOrderIcon(IconHelper.wallet, "Chờ xác nhận"),
-              _buildOrderIcon(IconHelper.package_box, "Chờ lấy hàng"),
-              _buildOrderIcon(IconHelper.truck, "Đang giao hàng"),
-              _buildOrderIcon(IconHelper.star_circle, "Đánh giá"),
-            ],
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, authState) {
+              if (authState is AuthAuthenticated) {
+                return BlocBuilder<OrderBloc, OrderState>(
+                  builder: (context, state) {
+                    int pendingCount = 0;
+                    int processingCount = 0;
+                    int shippedCount = 0;
+                    int deliveredCount = 0;
+
+                    if (state is OrderLoaded) {
+                      for (var order in state.orders) {
+                        switch (order.status) {
+                          case OrderStatus.pending:
+                            pendingCount++;
+                            break;
+                          case OrderStatus.processing:
+                            processingCount++;
+                            break;
+                          case OrderStatus.shipped:
+                            shippedCount++;
+                            break;
+                          case OrderStatus.delivered:
+                            deliveredCount++;
+                            break;
+                          default:
+                            break;
+                        }
+                      }
+                    }
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildOrderIcon(
+                            IconHelper.wallet, "Chờ xác nhận", pendingCount),
+                        _buildOrderIcon(IconHelper.package_box, "Chờ lấy hàng",
+                            processingCount),
+                        _buildOrderIcon(
+                            IconHelper.truck, "Đang giao hàng", shippedCount),
+                        _buildOrderIcon(
+                            IconHelper.star_circle, "Đánh giá", deliveredCount),
+                      ],
+                    );
+                  },
+                );
+              }
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildOrderIcon(IconHelper.wallet, "Chờ xác nhận", 0),
+                  _buildOrderIcon(IconHelper.package_box, "Chờ lấy hàng", 0),
+                  _buildOrderIcon(IconHelper.truck, "Đang giao hàng", 0),
+                  _buildOrderIcon(IconHelper.star_circle, "Đánh giá", 0),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 20),
         ],
@@ -561,11 +635,64 @@ class _UserScreenState extends State<UserScreen> {
   }
 
   // Biểu tượng đơn mua
-  Widget _buildOrderIcon(String icon, String label) {
+  Widget _buildOrderIcon(String icon, String label, int count) {
+    int tabIndex;
+    switch (label) {
+      case 'Chờ xác nhận':
+        tabIndex = 0;
+        break;
+      case 'Chờ lấy hàng':
+        tabIndex = 1;
+        break;
+      case 'Đang giao hàng':
+        tabIndex = 2;
+        break;
+      case 'Đánh giá':
+        tabIndex = 3;
+        break;
+      default:
+        tabIndex = 0;
+    }
+
     return GestureDetector(
+      onTap: () {
+        final authState = context.read<AuthBloc>().state;
+        if (authState is AuthAuthenticated) {
+          Navigator.of(context)
+              .pushNamed(OrderScreen.routeName, arguments: tabIndex);
+        } else {
+          Navigator.of(context).pushNamed(SigninScreen.routeName);
+        }
+      },
       child: Column(
         children: [
-          SvgPicture.asset(icon, height: 35, width: 35),
+          Stack(
+            children: [
+              SvgPicture.asset(icon, height: 35, width: 35),
+              if (count > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(width: 1.5, color: Colors.white),
+                    ),
+                    child: Text(
+                      count.toString(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 5),
           Text(label, style: const TextStyle(fontSize: 12)),
         ],

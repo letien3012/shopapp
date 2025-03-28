@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/user_info_model.dart';
@@ -17,14 +19,27 @@ class LocationScreen extends StatefulWidget {
 class _LocationScreenState extends State<LocationScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<UserBloc, UserState>(
-      builder: (context, userState) {
-        if (userState is UserLoading) {
+    return Scaffold(body: BlocBuilder<AuthBloc, AuthState>(
+      builder: (BuildContext context, state) {
+        if (state is AuthLoading) {
           return _buildLoading();
-        } else if (userState is UserLoaded) {
-          return _buildUserContent(context, userState.user);
-        } else if (userState is UserError) {
-          return _buildError(userState.message);
+        } else if (state is AuthAuthenticated) {
+          return BlocBuilder<UserBloc, UserState>(
+            builder: (context, userState) {
+              if (userState is UserLoading) {
+                return _buildLoading();
+              } else if (userState is UserLoaded) {
+                return _buildUserContent(context, userState.user);
+              } else if (userState is UserError) {
+                return _buildError(userState.message);
+              }
+              return _buildInitializing();
+            },
+          );
+        } else if (state is AuthError) {
+          return _buildError(state.message);
+        } else if (state is AuthUnauthenticated) {
+          return _buildNotAuthenticated();
         }
         return _buildInitializing();
       },
@@ -44,6 +59,10 @@ class _LocationScreenState extends State<LocationScreen> {
   // Trạng thái khởi tạo
   Widget _buildInitializing() {
     return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  Widget _buildNotAuthenticated() {
+    return const Center(child: Text("Chưa đăng nhập"));
   }
 
   Widget _buildUserContent(BuildContext context, UserInfoModel user) {

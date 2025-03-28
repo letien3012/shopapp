@@ -36,6 +36,7 @@ class Order {
   double totalPrice; // Tổng thanh toán
   List<OrderStatusHistory> statusHistory; // Lịch sử trạng thái đơn hàng
   String? trackingNumber; // Mã vận đơn
+  String? shippingCode; // Mã vận đơn (mã bưu điện)
   DateTime? estimatedDeliveryDate; // Ngày giao hàng dự kiến
   DateTime? actualDeliveryDate; // Ngày giao hàng thực tế
   double discountAmount; // Số tiền giảm giá (nếu có)
@@ -59,6 +60,7 @@ class Order {
     required this.totalPrice,
     this.statusHistory = const [],
     this.trackingNumber,
+    this.shippingCode,
     this.estimatedDeliveryDate,
     this.actualDeliveryDate,
     this.discountAmount = 0.0,
@@ -100,6 +102,7 @@ class Order {
               .toList() ??
           [],
       trackingNumber: map['trackingNumber'],
+      shippingCode: map['shippingCode'],
       estimatedDeliveryDate: map['estimatedDeliveryDate'] != null
           ? DateTime.parse(map['estimatedDeliveryDate'])
           : null,
@@ -131,6 +134,7 @@ class Order {
       'totalPrice': totalPrice,
       'statusHistory': statusHistory.map((e) => e.toMap()).toList(),
       'trackingNumber': trackingNumber,
+      'shippingCode': shippingCode,
       'estimatedDeliveryDate': estimatedDeliveryDate?.toIso8601String(),
       'actualDeliveryDate': actualDeliveryDate?.toIso8601String(),
       'discountAmount': discountAmount,
@@ -173,6 +177,7 @@ class Order {
               .toList() ??
           [],
       trackingNumber: json['trackingNumber'],
+      shippingCode: json['shippingCode'],
       estimatedDeliveryDate: json['estimatedDeliveryDate'] != null
           ? DateTime.parse(json['estimatedDeliveryDate'])
           : null,
@@ -204,6 +209,7 @@ class Order {
       'totalPrice': totalPrice,
       'statusHistory': statusHistory.map((e) => e.toJson()).toList(),
       'trackingNumber': trackingNumber,
+      'shippingCode': shippingCode,
       'estimatedDeliveryDate': estimatedDeliveryDate?.toIso8601String(),
       'actualDeliveryDate': actualDeliveryDate?.toIso8601String(),
       'discountAmount': discountAmount,
@@ -231,6 +237,7 @@ class Order {
     double? totalPrice,
     List<OrderStatusHistory>? statusHistory,
     String? trackingNumber,
+    String? shippingCode,
     DateTime? estimatedDeliveryDate,
     DateTime? actualDeliveryDate,
     double? discountAmount,
@@ -254,6 +261,7 @@ class Order {
       totalPrice: totalPrice ?? this.totalPrice,
       statusHistory: statusHistory ?? this.statusHistory,
       trackingNumber: trackingNumber ?? this.trackingNumber,
+      shippingCode: shippingCode ?? this.shippingCode,
       estimatedDeliveryDate:
           estimatedDeliveryDate ?? this.estimatedDeliveryDate,
       actualDeliveryDate: actualDeliveryDate ?? this.actualDeliveryDate,

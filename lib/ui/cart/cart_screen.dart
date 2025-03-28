@@ -18,6 +18,7 @@ import 'package:luanvan/models/cart_shop.dart';
 import 'package:luanvan/ui/cart/shop_item.dart';
 import 'package:luanvan/ui/checkout/check_out_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
@@ -258,46 +259,70 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          SingleChildScrollView(
-            child: Container(
-              color: Colors.grey[200],
-              padding: const EdgeInsets.only(
-                  left: 10, right: 10, top: 90, bottom: 60),
-              constraints:
-                  BoxConstraints(minHeight: MediaQuery.of(context).size.height),
-              child: Column(
-                children: [
-                  ListView.builder(
-                    padding: EdgeInsets.zero,
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: cart.shops.length,
-                    itemBuilder: (context, index) {
-                      if (index >= listShopId.length) {
-                        return const SizedBox.shrink();
-                      }
-                      final shopId = listShopId[index];
-
-                      return ShopItemWidget(
-                        shopId: shopId,
-                        cart: cart,
-                        checkedShop: checkedShop,
-                        onCheckedShopChanged: onCheckedShopChanged,
-                        checkedProduct: checkedProduct,
-                        onCheckedProductChanged: onCheckedProductChanged,
-                        quantityControllers: quantityControllers,
-                        maxSwipe: _maxSwipe,
-                        onDeleteProduct: _deleteProduct,
-                        onDeleteShop: _deleteShop,
-                        onUpdateQuantity: _updateQuantity,
-                        onShowConfirmDelete: _showConfirmDeleteProductDialog,
-                      );
-                    },
+          (cart.totalItems == 0)
+              ? Container(
+                  alignment: Alignment.center,
+                  color: Colors.white,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        ImageHelper.no_cart,
+                        height: 300,
+                        width: 300,
+                      ),
+                      const Text(
+                        "Giỏ hàng của bạn đang trống",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    ],
                   ),
-                ],
-              ),
-            ),
-          ),
+                )
+              : SingleChildScrollView(
+                  child: Container(
+                    color: Colors.grey[200],
+                    padding: const EdgeInsets.only(
+                        left: 10, right: 10, top: 90, bottom: 60),
+                    constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height),
+                    child: Column(
+                      children: [
+                        ListView.builder(
+                          padding: EdgeInsets.zero,
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: cart.shops.length,
+                          itemBuilder: (context, index) {
+                            if (index >= listShopId.length) {
+                              return const SizedBox.shrink();
+                            }
+                            final shopId = listShopId[index];
+
+                            return ShopItemWidget(
+                              shopId: shopId,
+                              cart: cart,
+                              checkedShop: checkedShop,
+                              onCheckedShopChanged: onCheckedShopChanged,
+                              checkedProduct: checkedProduct,
+                              onCheckedProductChanged: onCheckedProductChanged,
+                              quantityControllers: quantityControllers,
+                              maxSwipe: _maxSwipe,
+                              onDeleteProduct: _deleteProduct,
+                              onDeleteShop: _deleteShop,
+                              onUpdateQuantity: _updateQuantity,
+                              onShowConfirmDelete:
+                                  _showConfirmDeleteProductDialog,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
           Align(
             alignment: Alignment.topCenter,
             child: AnimatedContainer(

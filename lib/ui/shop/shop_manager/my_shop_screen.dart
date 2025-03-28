@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/blocs/order/order_bloc.dart';
+import 'package:luanvan/blocs/order/order_event.dart';
+import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
+import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/ship_manager_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
@@ -21,6 +26,22 @@ class MyShopScreen extends StatefulWidget {
 }
 
 class _MyShopScreenState extends State<MyShopScreen> {
+  String formatNumber(int number) {
+    if (number >= 1000000000) {
+      double result = number / 1000000000;
+      return '${result.toStringAsFixed(1)}B';
+    }
+    if (number >= 1000000) {
+      double result = number / 1000000;
+      return '${result.toStringAsFixed(1)}M';
+    }
+    if (number >= 1000) {
+      double result = number / 1000;
+      return '${result.toStringAsFixed(1)}k';
+    }
+    return number.toString();
+  }
+
   bool isFastEnabled = false;
   bool isEconomyEnabled = false;
   bool isExpress = false;
@@ -30,6 +51,12 @@ class _MyShopScreenState extends State<MyShopScreen> {
     Future.microtask(() {
       user = ModalRoute.of(context)!.settings.arguments as UserInfoModel;
       context.read<ShopBloc>().add(FetchShopEvent(user.id));
+      final shopState = context.read<ShopBloc>().state;
+      if (shopState is ShopLoaded) {
+        context
+            .read<OrderBloc>()
+            .add(FetchOrdersByShopId(shopState.shop.shopId!));
+      }
     });
     super.initState();
   }
@@ -151,7 +178,11 @@ class _MyShopScreenState extends State<MyShopScreen> {
                     children: [
                       Text("Đơn hàng"),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(
+                              context, OrderShopScreen.routeName,
+                              arguments: 0);
+                        },
                         child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -167,58 +198,50 @@ class _MyShopScreenState extends State<MyShopScreen> {
                 ),
                 Padding(
                   padding: EdgeInsets.only(top: 15, bottom: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      GestureDetector(
-                        child: Column(
-                          children: [
-                            Text(
-                              "0",
-                              style: TextStyle(fontSize: 30),
-                            ),
-                            Text("Chờ lấy hàng",
-                                style: const TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        child: Column(
-                          children: [
-                            Text(
-                              "5",
-                              style: TextStyle(fontSize: 30),
-                            ),
-                            Text("Đơn huỷ",
-                                style: const TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        child: Column(
-                          children: [
-                            Text(
-                              "2",
-                              style: TextStyle(fontSize: 30),
-                            ),
-                            Text("Trả hàng hoàn tiền",
-                                style: const TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        child: Column(
-                          children: [
-                            Text(
-                              "1k",
-                              style: TextStyle(fontSize: 30),
-                            ),
-                            Text("Phản hôi đánh giá",
-                                style: const TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: BlocBuilder<OrderBloc, OrderState>(
+                    builder: (context, state) {
+                      int processingCount = 0;
+                      int cancelledCount = 0;
+                      int returnedCount = 0;
+                      int feedbackCount = 0;
+
+                      if (state is OrderShopLoaded) {
+                        for (var order in state.orders) {
+                          if (order.shopId == shop.shopId) {
+                            switch (order.status) {
+                              case OrderStatus.pending:
+                                processingCount++;
+                                break;
+                              case OrderStatus.cancelled:
+                                cancelledCount++;
+                                break;
+                              case OrderStatus.returned:
+                                returnedCount++;
+                                break;
+                              case OrderStatus.delivered:
+                                feedbackCount++;
+                                break;
+                              default:
+                                break;
+                            }
+                          }
+                        }
+                      }
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildOrderCountItem("Chờ xác nhận", processingCount,
+                              OrderStatus.pending),
+                          _buildOrderCountItem(
+                              "Đơn huỷ", cancelledCount, OrderStatus.cancelled),
+                          _buildOrderCountItem("Trả hàng hoàn tiền",
+                              returnedCount, OrderStatus.returned),
+                          _buildOrderCountItem("Phản hôi đánh giá",
+                              feedbackCount, OrderStatus.delivered),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 Container(
@@ -502,6 +525,62 @@ class _MyShopScreenState extends State<MyShopScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOrderCountItem(String label, int count, OrderStatus status) {
+    return InkWell(
+      onTap: () {
+        int index = 0;
+        switch (status) {
+          case OrderStatus.pending:
+            index = 0; // Chờ xác nhận
+            break;
+          case OrderStatus.processing:
+            index = 1; // Chờ lấy hàng
+            break;
+          case OrderStatus.shipped:
+            index = 2; // Chờ giao hàng
+            break;
+          case OrderStatus.delivered:
+            index = 3; // Đã giao
+            break;
+          case OrderStatus.returned:
+            index = 4; // Trả hàng
+            break;
+          case OrderStatus.cancelled:
+            index = 5; // Đã hủy
+            break;
+        }
+        Navigator.pushNamed(
+          context,
+          OrderShopScreen.routeName,
+          arguments: index,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          children: [
+            Text(
+              formatNumber(count),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF8B4513),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

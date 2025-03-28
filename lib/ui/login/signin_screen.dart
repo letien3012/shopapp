@@ -122,7 +122,7 @@ class _SigninScreenState extends State<SigninScreen> {
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(color: Colors.black),
                         ),
-                        hintText: 'Email/ số điện thoại',
+                        hintText: 'Email/Phone Number',
                         hintStyle: const TextStyle(fontWeight: FontWeight.w300),
                         contentPadding: const EdgeInsets.only(left: 20),
                       ),

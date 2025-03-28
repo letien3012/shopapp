@@ -136,6 +136,41 @@ class AuthService {
         print('Đăng nhập thành công: ${userCredential.user?.displayName}');
         User? user = userCredential.user;
         if (user != null) {
+          QuerySnapshot querySnapshot = await _firestore
+              .collection('users')
+              .where('id', isEqualTo: user.uid)
+              .limit(1)
+              .get();
+
+          late UserInfoModel userInfo;
+          if (querySnapshot.docs.isEmpty) {
+            String username = generateRandomUsername();
+            bool isUsernameTaken = await checkUSerNameExits(username);
+
+            while (isUsernameTaken) {
+              username = generateRandomUsername();
+              isUsernameTaken = await checkUSerNameExits(username);
+            }
+            userInfo = UserInfoModel(
+              id: user.uid,
+              name: user.displayName ?? "Người dùng Facebook",
+              email: user.email,
+              phone: user.phoneNumber,
+              avataUrl: user.photoURL,
+              gender: null,
+              date: null,
+              userName: username,
+              role: 0,
+            );
+            await _firestore
+                .collection('users')
+                .doc(userInfo.id)
+                .set(userInfo.toMap(), SetOptions(merge: true));
+          } else {
+            userInfo = UserInfoModel.fromFirestore(
+                querySnapshot.docs.first.data() as Map<String, dynamic>);
+          }
+
           await createCartForUser(user.uid);
         }
       } on FirebaseAuthException catch (e) {
@@ -225,5 +260,182 @@ class AuthService {
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
     await _googleSignIn.signOut();
+    await FacebookAuth.instance.logOut();
+  }
+
+  Future<UserCredential> signUpWithEmailAndPassword(
+      String email, String password) async {
+    try {
+      final UserCredential userCredential =
+          await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (userCredential.user != null) {
+        // Tạo thông tin user trong Firestore
+        String username = generateRandomUsername();
+        bool isUsernameTaken = await checkUSerNameExits(username);
+
+        while (isUsernameTaken) {
+          username = generateRandomUsername();
+          isUsernameTaken = await checkUSerNameExits(username);
+        }
+
+        final UserInfoModel userInfo = UserInfoModel(
+          id: userCredential.user!.uid,
+          name: userCredential.user!.displayName ?? "Người dùng",
+          email: email,
+          phone: userCredential.user!.phoneNumber,
+          avataUrl: userCredential.user!.photoURL,
+          gender: null,
+          date: null,
+          userName: username,
+          role: 0,
+        );
+
+        await _firestore
+            .collection('users')
+            .doc(userInfo.id)
+            .set(userInfo.toMap(), SetOptions(merge: true));
+
+        await createCartForUser(userCredential.user!.uid);
+      }
+
+      return userCredential;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<UserCredential> signInWithEmailAndPassword(
+      String email, String password) async {
+    try {
+      return await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> verifyEmail(String verificationId) async {
+    try {
+      await _firebaseAuth.currentUser?.reload();
+      if (!_firebaseAuth.currentUser!.emailVerified) {
+        throw Exception('Email chưa được xác thực');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> sendEmailVerification() async {
+    try {
+      await _firebaseAuth.currentUser?.sendEmailVerification();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> isEmailVerified() async {
+    try {
+      await _firebaseAuth.currentUser?.reload();
+      return _firebaseAuth.currentUser?.emailVerified ?? false;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<User?> getCurrentUser() async {
+    try {
+      return _firebaseAuth.currentUser;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> reloadUser() async {
+    try {
+      await _firebaseAuth.currentUser?.reload();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> sendEmailVerificationCode(String email) async {
+    try {
+      // Tạo mã xác thực ngẫu nhiên 6 chữ số
+      final code =
+          (100000 + DateTime.now().millisecondsSinceEpoch % 900000).toString();
+
+      // Lưu mã xác thực vào Firestore với thời gian hết hạn 5 phút
+      await _firestore.collection('verification_codes').add({
+        'email': email,
+        'code': code,
+        'createdAt': FieldValue.serverTimestamp(),
+        'expiresAt': DateTime.now().add(const Duration(minutes: 5)),
+      });
+
+      // Gửi email chứa mã xác thực thông qua Cloud Function
+      await _firestore.collection('email_queue').add({
+        'to': email,
+        'subject': 'Mã xác thực email',
+        'body': '''
+          Xin chào,
+          
+          Mã xác thực của bạn là: $code
+          
+          Mã này sẽ hết hạn sau 5 phút.
+          
+          Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.
+        ''',
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Lỗi gửi mã xác thực: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> verifyEmailCode(String verificationId, String code) async {
+    try {
+      // Tìm mã xác thực trong Firestore
+      final querySnapshot = await _firestore
+          .collection('verification_codes')
+          .where('code', isEqualTo: code)
+          .where('expiresAt', isGreaterThan: DateTime.now())
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return false;
+      }
+
+      // Xóa mã đã sử dụng
+      await querySnapshot.docs.first.reference.delete();
+
+      // Cập nhật trạng thái xác thực email của user
+      final user = _firebaseAuth.currentUser;
+      if (user != null) {
+        await user.updateEmail(querySnapshot.docs.first.data()['email']);
+        await user.sendEmailVerification();
+      }
+
+      return true;
+    } catch (e) {
+      print('Lỗi xác thực mã: $e');
+      return false;
+    }
   }
 }

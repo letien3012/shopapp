@@ -21,7 +21,6 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     emit(OrderLoading());
     try {
       final orders = await _orderService.fetchOrdersByUserId(event.userId);
-      print('orders: ${orders.length}');
       emit(OrderLoaded(orders));
     } catch (e) {
       emit(OrderError(e.toString()));
@@ -33,7 +32,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     emit(OrderLoading());
     try {
       final orders = await _orderService.fetchOrdersByShopId(event.shopId);
-      emit(OrderLoaded(orders));
+      emit(OrderShopLoaded(orders));
     } catch (e) {
       emit(OrderError(e.toString()));
     }

@@ -22,6 +22,11 @@ class OrderLoaded extends OrderState {
   OrderLoaded(this.orders);
 }
 
+class OrderShopLoaded extends OrderState {
+  final List<Order> orders;
+  OrderShopLoaded(this.orders);
+}
+
 class OrderDetailLoaded extends OrderState {
   final Order order;
   OrderDetailLoaded(this.order);

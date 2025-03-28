@@ -17,10 +17,13 @@ import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
 import 'package:luanvan/ui/login/verify_screen.dart';
 import 'package:luanvan/ui/mainscreen.dart';
+import 'package:luanvan/ui/order/order_detail_screen.dart';
 import 'package:luanvan/ui/order/order_screen.dart';
 import 'package:luanvan/ui/order/order_success_screen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
+import 'package:luanvan/ui/shop/order_manager/order_detail_shop_screen.dart';
+import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/delivery_cost_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
@@ -97,4 +100,7 @@ final Map<String, WidgetBuilder> routes = {
       ChoiceShipmethodForShopScreen(),
   OrderSuccessScreen.routeName: (context) => OrderSuccessScreen(),
   OrderScreen.routeName: (context) => OrderScreen(),
+  OrderShopScreen.routeName: (context) => OrderShopScreen(),
+  OrderDetailScreen.routeName: (context) => OrderDetailScreen(),
+  OrderDetailShopScreen.routeName: (context) => OrderDetailShopScreen(),
 };

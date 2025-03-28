@@ -30,5 +30,6 @@ class IconHelper {
       "${imagePath}chat-bubble-question.svg";
   static const String star_circle = "${imagePath}star_circle.svg";
   static const String package_box = "${imagePath}package_box.svg";
-  static const String no_order = "${imagePath}no_order.svg";
+  static const String locaiton_pin = "${imagePath}location_pin.svg";
+  static const String dollar = "${imagePath}dollar.svg";
 }

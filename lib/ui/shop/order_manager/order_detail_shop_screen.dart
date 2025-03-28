@@ -6,19 +6,18 @@ import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/order/shop_order_detail.dart';
+import 'package:luanvan/ui/shop/order_manager/detail_product_and_shop.dart';
 
-class OrderDetailScreen extends StatefulWidget {
-  static const String routeName = 'order_detail_screen';
+class OrderDetailShopScreen extends StatefulWidget {
+  static const String routeName = 'order_detail_shop_screen';
 
-  const OrderDetailScreen({super.key});
+  const OrderDetailShopScreen({super.key});
 
   @override
-  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+  State<OrderDetailShopScreen> createState() => _OrderDetailShopScreenState();
 }
 
-class _OrderDetailScreenState extends State<OrderDetailScreen> {
-  bool isShowMoreDetailOrderDate = false;
+class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
   String formatPrice(double price) {
     final formatter = NumberFormat.currency(
       locale: 'vi_VN',
@@ -57,7 +56,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('Thông tin đơn hàng'),
+        title: Text('Chi tiết đơn hàng'),
       ),
       body: Container(
         color: Colors.grey[200],
@@ -68,7 +67,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           child: Column(
             children: [
               _buildStatusSection(order),
-              ShopOrderDetail(order: order),
+              _buildPaymentInfo(order),
+              _buildPaymentMethod(order),
+              DetailProductAndShop(order: order),
               _buildOrderInfoSection(order),
               if (order.status == OrderStatus.pending)
                 SizedBox(
@@ -133,24 +134,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
 
     return Container(
-      margin: EdgeInsets.only(top: 10, left: 10, right: 10),
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(8)),
-      ),
+      color: Colors.white,
       child: Column(
         children: [
           Container(
             width: double.infinity,
             height: 40,
-            decoration: BoxDecoration(
-              color: statusColor,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
-            ),
+            color: statusColor,
             alignment: Alignment.center,
             child: Text(
               'Đơn hàng $statusText',
@@ -166,16 +157,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SvgPicture.asset(
-                  IconHelper.locaiton_pin,
-                  height: 25,
-                  width: 25,
-                ),
+                SvgPicture.asset(IconHelper.locaiton_pin,
+                    height: 25, width: 25, color: Colors.green[700]),
                 const SizedBox(width: 5),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 4),
+                      Text(
+                        'Địa chỉ nhận hàng',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
                       Row(
                         children: [
                           Text(
@@ -204,103 +201,135 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Widget _buildOrderInfoSection(Order order) {
+  Widget _buildPaymentInfo(Order order) {
     return Container(
-      margin: EdgeInsets.only(top: 10, left: 10, right: 10),
+      color: Colors.white,
       padding: EdgeInsets.all(10),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+      margin: EdgeInsets.only(
+        top: 10,
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              SvgPicture.asset(IconHelper.dollar,
+                  height: 25, width: 25, color: Colors.green[700]),
+              const SizedBox(
+                width: 10,
+              ),
+              Text(
+                'Thông tin thanh toán',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              const SizedBox(width: 35),
+              Expanded(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Tổng tiền sản phẩm'),
+                        Text('đ${formatPrice(order.totalProductPrice)}'),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Phí vận chuyển'),
+                        Text('đ${formatPrice(order.totalShipFee)}'),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Tổng đơn hàng'),
+                        Text('đ${formatPrice(order.totalPrice)}'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPaymentMethod(Order order) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: EdgeInsets.all(10),
+      margin: EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Phương thức thanh toán',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              )),
+          const SizedBox(height: 5),
+          Text(getPaymentMethodName(order.paymentMethod.name)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderInfoSection(Order order) {
+    return Container(
+      margin: EdgeInsets.only(
+        top: 10,
+      ),
+      padding: EdgeInsets.all(10),
+      width: double.infinity,
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Mã đơn hàng'),
-              Text(order.trackingNumber ?? ''),
+              Text('Mã đơn hàng',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  )),
+              Text(order.trackingNumber ?? '',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  )),
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Container(
+            height: 1,
+            color: Colors.grey[300],
+          ),
+          Column(
             children: [
-              Text('Phương thức thanh toán'),
-              Text(getPaymentMethodName(order.paymentMethod.name)),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Thời gian đặt hàng:'),
+                  Text(formatDate(order.createdAt)),
+                ],
+              ),
+              const SizedBox(height: 5),
             ],
-          ),
-          const SizedBox(height: 10),
-          isShowMoreDetailOrderDate
-              ? Container(
-                  height: 1,
-                  color: Colors.grey[300],
-                )
-              : SizedBox(),
-          AnimatedContainer(
-            curve: Curves.easeInOut,
-            duration: const Duration(milliseconds: 300),
-            height: isShowMoreDetailOrderDate ? 65 : 0,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Ngày đặt hàng:'),
-                      Text(formatDate(order.createdAt)),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Ngày giao hàng dự kiến:'),
-                      Text(formatDate(
-                          order.estimatedDeliveryDate ?? DateTime.now())),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                isShowMoreDetailOrderDate = !isShowMoreDetailOrderDate;
-              });
-            },
-            child: Container(
-              alignment: Alignment.center,
-              width: double.infinity,
-              height: 40,
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: Colors.grey[300]!, width: 1),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(isShowMoreDetailOrderDate ? 'Rút gọn' : 'Xem chi tiết'),
-                  Icon(
-                      isShowMoreDetailOrderDate
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 20),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -368,7 +397,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
           child: Center(
             child: Text(
-              'Liên hệ shop',
+              'Liên hệ người mua',
               style: TextStyle(color: Colors.white),
             ),
           ),

@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
+import 'package:luanvan/blocs/listuserordershop/list_user_order_bloc.dart';
+import 'package:luanvan/blocs/listuserordershop/list_user_order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
 import 'package:luanvan/models/order.dart';
-import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/order/order_detail_screen.dart';
 import 'package:luanvan/ui/order/product_order_widget.dart';
+import 'package:luanvan/ui/shop/order_manager/order_detail_shop_screen.dart';
 
-class ShopOrderItem extends StatefulWidget {
+class UserOrderItem extends StatefulWidget {
   Order order;
-  ShopOrderItem({
+  UserOrderItem({
     required this.order,
   });
 
   @override
-  State<ShopOrderItem> createState() => _ShopOrderItemState();
+  State<UserOrderItem> createState() => _UserOrderItemState();
 }
 
-class _ShopOrderItemState extends State<ShopOrderItem> {
+class _UserOrderItemState extends State<UserOrderItem> {
   bool _showAllProducts = false;
 
   @override
@@ -78,37 +76,45 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ListShopBloc, ListShopState>(
-      builder: (context, listShopState) {
-        if (listShopState is ListShopLoading) {
+    return BlocBuilder<ListUserOrderBloc, ListUserOrderState>(
+      builder: (context, listUserState) {
+        if (listUserState is ListUserOrderLoading) {
           return _buildShopSkeleton();
-        } else if (listShopState is ListShopLoaded) {
-          final shop = listShopState.shops.firstWhere(
-            (element) => element.shopId == widget.order.shopId,
+        } else if (listUserState is ListUserOrderLoaded) {
+          final user = listUserState.users.firstWhere(
+            (element) => element.id == widget.order.userId,
           );
 
           return GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context, OrderDetailScreen.routeName,
+              Navigator.pushNamed(context, OrderDetailShopScreen.routeName,
                   arguments: widget.order);
             },
             child: Container(
-              margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+              margin: const EdgeInsets.only(
+                top: 10,
+              ),
               padding: const EdgeInsets.only(
                   top: 10, left: 10, right: 10, bottom: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      SvgPicture.asset(IconHelper.store, width: 25, height: 25),
+                      ClipOval(
+                        child: Image.network(
+                          user.avataUrl ?? '',
+                          width: 25,
+                          height: 25,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                       const SizedBox(width: 5),
                       Text(
-                        shop.name,
+                        user.name ?? '',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -124,6 +130,7 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
                   BlocBuilder<ProductOrderBloc, ProductOrderState>(
                     builder: (context, productOrderState) {
                       if (productOrderState is ProductOrderListLoaded) {
@@ -188,15 +195,101 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   Text(
-                                    "Tổng số tiền ($totalProduct sản phẩm): đ${formatPrice(widget.order.totalPrice)}",
+                                    "Tổng thanh toán: ",
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
+                                  Text(
+                                    "đ${formatPrice(widget.order.totalPrice)}",
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color.fromARGB(255, 151, 14, 4),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
+                            Container(
+                              height: 0.3,
+                              color: Colors.grey[300],
+                            ),
+                            Container(
+                              height: 60,
+                              alignment: Alignment.centerRight,
+                              child: Material(
+                                color: Colors.brown,
+                                child: InkWell(
+                                  onTap: () {
+                                    if (widget.order.status ==
+                                        OrderStatus.pending) {
+                                      // context.read<OrderBloc>().add(
+                                      //       UpdateOrderStatusEvent(
+                                      //         widget.order.orderId,
+                                      //         OrderStatus.processing,
+                                      //       ),
+                                      //     );
+                                    } else if (widget.order.status ==
+                                        OrderStatus.processing) {
+                                      // context.read<OrderBloc>().add(
+                                      //       UpdateOrderStatusEvent(
+                                      //         widget.order.orderId,
+                                      //         OrderStatus.shipped,
+                                      //       ),
+                                      //     );
+                                    } else if (widget.order.status ==
+                                        OrderStatus.delivered) {
+                                      // TODO: Implement contact buyer logic
+                                    }
+                                  },
+                                  child: Container(
+                                    height: 40,
+                                    width: 120,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      widget.order.status == OrderStatus.pending
+                                          ? 'Xác nhận'
+                                          : widget.order.status ==
+                                                  OrderStatus.processing
+                                              ? 'Chuẩn bị hàng'
+                                              : widget.order.status ==
+                                                      OrderStatus.delivered
+                                                  ? 'Liên hệ người mua'
+                                                  : '',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              height: 0.3,
+                              color: Colors.grey[300],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Mã đơn hàng',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  widget.order.trackingNumber ?? '',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            )
                           ],
                         );
                       } else if (productOrderState is ProductOrderError) {
@@ -209,8 +302,8 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
               ),
             ),
           );
-        } else if (listShopState is ListShopError) {
-          return Text('Error: ${listShopState.message}');
+        } else if (listUserState is ListUserOrderError) {
+          return Text('Error: ${listUserState.message}');
         }
         return _buildShopSkeleton();
       },

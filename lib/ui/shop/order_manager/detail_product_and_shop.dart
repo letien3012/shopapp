@@ -6,65 +6,27 @@ import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/order/order_detail_screen.dart';
 import 'package:luanvan/ui/order/product_order_widget.dart';
 
-class ShopOrderItem extends StatefulWidget {
+class DetailProductAndShop extends StatefulWidget {
   Order order;
-  ShopOrderItem({
+  DetailProductAndShop({
     required this.order,
   });
 
   @override
-  State<ShopOrderItem> createState() => _ShopOrderItemState();
+  State<DetailProductAndShop> createState() => _DetailProductAndShopState();
 }
 
-class _ShopOrderItemState extends State<ShopOrderItem> {
-  bool _showAllProducts = false;
-
+class _DetailProductAndShopState extends State<DetailProductAndShop> {
+  bool isShowDetailPrice = false;
   @override
   void initState() {
     super.initState();
-  }
-
-  String _getOrderStatusText(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return 'Chờ xác nhận';
-      case OrderStatus.processing:
-        return 'Chờ lấy hàng';
-      case OrderStatus.shipped:
-        return 'Chờ giao hàng';
-      case OrderStatus.delivered:
-        return 'Hoàn thành';
-      case OrderStatus.cancelled:
-        return 'Đã hủy';
-      case OrderStatus.returned:
-        return 'Trả hàng';
-      default:
-        return '';
-    }
-  }
-
-  Color _getOrderStatusColor(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return Colors.orange;
-      case OrderStatus.processing:
-        return Colors.purple;
-      case OrderStatus.shipped:
-        return Colors.blue;
-      case OrderStatus.delivered:
-        return Colors.green;
-      case OrderStatus.cancelled:
-        return Colors.red;
-      case OrderStatus.returned:
-        return Colors.grey;
-      default:
-        return Colors.grey;
-    }
   }
 
   String formatPrice(double price) {
@@ -78,69 +40,55 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ListShopBloc, ListShopState>(
-      builder: (context, listShopState) {
-        if (listShopState is ListShopLoading) {
+    return BlocBuilder<ShopBloc, ShopState>(
+      builder: (context, shopState) {
+        if (shopState is ShopLoading) {
           return _buildShopSkeleton();
-        } else if (listShopState is ListShopLoaded) {
-          final shop = listShopState.shops.firstWhere(
-            (element) => element.shopId == widget.order.shopId,
-          );
-
-          return GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, OrderDetailScreen.routeName,
-                  arguments: widget.order);
-            },
-            child: Container(
-              margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
-              padding: const EdgeInsets.only(
-                  top: 10, left: 10, right: 10, bottom: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
+        } else if (shopState is ShopLoaded) {
+          final shop = shopState.shop;
+          return Container(
+            margin: const EdgeInsets.only(
+              top: 10,
+            ),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      SvgPicture.asset(IconHelper.store, width: 25, height: 25),
-                      const SizedBox(width: 5),
-                      Text(
-                        shop.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      ClipOval(
+                          child: Image.network(shop.avatarUrl ?? '',
+                              width: 25, height: 25)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          shop.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
-                      const Spacer(),
-                      Text(
-                        _getOrderStatusText(widget.order.status),
-                        style: TextStyle(
-                          color: _getOrderStatusColor(widget.order.status),
-                          fontSize: 13,
-                        ),
-                      ),
+                      Icon(Icons.arrow_forward_ios, size: 16),
                     ],
                   ),
                   BlocBuilder<ProductOrderBloc, ProductOrderState>(
                     builder: (context, productOrderState) {
                       if (productOrderState is ProductOrderListLoaded) {
-                        int totalProduct = 0;
-                        for (var element in widget.order.item) {
-                          totalProduct += element.quantity;
-                        }
                         return Column(
                           children: [
                             ListView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: _showAllProducts
-                                  ? widget.order.item.length
-                                  : 1,
+                              itemCount: widget.order.item.length,
                               padding: const EdgeInsets.only(
-                                  top: 10, left: 10, right: 10),
+                                top: 10,
+                              ),
                               itemBuilder: (context, index) {
                                 final item = widget.order.item[index];
                                 return ProductOrderWidget(
@@ -149,53 +97,6 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
                                   productOrderState: productOrderState,
                                 );
                               },
-                            ),
-                            if (widget.order.item.length > 1)
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _showAllProducts = !_showAllProducts;
-                                  });
-                                },
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        _showAllProducts
-                                            ? 'Thu gọn'
-                                            : 'Xem thêm',
-                                        style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                      Icon(
-                                        _showAllProducts
-                                            ? Icons.keyboard_arrow_up
-                                            : Icons.keyboard_arrow_down,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            SizedBox(
-                              height: 40,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    "Tổng số tiền ($totalProduct sản phẩm): đ${formatPrice(widget.order.totalPrice)}",
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ],
                         );
@@ -209,8 +110,8 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
               ),
             ),
           );
-        } else if (listShopState is ListShopError) {
-          return Text('Error: ${listShopState.message}');
+        } else if (shopState is ShopError) {
+          return Text('Error: ${shopState.message}');
         }
         return _buildShopSkeleton();
       },

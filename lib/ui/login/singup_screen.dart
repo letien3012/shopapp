@@ -8,6 +8,7 @@ import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/verify_screen.dart';
+import 'package:luanvan/ui/login/create_password_screen.dart';
 import 'package:luanvan/ui/mainscreen.dart';
 
 class SingupScreen extends StatefulWidget {
@@ -19,12 +20,25 @@ class SingupScreen extends StatefulWidget {
 }
 
 class _SingupScreenState extends State<SingupScreen> {
-  final _phoneFormKey = GlobalKey<FormState>();
-  final TextEditingController _phoneController = TextEditingController();
+  final _emailFormKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
   bool is_check = false;
+
+  // Validation cho email
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Vui lòng nhập email';
+    }
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Email không hợp lệ';
+    }
+    return null;
+  }
+
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -32,8 +46,11 @@ class _SingupScreenState extends State<SingupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(listener: (context, state) {
-        if (state is AuthAuthenticated) {
-          Navigator.of(context).pushNamed(MainScreen.routeName);
+        if (state is AuthEmailVerificationSent) {
+          Navigator.of(context).pushNamed(VerifyScreen.routeName);
+        }
+        if (state is AuthEmailVerified) {
+          Navigator.of(context).pushNamed(CreatePasswordScreen.routeName);
         }
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -70,15 +87,15 @@ class _SingupScreenState extends State<SingupScreen> {
                   height: 50,
                 ),
                 const Text(
-                  'Nhập số điện thoại',
+                  'Nhập email',
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 10),
                 Form(
-                  key: _phoneFormKey,
+                  key: _emailFormKey,
                   child: TextFormField(
-                    controller: _phoneController,
-                    keyboardType: const TextInputType.numberWithOptions(),
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -88,33 +105,12 @@ class _SingupScreenState extends State<SingupScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Colors.black),
                       ),
-                      hintText: 'Nhập số điện thoại của bạn',
+                      hintText: 'Nhập email của bạn',
                       hintStyle: const TextStyle(fontWeight: FontWeight.w300),
                       contentPadding: const EdgeInsets.only(left: 20),
                       errorStyle: const TextStyle(color: Colors.red),
                     ),
-                    maxLength: 10,
-                    buildCounter: (context,
-                            {required currentLength,
-                            required isFocused,
-                            maxLength}) =>
-                        null,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Vui lòng nhập số điện thoại';
-                      }
-                      final RegExp vietnamPhoneRegExp = RegExp(
-                        r'^0(3[2-9]|5[6-9]|7[0|6-9]|8[1-9]|9[0-9])[0-9]{7}$',
-                      );
-                      if (!vietnamPhoneRegExp.hasMatch(value) ||
-                          value.length != 10) {
-                        return 'Số điện thoại không hợp lệ';
-                      }
-                      return null;
-                    },
+                    validator: _validateEmail,
                     onChanged: (value) => setState(() {}),
                   ),
                 ),
@@ -162,35 +158,41 @@ class _SingupScreenState extends State<SingupScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        color:
-                            (is_check && _phoneController.value.text.isNotEmpty)
-                                ? Colors.brown
-                                : Colors.grey[300],
+                        color: (is_check && _emailController.text.isNotEmpty)
+                            ? Colors.brown
+                            : Colors.grey[300],
                         alignment: Alignment.center,
                         child: Text(
                           'Tiếp theo',
                           style: TextStyle(
                             fontSize: 20,
-                            color: (is_check &&
-                                    _phoneController.value.text.isNotEmpty)
-                                ? Colors.white
-                                : Colors.grey,
+                            color:
+                                (is_check && _emailController.text.isNotEmpty)
+                                    ? Colors.white
+                                    : Colors.grey,
                           ),
                         ),
                       ),
                     ),
                     onTap: () {
-                      if (is_check && _phoneController.value.text.isNotEmpty) {
-                        if (_phoneFormKey.currentState!.validate()) {
+                      if (is_check && _emailController.text.isNotEmpty) {
+                        if (_emailFormKey.currentState!.validate()) {
                           context
                               .read<AuthBloc>()
-                              .add(SignUpWithPhoneEvent(_phoneController.text));
-
-                          Navigator.of(context)
-                              .pushNamed(VerifyScreen.routeName);
+                              .add(SignUpWithEmailAndPasswordEvent(
+                                _emailController.text,
+                                '', // Mật khẩu sẽ được nhập sau khi xác thực email
+                              ));
                         }
                       } else {
-                        if (!is_check) {}
+                        if (!is_check) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Vui lòng đồng ý với điều khoản và dịch vụ'),
+                            ),
+                          );
+                        }
                       }
                     },
                   ),

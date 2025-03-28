@@ -15,7 +15,7 @@ class OrderService {
           // .orderBy('createdAt', descending: true)
           .get();
       return querySnapshot.docs.map((doc) {
-        return Order.fromMap(doc.data() as Map<String, dynamic>);
+        return Order.fromMap(doc.data());
       }).toList();
     } catch (e) {
       throw Exception('Failed to fetch orders for user: $e');
@@ -27,10 +27,10 @@ class OrderService {
       final querySnapshot = await _firestore
           .collection('orders')
           .where('shopId', isEqualTo: shopId)
-          .orderBy('createdAt', descending: true)
+          // .orderBy('createdAt', descending: true)
           .get();
       return querySnapshot.docs.map((doc) {
-        return Order.fromMap(doc.data() as Map<String, dynamic>);
+        return Order.fromMap(doc.data());
       }).toList();
     } catch (e) {
       throw Exception('Failed to fetch orders for shop: $e');
@@ -50,14 +50,55 @@ class OrderService {
     }
   }
 
+  // Tạo mã tracking number theo format YYMMDDXXXXXXXX (X là ký tự từ 0-9 và A-Z)
+  Future<String> _generateUniqueTrackingNumber() async {
+    String generateTrackingNumber() {
+      final now = DateTime.now();
+      final datePrefix =
+          '${now.year.toString().substring(2)}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+
+      const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      final random = List.generate(
+          8,
+          (index) =>
+              chars[DateTime.now().millisecondsSinceEpoch % chars.length]);
+
+      return datePrefix + random.join('');
+    }
+
+    while (true) {
+      final trackingNumber = generateTrackingNumber();
+
+      // Kiểm tra xem mã đã tồn tại chưa
+      final querySnapshot = await _firestore
+          .collection('orders')
+          .where('trackingNumber', isEqualTo: trackingNumber)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return trackingNumber;
+      }
+    }
+  }
+
   Future<Order> createOrder(Order order) async {
     try {
-      final orderRef = await _firestore.collection('orders').add(order.toMap());
+      // Tạo tracking number mới
+      final trackingNumber = await _generateUniqueTrackingNumber();
+
+      final updatedOrder = order.copyWith(
+        trackingNumber: trackingNumber,
+      );
+
+      final orderRef =
+          await _firestore.collection('orders').add(updatedOrder.toMap());
       String orderId = orderRef.id;
+
       await _firestore
           .collection('orders')
           .doc(orderId)
           .update({'id': orderId});
+
       final OrderCreated =
           await _firestore.collection('orders').doc(orderId).get();
       return Order.fromMap(OrderCreated.data() as Map<String, dynamic>);

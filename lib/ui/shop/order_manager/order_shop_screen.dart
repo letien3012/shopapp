@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
-import 'package:luanvan/blocs/listuserordershop/list_user_order_bloc.dart';
-import 'package:luanvan/blocs/listuserordershop/list_user_order_event.dart';
-import 'package:luanvan/blocs/listuserordershop/list_user_order_state.dart';
+import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
+import 'package:luanvan/blocs/list_user/list_user_event.dart';
+import 'package:luanvan/blocs/list_user/list_user_state.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
@@ -216,8 +216,8 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                     .map((item) => item.productId)
                     .toList();
                 context
-                    .read<ListUserOrderBloc>()
-                    .add(FetchListUserOrderEventByUserId(listUserId));
+                    .read<ListUserBloc>()
+                    .add(FetchListUserOrderedEventByUserId(listUserId));
                 context
                     .read<ProductOrderBloc>()
                     .add(FetchMultipleProductsOrderEvent(listProductId));
@@ -288,10 +288,9 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                   );
                 }
 
-                return BlocBuilder<ListUserOrderBloc, ListUserOrderState>(
-                  builder:
-                      (BuildContext context, ListUserOrderState listUserState) {
-                    if (listUserState is ListUserOrderLoaded) {
+                return BlocBuilder<ListUserBloc, ListUserState>(
+                  builder: (BuildContext context, ListUserState listUserState) {
+                    if (listUserState is ListUserOrderedLoaded) {
                       return BlocBuilder<ProductOrderBloc, ProductOrderState>(
                         builder:
                             (BuildContext context, ProductOrderState state) {

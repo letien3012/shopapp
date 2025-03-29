@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:luanvan/blocs/auth/auth_bloc.dart';
-import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_event.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_state.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_event.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
+import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
+import 'package:luanvan/blocs/list_user/list_user_event.dart';
+import 'package:luanvan/blocs/list_user/list_user_state.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/chat_room.dart';
-import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/shop/chat/shop_chat_detail_screen.dart';
 
 enum ChatFilter {
   all('Tất cả'),
@@ -25,17 +25,18 @@ enum ChatFilter {
   const ChatFilter(this.label);
 }
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
-  static String routeName = "chat_screen";
+class ShopChatScreen extends StatefulWidget {
+  const ShopChatScreen({super.key});
+  static String routeName = "shop_chat_screen";
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<ShopChatScreen> createState() => _ShopChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
-  List<String> shopIds = [];
-  ChatFilter _selectedFilter = ChatFilter.all;
+class _ShopChatScreenState extends State<ShopChatScreen> {
+  String shopId = '';
+  List<String> userIds = [];
+  ChatFilter selectedFilter = ChatFilter.all;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -49,18 +50,19 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     // Lấy userId từ AuthBloc và gửi sự kiện LoadChatRoomsEvent
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<AuthBloc>().state;
-      if (authState is AuthAuthenticated) {
-        context
-            .read<ChatRoomBloc>()
-            .add(LoadChatRoomsUserEvent(authState.user.uid));
+      final authState = context.read<ShopBloc>().state;
+      if (authState is ShopLoaded) {
+        shopId = authState.shop.shopId!;
+        context.read<ChatRoomBloc>().add(LoadChatRoomsShopEvent(shopId));
       }
-      final chatState = context.read<ChatRoomBloc>().state;
-      if (chatState is ChatRoomsUserLoaded) {
-        shopIds =
-            chatState.chatRooms.map((chatRoom) => chatRoom.shopId).toList();
-        context.read<ListShopBloc>().add(FetchListShopEventByShopId(shopIds));
-      }
+      // final chatState = context.read<ChatRoomBloc>().state;
+      // if (chatState is ChatRoomsUserLoaded) {
+      //   userIds =
+      //       chatState.chatRooms.map((chatRoom) => chatRoom.buyerId).toList();
+      //   context
+      //       .read<ListUserBloc>()
+      //       .add(FetchListUserChatEventByUserId(userIds));
+      // }
     });
   }
 
@@ -73,35 +75,34 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, authState) {
-          if (authState is AuthLoading) {
+      body: BlocBuilder<ShopBloc, ShopState>(
+        builder: (context, shopState) {
+          if (shopState is ShopLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (authState is AuthAuthenticated) {
+          if (shopState is ShopLoaded) {
             return BlocBuilder<ChatRoomBloc, ChatRoomState>(
               builder: (context, chatState) {
-                if (chatState is ChatRoomsUserLoaded) {
-                  shopIds = chatState.chatRooms
-                      .map((chatRoom) => chatRoom.shopId)
+                if (chatState is ChatRoomsShopLoaded) {
+                  userIds = chatState.chatRooms
+                      .map((chatRoom) => chatRoom.buyerId)
                       .toList();
                   context
-                      .read<ListShopBloc>()
-                      .add(FetchListShopEventByShopId(shopIds));
+                      .read<ListUserBloc>()
+                      .add(FetchListUserChatEventByUserId(userIds));
                 }
                 return Stack(
                   children: [
                     RefreshIndicator(
                       onRefresh: () async {
-                        context
-                            .read<ChatRoomBloc>()
-                            .add(LoadChatRoomsUserEvent(authState.user.uid));
+                        context.read<ChatRoomBloc>().add(
+                            LoadChatRoomsShopEvent(shopState.shop.shopId!));
                       },
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         child: Container(
                           constraints: BoxConstraints(
-                            minHeight: MediaQuery.of(context).size.height - 60,
+                            minHeight: MediaQuery.of(context).size.height,
                           ),
                           width: MediaQuery.of(context).size.width,
                           color: Colors.grey[200],
@@ -112,14 +113,11 @@ class _ChatScreenState extends State<ChatScreen> {
                               _buildSearchBar(context),
                               if (chatState is ChatRoomLoading)
                                 const Center(child: CircularProgressIndicator())
-                              else if (chatState is ChatRoomsUserLoaded)
+                              else if (chatState is ChatRoomsShopLoaded)
                                 chatState.chatRooms.isEmpty
                                     ? _buildEmptyChatList()
-                                    : _buildFilteredChatRoomList(
-                                        context,
-                                        chatState.chatRooms,
-                                        _selectedFilter,
-                                      )
+                                    : _buildFilteredChatRoomList(context,
+                                        chatState.chatRooms, selectedFilter)
                               else if (chatState is ChatRoomError)
                                 Center(child: Text(chatState.message))
                             ],
@@ -147,10 +145,10 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Row(
         children: [
           PopupMenuButton<ChatFilter>(
-            initialValue: _selectedFilter,
+            initialValue: selectedFilter,
             onSelected: (ChatFilter filter) {
               setState(() {
-                _selectedFilter = filter;
+                selectedFilter = filter;
               });
             },
             color: Colors.white,
@@ -169,7 +167,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(_selectedFilter.label),
+                  Text(selectedFilter.label),
                   const SizedBox(width: 8),
                   const Icon(Icons.arrow_drop_down, size: 20),
                 ],
@@ -184,7 +182,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildEmptyChatList() {
     return Container(
       constraints: BoxConstraints(
-        minHeight: MediaQuery.of(context).size.height - 200,
+        minHeight: MediaQuery.of(context).size.height - 140,
       ),
       color: Colors.white,
       child: Center(
@@ -281,25 +279,25 @@ class _ChatScreenState extends State<ChatScreen> {
     // Apply filter
     if (filter == ChatFilter.unread) {
       filteredRooms =
-          filteredRooms.where((room) => room.unreadCountBuyer > 0).toList();
+          filteredRooms.where((room) => room.unreadCountShop > 0).toList();
     } else if (filter == ChatFilter.unanswered) {
       filteredRooms = filteredRooms
-          .where((room) => room.lastMessageSenderId == room.shopId)
+          .where((room) => room.lastMessageSenderId != shopId)
           .toList();
     }
 
     // Apply search
     if (_searchQuery.isNotEmpty) {
-      return BlocBuilder<ListShopBloc, ListShopState>(
-        builder: (context, listShopState) {
-          if (listShopState is ListShopLoaded) {
+      return BlocBuilder<ListUserBloc, ListUserState>(
+        builder: (context, listUserState) {
+          if (listUserState is ListUserChatLoaded) {
             filteredRooms = filteredRooms.where((room) {
-              final shop = listShopState.shops.firstWhere(
-                (shop) => shop.shopId == room.shopId,
-                orElse: () => listShopState.shops.first,
+              final user = listUserState.users.firstWhere(
+                (user) => user.id == room.buyerId,
+                orElse: () => listUserState.users.first,
               );
-              final shopName = shop.name.toLowerCase();
-              return shopName.contains(_searchQuery.toLowerCase());
+              final userName = user.name?.toLowerCase() ?? '';
+              return userName.contains(_searchQuery.toLowerCase());
             }).toList();
           }
           return _buildChatRoomList(context, filteredRooms);
@@ -311,9 +309,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildChatRoomList(BuildContext context, List<ChatRoom> chatRooms) {
-    return BlocBuilder<ListShopBloc, ListShopState>(
-      builder: (context, listShopState) {
-        if (listShopState is ListShopLoaded) {
+    return BlocBuilder<ListUserBloc, ListUserState>(
+      builder: (context, listUserState) {
+        if (listUserState is ListUserChatLoaded) {
           return ListView.builder(
             padding: EdgeInsets.zero,
             physics: const NeverScrollableScrollPhysics(),
@@ -324,8 +322,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   .read<ChatBloc>()
                   .add(LoadMessagesEvent(chatRooms[index].chatRoomId));
               final chatRoom = chatRooms[index];
-              final shop = listShopState.shops
-                  .firstWhere((shop) => shop.shopId == chatRoom.shopId);
+              final user = listUserState.users
+                  .firstWhere((user) => user.id == chatRoom.buyerId);
               return Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -338,7 +336,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: GestureDetector(
                   onTap: () {
                     Navigator.of(context).pushNamed(
-                      ChatDetailScreen.routeName,
+                      ShopChatDetailScreen.routeName,
                       arguments: chatRoom.chatRoomId,
                     );
                   },
@@ -350,7 +348,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           width: 50,
                           height: 50,
                           fit: BoxFit.cover,
-                          shop.avatarUrl ?? '',
+                          user.avataUrl ?? '', // Thay bằng ảnh của shop nếu có
                           errorBuilder: (context, error, stackTrace) =>
                               const Text(
                             "Lỗi",
@@ -371,7 +369,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    shop.name,
+                                    user.name ?? '',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
@@ -382,7 +380,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   Text(
                                     chatRoom.createdAt
                                         .toString()
-                                        .substring(11, 16),
+                                        .substring(11, 16), // Hiển thị giờ phút
                                     maxLines: 1,
                                     style: const TextStyle(
                                       fontSize: 13,
@@ -423,7 +421,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: Text(
-                            '${chatRoom.unreadCountBuyer}',
+                            '${chatRoom.unreadCountShop}',
                             style: const TextStyle(
                                 color: Colors.white, fontSize: 12),
                           ),

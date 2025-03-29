@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_event.dart';
@@ -7,14 +9,13 @@ import 'package:luanvan/services/auth_service.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
   String? _pendingEmail;
-  String? _pendingPassword;
-  String? _verificationId;
 
   AuthBloc(this._authService) : super(AuthInitial()) {
     on<SignUpWithEmailAndPasswordEvent>(_onSignUpWithEmailAndPassword);
     on<LoginWithEmailAndPasswordEvent>(_onLoginWithEmailAndPassword);
     on<ForgotPasswordEvent>(_onForgotPassword);
     on<VerifyEmailEvent>(_onVerifyEmail);
+    on<CheckPhoneNumberEvent>(_onCheckPhoneNumber);
     on<SignUpWithPhoneEvent>(_onSignUpWithPhone);
     on<VerifyPhoneCodeEvent>(_onVerifyPhoneCode);
     on<LoginInWithFacebookEvent>(_onSignInWithFacebook);
@@ -22,6 +23,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginEvent>(_onLogin);
     on<SignOutEvent>(_onSignOut);
     on<SendEmailVerificationEvent>(_onSendEmailVerification);
+    on<CheckEmailEvent>(_onCheckEmail);
   }
 
   Future<void> _onSignUpWithEmailAndPassword(
@@ -30,35 +32,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      if (event.password.isEmpty) {
-        // Bước 1: Lưu email và gửi mã xác thực
-        _pendingEmail = event.email;
-        final UserCredential userCredential =
-            await _authService.signUpWithEmailAndPassword(
-          event.email,
-          'temporary_password', // Mật khẩu tạm thời
-        );
+      final user = await _authService.onSignUpWithEmailAndPassword(
+        event.email,
+        event.password,
+      );
 
-        if (userCredential.user != null) {
-          // Gửi mã xác thực qua email
-          await _authService.sendEmailVerificationCode(event.email);
-          emit(AuthEmailVerificationSent());
-        }
+      if (user != null) {
+        emit(AuthAuthenticated(user));
       } else {
-        // Bước 2: Cập nhật mật khẩu sau khi xác thực email
-        if (_pendingEmail == null) {
-          emit(AuthError('Vui lòng đăng ký lại từ đầu'));
-          return;
-        }
-
-        // Cập nhật mật khẩu cho tài khoản
-        final user = await _authService.getCurrentUser();
-        if (user != null) {
-          await user.updatePassword(event.password);
-          emit(AuthAuthenticated(user));
-        } else {
-          emit(AuthError('Không tìm thấy tài khoản'));
-        }
+        emit(AuthError('Không tìm thấy tài khoản'));
       }
     } on FirebaseAuthException catch (e) {
       String message = 'Đã xảy ra lỗi';
@@ -137,15 +119,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final bool isVerified = await _authService.verifyEmailCode(
-        event.verificationId,
-        event.code,
-      );
-      if (isVerified) {
-        emit(AuthEmailVerified());
-      } else {
-        emit(AuthError('Mã xác thực không đúng'));
+      final user = await _authService.getCurrentUser();
+      if (user == null) {
+        emit(AuthError('Không tìm thấy người dùng'));
+        return;
       }
+      await user.reload();
+      if (!user.emailVerified) {
+        emit(AuthError('Email chưa được xác thực'));
+        return;
+      }
+
+      emit(AuthEmailVerified());
     } catch (e) {
       emit(AuthError('Xác thực email thất bại: ${e.toString()}'));
     }
@@ -157,11 +142,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await _authService.sendEmailVerification();
+      await _authService.sendEmailVerification(event.email);
       emit(AuthEmailVerificationSent());
     } catch (e) {
       emit(AuthError('Gửi email xác thực thất bại: ${e.toString()}'));
     }
+  }
+
+  String formatPhoneNumber(String phoneNumber) {
+    phoneNumber = phoneNumber.trim();
+    phoneNumber = phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
+    if (phoneNumber.startsWith('0')) {
+      phoneNumber = '+84${phoneNumber.substring(1)}';
+    } else if (!phoneNumber.startsWith('+')) {
+      phoneNumber = '+84$phoneNumber';
+    }
+    return phoneNumber;
   }
 
   Future<void> _onSignUpWithPhone(
@@ -170,11 +166,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await _authService.signUpWithPhone(event.phone, (verificationId) {
-        emit(AuthCodeSent(verificationId));
+      final formattedPhone = formatPhoneNumber(event.phone);
+      await _authService.signUpWithPhone(formattedPhone, (verificationId) {
+        if (!emit.isDone) {
+          emit(AuthCodeSent(verificationId));
+        }
       });
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError('Lỗi gửi mã xác thực: ${e.toString()}'));
     }
   }
 
@@ -243,6 +242,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthUnauthenticated());
     } catch (e) {
       emit(AuthError('Lỗi đăng xuất: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onCheckPhoneNumber(
+    CheckPhoneNumberEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final bool exists =
+          await _authService.checkPhoneNumberExists(event.phoneNumber);
+      if (exists) {
+        emit(PhoneNumberExists());
+      } else {
+        emit(PhoneNumberAvailable());
+      }
+    } catch (e) {
+      emit(AuthError('Lỗi kiểm tra số điện thoại: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onCheckEmail(
+    CheckEmailEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final bool exists = await _authService.checkEmailExists(event.email);
+      if (exists) {
+        emit(EmailExists());
+      } else {
+        emit(EmailAvailable());
+      }
+    } catch (e) {
+      emit(AuthError('Lỗi kiểm tra email: ${e.toString()}'));
     }
   }
 }

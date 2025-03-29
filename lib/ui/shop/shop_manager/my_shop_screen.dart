@@ -13,6 +13,7 @@ import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/ship_manager_screen.dart';
@@ -508,11 +509,19 @@ class _MyShopScreenState extends State<MyShopScreen> {
                             const SizedBox(
                               width: 10,
                             ),
-                            SvgPicture.asset(
-                              IconHelper.chatIcon,
-                              color: Colors.brown,
-                              height: 30,
-                              width: 30,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  ShopChatScreen.routeName,
+                                );
+                              },
+                              child: SvgPicture.asset(
+                                IconHelper.chatIcon,
+                                color: Colors.brown,
+                                height: 30,
+                                width: 30,
+                              ),
                             ),
                           ],
                         ),

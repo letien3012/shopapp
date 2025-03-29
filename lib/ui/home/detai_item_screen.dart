@@ -10,6 +10,9 @@ import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
+import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
+import 'package:luanvan/blocs/chat_room/chat_room_event.dart';
+import 'package:luanvan/blocs/chat_room/chat_room_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
@@ -865,7 +868,9 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
+              onTap: () {
+                Navigator.of(context).pop();
+              },
               child: ClipOval(
                 child: Container(
                   height: 40,
@@ -1010,7 +1015,6 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                                 userId,
                                 product.shopId,
                               ));
-
                           final tempChatRoomId = '$userId-${product.shopId}';
                           Navigator.pushNamed(
                             context,
@@ -1018,11 +1022,16 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                             arguments: tempChatRoomId,
                           );
                         },
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(FontAwesomeIcons.message, color: Colors.brown),
-                            Text(
+                            SvgPicture.asset(
+                              IconHelper.chatIcon,
+                              color: Colors.brown,
+                              height: 30,
+                              width: 30,
+                            ),
+                            const Text(
                               "Chat ngay",
                               style: TextStyle(
                                 color: Colors.brown,

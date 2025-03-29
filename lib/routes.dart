@@ -22,6 +22,8 @@ import 'package:luanvan/ui/order/order_screen.dart';
 import 'package:luanvan/ui/order/order_success_screen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
+import 'package:luanvan/ui/shop/chat/shop_chat_detail_screen.dart';
+import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_detail_shop_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
@@ -103,4 +105,6 @@ final Map<String, WidgetBuilder> routes = {
   OrderShopScreen.routeName: (context) => OrderShopScreen(),
   OrderDetailScreen.routeName: (context) => OrderDetailScreen(),
   OrderDetailShopScreen.routeName: (context) => OrderDetailShopScreen(),
+  ShopChatScreen.routeName: (context) => ShopChatScreen(),
+  ShopChatDetailScreen.routeName: (context) => ShopChatDetailScreen(),
 };

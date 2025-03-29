@@ -6,40 +6,42 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
-import 'package:luanvan/blocs/shop/shop_bloc.dart';
-import 'package:luanvan/blocs/shop/shop_event.dart';
-import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/models/chat_room.dart';
-import 'package:luanvan/models/shop.dart';
+import 'package:luanvan/blocs/user/user_bloc.dart';
 
-class ChatDetailScreen extends StatefulWidget {
-  const ChatDetailScreen({super.key});
-  static String routeName = "chat_detail_screen";
+import 'package:luanvan/blocs/user/user_state.dart';
+import 'package:luanvan/blocs/user_chat/user_chat_bloc.dart';
+import 'package:luanvan/blocs/user_chat/user_chat_event.dart';
+import 'package:luanvan/blocs/user_chat/user_chat_state.dart';
+import 'package:luanvan/models/user_info_model.dart';
+
+class ShopChatDetailScreen extends StatefulWidget {
+  const ShopChatDetailScreen({super.key});
+  static String routeName = "shop_chat_detail_screen";
 
   @override
-  State<ChatDetailScreen> createState() => _ChatDetailScreenState();
+  State<ShopChatDetailScreen> createState() => _ShopChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends State<ChatDetailScreen> {
+class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
   final _chatController = TextEditingController();
   bool _showSendButton = false;
   String _chatRoomId = '';
-  String _shopId = '';
+  String _userId = '';
   bool _shouldReverse = false;
   bool _hasMeasured = false;
   int _lastMessageCount = 0;
   final FocusNode focusNode = FocusNode();
   final _scrollController = ScrollController();
   bool _isKeyboardVisible = false;
-  Shop? shop;
+  UserInfoModel? user;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _chatRoomId = ModalRoute.of(context)!.settings.arguments as String;
       context.read<ChatBloc>().add(LoadMessagesEvent(_chatRoomId));
-      _shopId = _chatRoomId.split('-')[1];
-      context.read<ShopBloc>().add(FetchShopEventByShopId(_shopId));
+      _userId = _chatRoomId.split('-')[0];
+      context.read<UserChatBloc>().add(FetchUserChatEvent(_userId));
     });
 
     _chatController.addListener(() {
@@ -113,10 +115,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Widget _buildAppBar(BuildContext context) {
-    return BlocBuilder<ShopBloc, ShopState>(
-      builder: (context, shopState) {
-        if (shopState is ShopLoaded) {
-          shop = shopState.shop;
+    return BlocBuilder<UserChatBloc, UserChatState>(
+      builder: (context, userState) {
+        if (userState is UserChatLoaded) {
+          user = userState.user;
         }
         return Container(
           padding: const EdgeInsets.only(top: 30, bottom: 10),
@@ -146,7 +148,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     height: 40,
                     width: 40,
                     fit: BoxFit.cover,
-                    shop!.avatarUrl ?? '',
+                    user!.avataUrl ?? '',
                   ),
                 ),
               ),
@@ -159,7 +161,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          shop!.name,
+                          user!.name ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

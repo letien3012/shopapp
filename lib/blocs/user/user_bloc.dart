@@ -11,6 +11,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   // final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   UserBloc(this._userService) : super(UserInitial()) {
     on<FetchUserEvent>(_onFetchUser);
+
     on<UpdateBasicInfoUserEvent>(_onUpdateBasicInfoUser);
     on<UpdateUserNameEvent>(_onUpdateUserName);
     on<UpdateUserEvent>(_onUpdateUser);

@@ -9,6 +9,7 @@ class ChatRoom {
   final bool isActive;
   final int unreadCountBuyer;
   final int unreadCountShop;
+  final String lastMessageSenderId;
 
   ChatRoom({
     required this.chatRoomId,
@@ -19,6 +20,7 @@ class ChatRoom {
     required this.isActive,
     this.unreadCountBuyer = 0,
     this.unreadCountShop = 0,
+    required this.lastMessageSenderId,
   });
 
   factory ChatRoom.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class ChatRoom {
       isActive: json['isActive'] as bool? ?? true,
       unreadCountBuyer: json['unreadCountBuyer'] as int? ?? 0,
       unreadCountShop: json['unreadCountShop'] as int? ?? 0,
+      lastMessageSenderId: json['lastMessageSenderId'] as String,
     );
   }
 
@@ -39,11 +42,12 @@ class ChatRoom {
       chatRoomId: map['chatRoomId'] as String,
       buyerId: map['buyerId'] as String,
       shopId: map['shopId'] as String,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      unreadCountBuyer: map['unreadCountBuyer'] as int,
+      unreadCountShop: map['unreadCountShop'] as int,
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
       lastMessageId: map['lastMessageId'] as String?,
       isActive: map['isActive'] as bool? ?? true,
-      unreadCountBuyer: map['unreadCountBuyer'] as int? ?? 0,
-      unreadCountShop: map['unreadCountShop'] as int? ?? 0,
+      lastMessageSenderId: map['lastMessageSenderId'] as String,
     );
   }
 
@@ -59,6 +63,7 @@ class ChatRoom {
       isActive: firestoreData['isActive'] as bool? ?? true,
       unreadCountBuyer: firestoreData['unreadCountBuyer'] as int? ?? 0,
       unreadCountShop: firestoreData['unreadCountShop'] as int? ?? 0,
+      lastMessageSenderId: firestoreData['lastMessageSenderId'] as String,
     );
   }
 
@@ -72,6 +77,7 @@ class ChatRoom {
       'isActive': isActive,
       'unreadCountBuyer': unreadCountBuyer,
       'unreadCountShop': unreadCountShop,
+      'lastMessageSenderId': lastMessageSenderId,
     };
   }
 

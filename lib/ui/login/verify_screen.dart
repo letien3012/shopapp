@@ -1,274 +1,330 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_event.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
-import 'package:luanvan/ui/login/create_password_screen.dart';
+import 'package:luanvan/ui/helper/image_helper.dart';
+import 'package:luanvan/ui/mainscreen.dart';
 
 class VerifyScreen extends StatefulWidget {
   const VerifyScreen({super.key});
   static String routeName = 'verify_screen';
-
   @override
   State<VerifyScreen> createState() => _VerifyScreenState();
 }
 
 class _VerifyScreenState extends State<VerifyScreen> {
+  String email = '';
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _codeController = TextEditingController();
-  final TextEditingController _code2Controller = TextEditingController();
-  final TextEditingController _code3Controller = TextEditingController();
-  final TextEditingController _code4Controller = TextEditingController();
-  final TextEditingController _code5Controller = TextEditingController();
-  final TextEditingController _code6Controller = TextEditingController();
-
-  final FocusNode _codeFocus = FocusNode();
-  final FocusNode _code2Focus = FocusNode();
-  final FocusNode _code3Focus = FocusNode();
-  final FocusNode _code4Focus = FocusNode();
-  final FocusNode _code5Focus = FocusNode();
-  final FocusNode _code6Focus = FocusNode();
+  final _passwordController = TextEditingController();
+  bool _obscureText = true;
 
   @override
   void dispose() {
-    _codeController.dispose();
-    _code2Controller.dispose();
-    _code3Controller.dispose();
-    _code4Controller.dispose();
-    _code5Controller.dispose();
-    _code6Controller.dispose();
-    _codeFocus.dispose();
-    _code2Focus.dispose();
-    _code3Focus.dispose();
-    _code4Focus.dispose();
-    _code5Focus.dispose();
-    _code6Focus.dispose();
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
     super.dispose();
   }
 
-  void _handleCodeInput(String value, FocusNode nextFocus) {
-    if (value.length == 1) {
-      nextFocus.requestFocus();
-    }
+  String getSmsCode() {
+    return _controllers.map((controller) => controller.text).join();
+  }
+
+  void startEmailVerificationCheck() {
+    Timer.periodic(Duration(seconds: 5), (timer) async {
+      User? user = FirebaseAuth.instance.currentUser;
+      await user?.reload();
+      user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.emailVerified) {
+        print("✅ Email đã xác minh!");
+        context.read<AuthBloc>().add(VerifyEmailEvent());
+        timer.cancel(); // Dừng kiểm tra
+      } else {
+        print("⏳ Chờ người dùng xác minh email...");
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Xác thực email'),
-        backgroundColor: Colors.brown,
-      ),
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthEmailVerified) {
-            Navigator.of(context).pushNamed(CreatePasswordScreen.routeName);
-          }
-          if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is AuthLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Nhập mã xác thực',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Vui lòng nhập mã xác thực đã được gửi đến email của bạn',
-                      style: TextStyle(
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        SizedBox(
-                          width: 45,
-                          child: TextFormField(
-                            controller: _codeController,
-                            focusNode: _codeFocus,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            maxLength: 1,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: const InputDecoration(
-                              counterText: '',
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (value) =>
-                                _handleCodeInput(value, _code2Focus),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 45,
-                          child: TextFormField(
-                            controller: _code2Controller,
-                            focusNode: _code2Focus,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            maxLength: 1,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: const InputDecoration(
-                              counterText: '',
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (value) =>
-                                _handleCodeInput(value, _code3Focus),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 45,
-                          child: TextFormField(
-                            controller: _code3Controller,
-                            focusNode: _code3Focus,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            maxLength: 1,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: const InputDecoration(
-                              counterText: '',
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (value) =>
-                                _handleCodeInput(value, _code4Focus),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 45,
-                          child: TextFormField(
-                            controller: _code4Controller,
-                            focusNode: _code4Focus,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            maxLength: 1,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: const InputDecoration(
-                              counterText: '',
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (value) =>
-                                _handleCodeInput(value, _code5Focus),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 45,
-                          child: TextFormField(
-                            controller: _code5Controller,
-                            focusNode: _code5Focus,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            maxLength: 1,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: const InputDecoration(
-                              counterText: '',
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (value) =>
-                                _handleCodeInput(value, _code6Focus),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 45,
-                          child: TextFormField(
-                            controller: _code6Controller,
-                            focusNode: _code6Focus,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            maxLength: 1,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: const InputDecoration(
-                              counterText: '',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          final code = _codeController.text +
-                              _code2Controller.text +
-                              _code3Controller.text +
-                              _code4Controller.text +
-                              _code5Controller.text +
-                              _code6Controller.text;
+    email = ModalRoute.of(context)?.settings.arguments as String;
 
-                          if (code.length == 6) {
-                            context.read<AuthBloc>().add(
-                                  VerifyEmailEvent(
-                                    'verification_id', // TODO: Get from AuthBloc
-                                    code,
-                                  ),
-                                );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Vui lòng nhập đủ 6 chữ số'),
+    return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          title: const Text('Xác thực Email'),
+        ),
+        body: SingleChildScrollView(
+          child: Container(
+            color: Colors.white,
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height,
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 30),
+            child: BlocConsumer<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is AuthEmailVerified) {}
+                if (state is AuthError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                    ),
+                  );
+                }
+                if (state is AuthAuthenticated) {
+                  Navigator.of(context).pushNamed(MainScreen.routeName);
+                }
+              },
+              builder: (context, state) {
+                if (state is AuthLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                if (state is AuthEmailVerified) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 50),
+                      const Text(
+                        'Nhập mật khẩu mới',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 10),
+                      Form(
+                        key: _formKey,
+                        child: TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscureText,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Colors.black),
                               ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.brown,
-                          shape: RoundedRectangleBorder(
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Colors.black),
+                              ),
+                              hintText: 'Nhập mật khẩu mới',
+                              hintStyle:
+                                  const TextStyle(fontWeight: FontWeight.w300),
+                              contentPadding: const EdgeInsets.only(left: 20),
+                              errorStyle: const TextStyle(color: Colors.red),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureText
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureText = !_obscureText;
+                                  });
+                                },
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Vui lòng nhập mật khẩu';
+                              }
+                              if (value.length < 8) {
+                                return 'Mật khẩu phải có ít nhất 8 ký tự';
+                              }
+                              if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                                return 'Mật khẩu phải chứa ít nhất một chữ hoa (A-Z)';
+                              }
+                              if (!RegExp(r'[a-z]').hasMatch(value)) {
+                                return 'Mật khẩu phải chứa ít nhất một chữ thường (a-z)';
+                              }
+                              if (!RegExp(r'[0-9]').hasMatch(value)) {
+                                return 'Mật khẩu phải chứa ít nhất một số (0-9)';
+                              }
+
+                              return null;
+                            }),
+                      ),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: GestureDetector(
+                          child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              color: Colors.brown,
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'Xác nhận',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Xác nhận',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                          ),
+                          onTap: () {
+                            if (_formKey.currentState!.validate()) {
+                              context.read<AuthBloc>().add(
+                                    SignUpWithEmailAndPasswordEvent(
+                                      email,
+                                      _passwordController.text,
+                                    ),
+                                  );
+                            }
+                          },
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
+                    ],
+                  );
+                }
+                if (state is AuthEmailVerificationSent) {
+                  return StatefulBuilder(
+                    builder: (context, setState) {
+                      return SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          children: [
+                            Text(
+                                'Vui lòng kiểm tra thông báo được gửi đến email'),
+                            const SizedBox(height: 10),
+                            Text(email),
+                            const SizedBox(height: 10),
+                            Image.asset(
+                              ImageHelper.smartphone_with_speech_bubble,
+                              width: 200,
+                              height: 200,
+                              fit: BoxFit.cover,
+                            ),
+                            const SizedBox(height: 20),
+                            StreamBuilder<int>(
+                              stream: Stream.periodic(
+                                const Duration(seconds: 1),
+                                (i) => 60 - i - 1,
+                              ).take(60),
+                              builder: (context, snapshot) {
+                                final seconds = snapshot.data ?? 60;
+                                return Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        (seconds > 0)
+                                            ? Row(
+                                                children: [
+                                                  Text(
+                                                    'Nếu chưa nhận được vui lòng chờ trong',
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    ' ${seconds}s ',
+                                                    style: TextStyle(
+                                                      color: Colors.brown,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'để gửi lại',
+                                                  ),
+                                                ],
+                                              )
+                                            : (seconds == 0)
+                                                ? Row(
+                                                    children: [
+                                                      Text(
+                                                        'Bạn vẫn chưa nhận được email xác thực? ',
+                                                        style: TextStyle(
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          context
+                                                              .read<AuthBloc>()
+                                                              .add(
+                                                                  SendEmailVerificationEvent(
+                                                                      email));
+                                                        },
+                                                        child: Text(
+                                                          'Gửi lại',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.blue),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  )
+                                                : SizedBox.shrink()
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }
+                return SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    children: [
+                      const Text(
+                          'Để tăng cường bảo mật cho tài khoản của bạn, hãy xác minh thông tin bằng cách sau'),
+                      const SizedBox(height: 15),
+                      GestureDetector(
+                        onTap: () {
+                          context
+                              .read<AuthBloc>()
+                              .add(SendEmailVerificationEvent(email));
+                          startEmailVerificationCheck();
+                        },
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black, width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Icon(Icons.link, size: 20),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Xác minh bằng liên kết Email',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
-    );
+          ),
+        ));
   }
 }

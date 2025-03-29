@@ -1,10 +1,5 @@
 abstract class ChatEvent {}
 
-class LoadChatRoomsEvent extends ChatEvent {
-  final String userId;
-  LoadChatRoomsEvent(this.userId);
-}
-
 class LoadMessagesEvent extends ChatEvent {
   final String chatRoomId;
   LoadMessagesEvent(this.chatRoomId);
@@ -33,7 +28,7 @@ class StartChatEvent extends ChatEvent {
   StartChatEvent(this.buyerId, this.shopId);
 }
 
-class MarkMessageAsReadEvent extends ChatEvent {
-  final String messageId;
-  MarkMessageAsReadEvent(this.messageId);
-}
+// class MarkMessageAsReadEvent extends ChatEvent {
+//   final String messageId;
+//   MarkMessageAsReadEvent(this.messageId);
+// }

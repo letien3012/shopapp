@@ -3,27 +3,17 @@ import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
 import 'package:luanvan/models/message.dart';
 import 'package:luanvan/services/chat_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final ChatService chatService;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   ChatBloc(this.chatService) : super(ChatInitial()) {
-    on<LoadChatRoomsEvent>(_onLoadChatRooms);
     on<LoadMessagesEvent>(_onLoadMessages);
     on<SendMessageEvent>(_onSendMessage);
     on<StartChatEvent>(_onStartChat);
-    on<MarkMessageAsReadEvent>(_onMarkMessageAsRead);
-  }
-
-  Future<void> _onLoadChatRooms(
-      LoadChatRoomsEvent event, Emitter<ChatState> emit) async {
-    emit(ChatLoading());
-    try {
-      final chatRooms = await chatService.getChatRoomsForUser(event.userId);
-      emit(ChatRoomsLoaded(chatRooms));
-    } catch (e) {
-      emit(ChatError('Failed to load chat rooms: $e'));
-    }
+    // on<MarkMessageAsReadEvent>(_onMarkMessageAsRead);
   }
 
   Future<void> _onLoadMessages(
@@ -73,13 +63,26 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  Future<void> _onMarkMessageAsRead(
-      MarkMessageAsReadEvent event, Emitter<ChatState> emit) async {
+  // Future<void> _onMarkMessageAsRead(
+  //     MarkMessageAsReadEvent event, Emitter<ChatState> emit) async {
+  //   try {
+  //     await chatService.markMessageAsRead(event.messageId);
+  //     // Có thể tải lại tin nhắn nếu cần
+  //   } catch (e) {
+  //     emit(ChatError('Failed to mark message as read: $e'));
+  //   }
+  // }
+
+  Future<void> deleteEmptyChatRoom(String chatRoomId) async {
     try {
-      await chatService.markMessageAsRead(event.messageId);
-      // Có thể tải lại tin nhắn nếu cần
+      final chatRoomRef = _firestore.collection('chatRooms').doc(chatRoomId);
+      final messages = await chatService.getMessages(chatRoomId);
+
+      if (messages.isEmpty) {
+        await chatRoomRef.delete();
+      }
     } catch (e) {
-      emit(ChatError('Failed to mark message as read: $e'));
+      print('Lỗi khi xóa chatroom: $e');
     }
   }
 }

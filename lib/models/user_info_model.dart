@@ -72,10 +72,10 @@ class UserInfoModel {
   factory UserInfoModel.fromMap(Map<String, dynamic> map) {
     return UserInfoModel(
       id: map['id'] as String,
-      name: map['name'],
-      email: map['email'],
-      phone: map['phone'],
-      avataUrl: map['avataUrl'],
+      name: map['name'] ?? '',
+      email: map['email'] ?? '',
+      phone: map['phone'] ?? '',
+      avataUrl: map['avataUrl'] ?? '',
       gender: map['gender'] != null
           ? Gender.values.firstWhere(
               (g) => g.toString().split('.').last == map['gender'],
@@ -95,19 +95,19 @@ class UserInfoModel {
   factory UserInfoModel.fromFirestore(Map<String, dynamic> data) {
     return UserInfoModel(
       id: data['id'] ?? '',
-      name: data['name'],
-      email: data['email'],
-      phone: data['phone'],
-      avataUrl: data['avataUrl'],
+      name: data['name'] ?? '',
+      email: data['email'] ?? '',
+      phone: data['phone'] ?? '',
+      avataUrl: data['avataUrl'] ?? '',
       gender: data['gender'] != null
           ? Gender.values.firstWhere(
               (g) => g.toString().split('.').last == data['gender'],
               orElse: () => Gender.unknown,
             )
           : Gender.unknown,
-      date: data['date'],
-      userName: data['userName'],
-      role: data['role'],
+      date: data['date'] ?? '',
+      userName: data['userName'] ?? '',
+      role: data['role'] ?? 0,
       addresses: data['addresses'] != null
           ? List<Address>.from(
               (data['addresses'] as List).map((x) => Address.fromMap(x)))

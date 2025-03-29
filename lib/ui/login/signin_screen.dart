@@ -61,6 +61,12 @@ class _SigninScreenState extends State<SigninScreen> {
 
   void _submit() {
     if (_formLoginKey.currentState!.validate()) {
+      context.read<AuthBloc>().add(
+            LoginWithEmailAndPasswordEvent(
+              _emailOrPhoneController.text,
+              _passwordController.text,
+            ),
+          );
       // Logic đăng nhập (gọi API hoặc Firebase ở đây)
       print('Email/Số điện thoại: ${_emailOrPhoneController.text}');
       print('Mật khẩu: ${_passwordController.text}');

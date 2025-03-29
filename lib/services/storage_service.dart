@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:cloudinary/cloudinary.dart';
-import 'package:http/http.dart' as http;
 import 'package:video_compress/video_compress.dart';
 
 class StorageService {

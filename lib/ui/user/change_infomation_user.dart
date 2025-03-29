@@ -84,7 +84,8 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
                       ? _avatarUrlController.text = userState.user.avataUrl!
                       : null;
 
-                  _nameController.text.isEmpty
+                  (_nameController.text.isEmpty &&
+                          userState.user.name!.isNotEmpty)
                       ? _nameController.text = userState.user.name!
                       : null;
 
@@ -147,8 +148,7 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
           children: [
             _buildAvatarSection(userState),
             _buildSpacer(2),
-            _buildName(
-                "Tên", _nameController.text ?? "Chưa có tên", userState.user),
+            _buildName("Tên", _nameController.text, userState.user),
             _buildGenderItem(context, "Giới tính", userState.user),
             _buildSpacer(10),
             _buildDateItem(context, "Ngày sinh", userState.user),
@@ -270,8 +270,11 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
               Row(
                 children: [
                   Text(
-                    value,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    value.isEmpty ? "Thiết lập ngay" : value,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: value.isNotEmpty ? Colors.black : Colors.grey,
+                    ),
                   ),
                   const SizedBox(width: 5),
                   const Icon(Icons.arrow_forward_ios, size: 16),

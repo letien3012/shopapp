@@ -4,24 +4,43 @@ import 'package:luanvan/models/message.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Future<ChatRoom> getChatRoomsById(String chatRoomId) async {
+    try {
+      final buyerQuery =
+          await _firestore.collection('chatRooms').doc(chatRoomId).get();
+
+      return ChatRoom.fromFirestore(buyerQuery.data()!);
+    } catch (e) {
+      throw Exception('Error fetching chat rooms: $e');
+    }
+  }
 
   // Lấy danh sách ChatRoom cho một user (buyer hoặc seller)
   Future<List<ChatRoom>> getChatRoomsForUser(String userId) async {
     try {
-      // Lấy các phòng chat mà user là buyer
       final buyerQuery = await _firestore
           .collection('chatRooms')
           .where('buyerId', isEqualTo: userId)
           .get();
 
-      // Lấy các phòng chat mà user là owner của shop
+      return buyerQuery.docs
+          .map((doc) => ChatRoom.fromFirestore(doc.data()))
+          .toList();
+    } catch (e) {
+      throw Exception('Error fetching chat rooms: $e');
+    }
+  }
+
+  Future<List<ChatRoom>> getChatRoomsForShop(String shopId) async {
+    try {
       final shopQuery = await _firestore
           .collection('chatRooms')
-          .where('shopId', whereIn: await _getOwnedShopIds(userId))
+          .where('shopId', isEqualTo: shopId)
           .get();
 
-      final allDocs = [...buyerQuery.docs, ...shopQuery.docs];
-      return allDocs.map((doc) => ChatRoom.fromFirestore(doc.data())).toList();
+      return shopQuery.docs
+          .map((doc) => ChatRoom.fromFirestore(doc.data()))
+          .toList();
     } catch (e) {
       throw Exception('Error fetching chat rooms: $e');
     }
@@ -30,7 +49,6 @@ class ChatService {
   // Lấy danh sách Message cho một ChatRoom
   Future<List<Message>> getMessages(String chatRoomId) async {
     try {
-      print(chatRoomId);
       final querySnapshot = await _firestore
           .collection('messages')
           .where('chatRoomId', isEqualTo: chatRoomId)
@@ -57,9 +75,10 @@ class ChatService {
           .doc(message.messageId)
           .set(message.toMap());
 
-      // Cập nhật lastMessageId và unreadCount trong ChatRoom
+      // Cập nhật lastMessageId, lastMessageSenderId và unreadCount trong ChatRoom
       await _firestore.collection('chatRooms').doc(message.chatRoomId).update({
         'lastMessageId': message.messageId,
+        'lastMessageSenderId': message.senderId,
         'unreadCountBuyer':
             message.senderId == (await _getBuyerId(message.chatRoomId))
                 ? FieldValue.increment(0)
@@ -91,6 +110,7 @@ class ChatService {
           shopId: shopId,
           createdAt: DateTime.now(),
           isActive: true,
+          lastMessageSenderId: buyerId,
         );
         await _firestore
             .collection('chatRooms')

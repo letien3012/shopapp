@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
+import 'package:luanvan/blocs/list_user/list_user_state.dart';
 import 'package:luanvan/blocs/listuserordershop/list_user_order_bloc.dart';
 import 'package:luanvan/blocs/listuserordershop/list_user_order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
@@ -76,11 +78,11 @@ class _UserOrderItemState extends State<UserOrderItem> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ListUserOrderBloc, ListUserOrderState>(
+    return BlocBuilder<ListUserBloc, ListUserState>(
       builder: (context, listUserState) {
-        if (listUserState is ListUserOrderLoading) {
+        if (listUserState is ListUserLoading) {
           return _buildShopSkeleton();
-        } else if (listUserState is ListUserOrderLoaded) {
+        } else if (listUserState is ListUserOrderedLoaded) {
           final user = listUserState.users.firstWhere(
             (element) => element.id == widget.order.userId,
           );
@@ -302,7 +304,7 @@ class _UserOrderItemState extends State<UserOrderItem> {
               ),
             ),
           );
-        } else if (listUserState is ListUserOrderError) {
+        } else if (listUserState is ListUserError) {
           return Text('Error: ${listUserState.message}');
         }
         return _buildShopSkeleton();

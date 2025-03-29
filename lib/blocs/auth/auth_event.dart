@@ -12,25 +12,29 @@ class LoginWithEmailAndPasswordEvent extends AuthEvent {
   LoginWithEmailAndPasswordEvent(this.email, this.password);
 }
 
-class SendEmailVerificationEvent extends AuthEvent {}
+class SendEmailVerificationEvent extends AuthEvent {
+  final String email;
+  SendEmailVerificationEvent(this.email);
+}
 
-// Quên mật khẩu
 class ForgotPasswordEvent extends AuthEvent {
   final String email;
   ForgotPasswordEvent({required this.email});
 }
 
 class VerifyEmailEvent extends AuthEvent {
-  final String verificationId;
-  final String code;
-  VerifyEmailEvent(this.verificationId, this.code);
+  final String password;
+  VerifyEmailEvent({this.password = ''});
+}
+
+class CheckPhoneNumberEvent extends AuthEvent {
+  final String phoneNumber;
+  CheckPhoneNumberEvent(this.phoneNumber);
 }
 
 class SignUpWithPhoneEvent extends AuthEvent {
   final String phone;
-  SignUpWithPhoneEvent(
-    this.phone,
-  );
+  SignUpWithPhoneEvent(this.phone);
 }
 
 class VerifyPhoneCodeEvent extends AuthEvent {
@@ -50,3 +54,8 @@ class LoginEvent extends AuthEvent {
 }
 
 class SignOutEvent extends AuthEvent {}
+
+class CheckEmailEvent extends AuthEvent {
+  final String email;
+  CheckEmailEvent(this.email);
+}

@@ -6,6 +6,7 @@ import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/widgets/add_to_cart.dart';
+import 'package:luanvan/ui/widgets/change_cart_variant.dart';
 
 class ProductItemWidget extends StatefulWidget {
   final String shopId;
@@ -57,9 +58,11 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      builder: (context) => AddToCartBottomSheet(
+      builder: (context) => ChangeCartVariant(
         product: product,
         parentContext: context,
+        quantity: widget.item.quantity,
+        itemId: widget.itemId,
         optionId1: optionId1,
         optionId2: optionId2,
       ),

@@ -6,6 +6,7 @@ import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/shop/shop_manager/change_shop_info_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/location/location_shop_screen.dart';
 
 class SettingShopScreen extends StatefulWidget {
   const SettingShopScreen({super.key});
@@ -176,13 +177,10 @@ class _SettingShopScreenState extends State<SettingShopScreen> {
             ),
             _buildIsCloseItem(context, shop),
             _buildAccountItem(
-              "Thiết lập thanh toán",
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            _buildAccountItem(
-              "Thiết lập tài khoản",
+              "Địa chỉ lấy hàng",
+              onTap: () => Navigator.of(context).pushNamed(
+                LocationShopScreen.routeName,
+              ),
             ),
           ],
         ),

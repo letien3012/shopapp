@@ -10,8 +10,9 @@ import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/shop/sign_shop/add_location_shop_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop/add_location_sign_shop_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
+import 'package:luanvan/ui/shop/sign_shop/add_shop_phone.dart';
 import 'package:luanvan/ui/shop/sign_shop/ship_setting_screen.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
 import 'package:luanvan/ui/user/change_info/change_phone.dart';
@@ -30,6 +31,8 @@ class _SignShopState extends State<SignShop> {
   int _currentStep = 0;
   String avatarUrl = '';
   String userId = '';
+  String default_background =
+      'https://res.cloudinary.com/deegjkzbd/image/upload/v1743300824/background_defaults_hdasjj.jpg';
   late Address address = Address(
     addressLine: '',
     city: '',
@@ -186,6 +189,7 @@ class _SignShopState extends State<SignShop> {
       addresses: [],
       phoneNumber: _phoneController.text,
       email: _emailController.text,
+      backgroundImageUrl: default_background,
       avatarUrl: avatarUrl,
       submittedAt: DateTime.now(),
       isClose: false,
@@ -221,7 +225,9 @@ class _SignShopState extends State<SignShop> {
     if (userBloc.state is UserLoaded) {
       final user = (userBloc.state as UserLoaded).user;
       _shopNameController.text = user.userName!.replaceFirst("(changed)", "");
-      _phoneController.text = user.phone ?? '';
+      if (user.phone != null && _phoneController.text.isEmpty) {
+        _phoneController.text = user.phone!;
+      }
       _emailController.text = user.email ?? '';
       userId = user.id;
       avatarUrl = user.avataUrl!;
@@ -405,7 +411,6 @@ class _SignShopState extends State<SignShop> {
   }
 
   Widget _buildContent(BuildContext context, UserInfoModel user) {
-    user.phone != null ? _phoneController.text = user.phone! : null;
     user.email != null ? _emailController.text = user.email! : null;
 
     return Scaffold(
@@ -928,11 +933,12 @@ class _SignShopState extends State<SignShop> {
         highlightColor: Colors.grey.withOpacity(0.1),
         onTap: () async {
           final result = await Navigator.of(context).pushNamed(
-              AddLocationShopScreen.routeName,
+              AddLocationShopSignShopScreen.routeName,
               arguments: address) as Address;
           if (mounted) {
             setState(() {
               address = result;
+              print(result);
               _addressController.text =
                   "${result.addressLine}, ${result.ward}, ${result.district}, ${result.city}";
             });
@@ -1057,8 +1063,21 @@ class _SignShopState extends State<SignShop> {
       child: InkWell(
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: () {
-          Navigator.of(context).pushNamed(ChangePhone.routeName);
+        onTap: () async {
+          final newPhone = await Navigator.pushNamed(
+            context,
+            AddShopPhone.routeName,
+            arguments: value,
+          );
+
+          if (newPhone != null) {
+            setState(() {
+              // _phoneController.text = newPhone as String;
+              setState(() {
+                _phoneController.text = newPhone as String;
+              });
+            });
+          }
         },
         child: Container(
           height: 50,

@@ -14,6 +14,7 @@ class OrderService {
           .where('userId', isEqualTo: userId)
           // .orderBy('createdAt', descending: true)
           .get();
+
       return querySnapshot.docs.map((doc) {
         return Order.fromMap(doc.data());
       }).toList();
@@ -33,6 +34,7 @@ class OrderService {
         return Order.fromMap(doc.data());
       }).toList();
     } catch (e) {
+      print(e.toString());
       throw Exception('Failed to fetch orders for shop: $e');
     }
   }
@@ -41,7 +43,7 @@ class OrderService {
     try {
       final doc = await _firestore.collection('orders').doc(orderId).get();
       if (doc.exists) {
-        return Order.fromMap({});
+        return Order.fromMap(doc.data()!);
       } else {
         throw Exception('Order not found');
       }
@@ -81,27 +83,37 @@ class OrderService {
     }
   }
 
-  Future<Order> createOrder(Order order) async {
+  Future<List<Order>> createOrder(List<Order> orders) async {
     try {
-      // Tạo tracking number mới
-      final trackingNumber = await _generateUniqueTrackingNumber();
+      List<Order> createdOrders = [];
 
-      final updatedOrder = order.copyWith(
-        trackingNumber: trackingNumber,
-      );
+      for (var order in orders) {
+        // Tạo tracking number mới cho mỗi order
+        String trackingNumber = await _generateUniqueTrackingNumber();
+        bool isUnique = false;
 
-      final orderRef =
-          await _firestore.collection('orders').add(updatedOrder.toMap());
-      String orderId = orderRef.id;
+        while (!isUnique) {
+          // Kiểm tra xem tracking number đã tồn tại chưa
+          final querySnapshot = await _firestore
+              .collection('orders')
+              .where('trackingNumber', isEqualTo: trackingNumber)
+              .get();
+          isUnique = querySnapshot.docs.isEmpty;
+          if (!isUnique) {
+            trackingNumber = await _generateUniqueTrackingNumber();
+          }
+        }
 
-      await _firestore
-          .collection('orders')
-          .doc(orderId)
-          .update({'id': orderId});
+        final updatedOrder = order.copyWith(trackingNumber: trackingNumber);
+        final orderRef =
+            await _firestore.collection('orders').add(updatedOrder.toMap());
+        final orderData = updatedOrder.toMap();
+        orderData['id'] = orderRef.id;
+        await orderRef.update({'id': orderRef.id});
+        createdOrders.add(Order.fromMap(orderData));
+      }
 
-      final OrderCreated =
-          await _firestore.collection('orders').doc(orderId).get();
-      return Order.fromMap(OrderCreated.data() as Map<String, dynamic>);
+      return createdOrders;
     } catch (e) {
       throw Exception('Failed to create order: $e');
     }
@@ -111,6 +123,7 @@ class OrderService {
     try {
       final orderRef = _firestore.collection('orders').doc(order.id);
       final orderData = order.toMap();
+
       await orderRef.update(orderData);
     } catch (e) {
       throw Exception('Failed to update order: $e');
@@ -133,7 +146,9 @@ class OrderService {
 
       await orderRef.update({
         'status': updatedOrder.status.toString().split('.').last,
-        'updateAt': updatedOrder.updateAt?.toIso8601String(),
+        'updateAt': updatedOrder.updateAt != null
+            ? firestore.Timestamp.fromDate(updatedOrder.updateAt!)
+            : null,
         'statusHistory':
             updatedOrder.statusHistory.map((e) => e.toMap()).toList(),
       });
@@ -160,7 +175,9 @@ class OrderService {
 
       await orderRef.update({
         'status': updatedOrder.status.toString().split('.').last,
-        'updateAt': updatedOrder.updateAt?.toIso8601String(),
+        'updateAt': updatedOrder.updateAt != null
+            ? firestore.Timestamp.fromDate(updatedOrder.updateAt!)
+            : null,
         'statusHistory':
             updatedOrder.statusHistory.map((e) => e.toMap()).toList(),
       });

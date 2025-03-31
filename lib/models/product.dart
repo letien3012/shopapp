@@ -26,6 +26,7 @@ class Product {
   double? price;
   List<ShippingMethod> shippingMethods;
   List<OptionInfo> optionInfos; // Mảng 1 chiều lưu giá, kho, trọng lượng
+  DateTime createdAt;
 
   Product({
     required this.id,
@@ -48,7 +49,8 @@ class Product {
     this.price,
     required this.shippingMethods,
     this.optionInfos = const [], // Khởi tạo mảng rỗng
-  });
+    DateTime? createdAt,
+  }) : this.createdAt = createdAt ?? DateTime.now();
 
   Product copyWith({
     String? id,
@@ -71,6 +73,7 @@ class Product {
     double? price,
     List<ShippingMethod>? shippingMethods,
     List<OptionInfo>? optionInfos,
+    DateTime? createdAt,
   }) {
     return Product(
       id: id ?? this.id,
@@ -93,6 +96,7 @@ class Product {
       price: price ?? this.price,
       shippingMethods: shippingMethods ?? this.shippingMethods,
       optionInfos: optionInfos ?? this.optionInfos,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -118,6 +122,7 @@ class Product {
       'price': price,
       'shippingMethods': shippingMethods.map((x) => x.toMap()).toList(),
       'optionInfos': optionInfos.map((x) => x.toMap()).toList(),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
@@ -155,6 +160,9 @@ class Product {
           (x) => OptionInfo.fromMap(x as Map<String, dynamic>),
         ),
       ),
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -202,6 +210,9 @@ class Product {
               ),
             )
           : [],
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 

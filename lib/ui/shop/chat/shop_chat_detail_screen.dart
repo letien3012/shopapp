@@ -6,9 +6,6 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
-import 'package:luanvan/blocs/user/user_bloc.dart';
-
-import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_bloc.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_event.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_state.dart';

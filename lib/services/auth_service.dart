@@ -459,8 +459,12 @@ class AuthService {
           .where('phone', isEqualTo: phoneNumber)
           .limit(1)
           .get();
-
-      return querySnapshot.docs.isNotEmpty;
+      final querySnapshotShop = await _firestore
+          .collection('shops')
+          .where('phone', isEqualTo: phoneNumber)
+          .limit(1)
+          .get();
+      return querySnapshot.docs.isNotEmpty || querySnapshotShop.docs.isNotEmpty;
     } catch (e) {
       print('Lỗi kiểm tra số điện thoại: $e');
       rethrow;

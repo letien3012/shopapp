@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:luanvan/blocs/chat/chat_bloc.dart';
+import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/shop/chat/shop_chat_detail_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/detail_product_and_shop.dart';
 
 class OrderDetailShopScreen extends StatefulWidget {
@@ -84,16 +88,11 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
                 ),
               if (order.status == OrderStatus.shipped ||
                   order.status == OrderStatus.returned ||
-                  order.status == OrderStatus.cancelled)
-                SizedBox(
-                  child: Row(
-                    children: [
-                      _buildShopContactButton(order),
-                      SizedBox(
-                        width: 16,
-                      )
-                    ],
-                  ),
+                  order.status == OrderStatus.cancelled ||
+                  order.status == OrderStatus.processing)
+                Container(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: _buildShopContactButton(order),
                 ),
             ],
           ),
@@ -130,6 +129,10 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
       case OrderStatus.returned:
         statusColor = Colors.grey;
         statusText = 'Đã trả hàng';
+        break;
+      case OrderStatus.reviewed:
+        statusColor = Colors.green;
+        statusText = 'Đã đánh giá';
         break;
     }
 
@@ -328,6 +331,24 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
                   Text(formatDate(order.createdAt)),
                 ],
               ),
+              (order.statusHistory.length > 0)
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Thời gian xác nhận:'),
+                        Text(formatDate(order.statusHistory.first.timestamp)),
+                      ],
+                    )
+                  : SizedBox.shrink(),
+              (order.statusHistory.length > 1)
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Thời gian người bán chuẩn bị hàng:'),
+                        Text(formatDate(order.statusHistory[1].timestamp)),
+                      ],
+                    )
+                  : SizedBox.shrink(),
               const SizedBox(height: 5),
             ],
           ),
@@ -356,6 +377,7 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
                     context.read<OrderBloc>().add(
                           CancelOrder(order.id),
                         );
+                    Navigator.pop(context);
                     Navigator.pop(context);
                   },
                   child: const Text('Có'),
@@ -387,7 +409,18 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 16, top: 16),
       child: GestureDetector(
-        onTap: () {},
+        onTap: () {
+          context.read<ChatBloc>().add(StartChatEvent(
+                order.userId,
+                order.shopId,
+              ));
+          final tempChatRoomId = '${order.userId}-${order.shopId}';
+          Navigator.pushNamed(
+            context,
+            ShopChatDetailScreen.routeName,
+            arguments: tempChatRoomId,
+          );
+        },
         child: Container(
           width: double.infinity,
           height: 40,

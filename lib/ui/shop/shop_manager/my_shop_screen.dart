@@ -17,6 +17,8 @@ import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/ship_manager_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/location/revenue_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/sales_analysis_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
 
 class MyShopScreen extends StatefulWidget {
@@ -222,6 +224,9 @@ class _MyShopScreenState extends State<MyShopScreen> {
                               case OrderStatus.delivered:
                                 feedbackCount++;
                                 break;
+                              case OrderStatus.reviewed:
+                                feedbackCount++;
+                                break;
                               default:
                                 break;
                             }
@@ -299,7 +304,9 @@ class _MyShopScreenState extends State<MyShopScreen> {
                 Material(
                   color: Colors.white,
                   child: InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).pushNamed(RevenueScreen.routeName);
+                    },
                     splashColor: Colors.transparent.withOpacity(0.2),
                     highlightColor: Colors.transparent.withOpacity(0.1),
                     child: Container(
@@ -393,7 +400,12 @@ class _MyShopScreenState extends State<MyShopScreen> {
                 Material(
                   color: Colors.white,
                   child: InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        SalesAnalysisScreen.routeName,
+                      );
+                    },
                     splashColor: Colors.transparent.withOpacity(0.2),
                     highlightColor: Colors.transparent.withOpacity(0.1),
                     child: Container(
@@ -559,6 +571,9 @@ class _MyShopScreenState extends State<MyShopScreen> {
             break;
           case OrderStatus.cancelled:
             index = 5; // Đã hủy
+            break;
+          case OrderStatus.reviewed:
+            index = 6; // Đã đánh giá
             break;
         }
         Navigator.pushNamed(

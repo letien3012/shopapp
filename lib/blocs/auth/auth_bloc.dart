@@ -15,7 +15,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginWithEmailAndPasswordEvent>(_onLoginWithEmailAndPassword);
     on<ForgotPasswordEvent>(_onForgotPassword);
     on<VerifyEmailEvent>(_onVerifyEmail);
-    on<CheckPhoneNumberEvent>(_onCheckPhoneNumber);
+    // on<CheckPhoneNumberEvent>(_onCheckPhoneNumber);
     on<SignUpWithPhoneEvent>(_onSignUpWithPhone);
     on<VerifyPhoneCodeEvent>(_onVerifyPhoneCode);
     on<LoginInWithFacebookEvent>(_onSignInWithFacebook);
@@ -245,23 +245,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onCheckPhoneNumber(
-    CheckPhoneNumberEvent event,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(AuthLoading());
-    try {
-      final bool exists =
-          await _authService.checkPhoneNumberExists(event.phoneNumber);
-      if (exists) {
-        emit(PhoneNumberExists());
-      } else {
-        emit(PhoneNumberAvailable());
-      }
-    } catch (e) {
-      emit(AuthError('Lỗi kiểm tra số điện thoại: ${e.toString()}'));
-    }
-  }
+  // Future<void> _onCheckPhoneNumber(
+  //   CheckPhoneNumberEvent event,
+  //   Emitter<AuthState> emit,
+  // ) async {
+  //   emit(AuthLoading());
+  //   try {
+  //     final bool exists =
+  //         await _authService.checkPhoneNumberExists(event.phoneNumber);
+  //     if (exists) {
+  //       emit(PhoneNumberExists());
+  //     } else {
+  //       emit(PhoneNumberAvailable());
+  //     }
+  //   } catch (e) {
+  //     emit(AuthError('Lỗi kiểm tra số điện thoại: ${e.toString()}'));
+  //   }
+  // }
 
   Future<void> _onCheckEmail(
     CheckEmailEvent event,

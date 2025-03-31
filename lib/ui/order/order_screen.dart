@@ -34,6 +34,8 @@ class _OrderScreenState extends State<OrderScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late ScrollController _scrollController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   List<String> listShopId = [];
   List<String> listProductId = [];
   final List<String> _tabs = [
@@ -50,6 +52,11 @@ class _OrderScreenState extends State<OrderScreen>
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
     _scrollController = ScrollController();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
     _loadOrders();
 
     _tabController.addListener(() {
@@ -101,6 +108,7 @@ class _OrderScreenState extends State<OrderScreen>
   void dispose() {
     _tabController.dispose();
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -116,18 +124,61 @@ class _OrderScreenState extends State<OrderScreen>
         ),
         title: const Text(
           'Đơn đã mua',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.black, fontSize: 18),
         ),
         actions: [
-          SvgPicture.asset(
-            IconHelper.chatIcon,
-            color: Colors.brown,
-            height: 30,
-            width: 30,
+          Container(
+            width: 160,
+            height: 36,
+            margin: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Center(
+              child: TextField(
+                controller: _searchController,
+                textAlignVertical: TextAlignVertical.center,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: 'Tìm kiếm...',
+                  hintStyle: const TextStyle(fontSize: 13),
+                  prefixIcon:
+                      const Icon(Icons.search, color: Colors.grey, size: 20),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.clear,
+                              color: Colors.grey, size: 20),
+                          onPressed: () {
+                            setState(() {
+                              _searchController.clear();
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                ),
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
           ),
-          const SizedBox(
-            width: 10,
-          )
+          const SizedBox(width: 8),
+          IconButton(
+            icon: SvgPicture.asset(
+              IconHelper.chatIcon,
+              color: Colors.brown,
+              height: 24,
+              width: 24,
+            ),
+            onPressed: () {
+              // Handle chat button press
+            },
+          ),
+          const SizedBox(width: 4),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -221,6 +272,80 @@ class _OrderScreenState extends State<OrderScreen>
             }
           }).toList();
 
+          if (_searchQuery.isNotEmpty) {
+            final query = _searchQuery.toLowerCase();
+            return BlocBuilder<ListShopBloc, ListShopState>(
+              builder: (context, listShopState) {
+                if (listShopState is ListShopLoaded) {
+                  return BlocBuilder<ProductOrderBloc, ProductOrderState>(
+                    builder: (context, productState) {
+                      if (productState is ProductOrderListLoaded) {
+                        filteredOrders = filteredOrders.where((order) {
+                          if (order.id.toLowerCase().contains(query)) {
+                            return true;
+                          }
+
+                          final shop = listShopState.shops.firstWhere(
+                            (shop) => shop.shopId == order.shopId,
+                            orElse: () => listShopState.shops.first,
+                          );
+                          if (shop.name.toLowerCase().contains(query)) {
+                            return true;
+                          }
+
+                          final orderProducts = order.item.map((item) {
+                            return productState.products.firstWhere(
+                              (product) => product.id == item.productId,
+                              orElse: () => productState.products.first,
+                            );
+                          }).toList();
+
+                          return orderProducts.any((product) =>
+                              product.name.toLowerCase().contains(query));
+                        }).toList();
+
+                        if (filteredOrders.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  ImageHelper.no_order,
+                                  width: 300,
+                                  height: 300,
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Không tìm thấy đơn hàng nào',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: filteredOrders.length,
+                          itemBuilder: (context, index) {
+                            return ShopOrderItem(
+                              order: filteredOrders[index],
+                            );
+                          },
+                        );
+                      }
+                      return const SizedBox();
+                    },
+                  );
+                }
+                return const SizedBox();
+              },
+            );
+          }
+
           if (filteredOrders.isEmpty) {
             return Center(
               child: Column(
@@ -239,8 +364,6 @@ class _OrderScreenState extends State<OrderScreen>
                       color: Colors.grey,
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  // _buildRecommendedProducts(),
                 ],
               ),
             );
@@ -253,20 +376,14 @@ class _OrderScreenState extends State<OrderScreen>
                   builder: (BuildContext context, ProductOrderState state) {
                     if (state is ProductOrderListLoaded) {
                       return ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemCount: filteredOrders.length,
-                          itemBuilder: (context, index) {
-                            if (index >= filteredOrders.length) {
-                              return const SizedBox.shrink();
-                            }
-                            // final shop = listShop.firstWhere((shop) =>
-                            //     shop.shopId == filteredOrders[index].shopId);
-                            return ShopOrderItem(
-                              order: filteredOrders[index],
-                            );
-                            // return _buildOrderCard(
-                            //     filteredOrders[index], shop, state.products);
-                          });
+                        padding: EdgeInsets.zero,
+                        itemCount: filteredOrders.length,
+                        itemBuilder: (context, index) {
+                          return ShopOrderItem(
+                            order: filteredOrders[index],
+                          );
+                        },
+                      );
                     }
                     return const SizedBox();
                   },

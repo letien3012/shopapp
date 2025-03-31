@@ -20,6 +20,8 @@ import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/item/add_review_screen.dart';
+import 'package:luanvan/ui/item/product_review_screen.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
 import 'package:luanvan/ui/order/order_screen.dart';
@@ -349,7 +351,7 @@ class _UserScreenState extends State<UserScreen> {
               onTap: () {
                 final authState = context.read<AuthBloc>().state;
                 if (authState is AuthAuthenticated) {
-                  // Xử lý khi đã đăng nhập
+                  Navigator.of(context).pushNamed(AddReviewScreen.routeName);
                 } else {
                   Navigator.of(context).pushNamed(SigninScreen.routeName);
                 }

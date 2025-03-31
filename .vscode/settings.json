@@ -1,6 +1,5 @@
 {
-    "cSpell.words": [
-        "bannercontroller"
-    ],
-    "java.configuration.updateBuildConfiguration": "interactive"
+  "cSpell.words": ["bannercontroller"],
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "cmake.sourceDirectory": "D:/LuanVan/Code/luanvan/windows"
 }

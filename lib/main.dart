@@ -7,30 +7,37 @@ import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
-import 'package:luanvan/blocs/listuserordershop/list_user_order_bloc.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
+import 'package:luanvan/blocs/search/search_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_bloc.dart';
+import 'package:luanvan/blocs/usercomment/list_user_comment_bloc.dart';
 import 'package:luanvan/di.dart';
 import 'package:luanvan/routes.dart';
 import 'package:luanvan/services/auth_service.dart';
 import 'package:luanvan/services/cart_service.dart';
 import 'package:luanvan/services/chat_service.dart';
+import 'package:luanvan/services/comment_service.dart';
 import 'package:luanvan/services/order_service.dart';
 import 'package:luanvan/services/product_service.dart';
+import 'package:luanvan/services/search_service.dart';
 import 'package:luanvan/services/shop_service.dart';
 import 'package:luanvan/services/user_service.dart';
+import 'package:luanvan/services/api_service.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui' as ui;
+
+import 'blocs/comment/comment_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -122,6 +129,19 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<UserChatBloc>(
           create: (context) => UserChatBloc(UserService()),
+        ),
+        BlocProvider<CommentBloc>(
+          create: (context) => CommentBloc(CommentService()),
+        ),
+        BlocProvider<ListUserCommentBloc>(
+          create: (context) => ListUserCommentBloc(UserService()),
+        ),
+        BlocProvider<SearchBloc>(
+          create: (context) => SearchBloc(SearchService(
+              ApiService(baseUrl: 'https://your-api-base-url.com'))),
+        ),
+        BlocProvider<CheckBloc>(
+          create: (context) => CheckBloc(AuthService()),
         ),
       ],
       child: MaterialApp(

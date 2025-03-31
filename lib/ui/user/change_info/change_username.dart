@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:icons_plus/icons_plus.dart';
-import 'package:luanvan/blocs/auth/auth_bloc.dart';
-import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
-import 'package:luanvan/models/user_info_model.dart';
+
 import 'package:luanvan/ui/helper/icon_helper.dart';
 
 class ChangeUsername extends StatefulWidget {

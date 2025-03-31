@@ -27,10 +27,10 @@ class VerifyEmailEvent extends AuthEvent {
   VerifyEmailEvent({this.password = ''});
 }
 
-class CheckPhoneNumberEvent extends AuthEvent {
-  final String phoneNumber;
-  CheckPhoneNumberEvent(this.phoneNumber);
-}
+// class CheckPhoneNumberEvent extends AuthEvent {
+//   final String phoneNumber;
+//   CheckPhoneNumberEvent(this.phoneNumber);
+// }
 
 class SignUpWithPhoneEvent extends AuthEvent {
   final String phone;

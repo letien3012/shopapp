@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/ui/order/order_screen.dart';
 
 class OrderSuccessScreen extends StatefulWidget {
   static String routeName = 'order-success';
@@ -106,7 +107,10 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
               'Đơn mua',
               Colors.brown,
               Colors.white,
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(OrderScreen.routeName);
+              },
             ),
           ),
         ],

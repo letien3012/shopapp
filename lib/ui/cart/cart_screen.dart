@@ -60,6 +60,48 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  Future<void> _fetchData(Cart cart) async {
+    listShopId = cart.shops.map((shop) => shop.shopId).toList();
+    listProductId = cart.shops
+        .expand((shop) => shop.items.values)
+        .map((item) => item.productId)
+        .toList();
+    listItemId = cart.shops.expand((shop) => shop.items.keys).toList();
+
+    if (listShopId.isNotEmpty) {
+      context.read<ListShopBloc>().add(FetchListShopEventByShopId(listShopId));
+    }
+    if (listProductId.isNotEmpty) {
+      context
+          .read<ProductCartBloc>()
+          .add(FetchMultipleProductsEvent(listProductId));
+    }
+
+    for (var shop in cart.shops) {
+      for (var item in shop.items.entries) {
+        final key = '${shop.shopId}_${item.key}';
+        if (!quantityControllers.containsKey(key)) {
+          quantityControllers[key] =
+              TextEditingController(text: item.value.quantity.toString());
+        }
+      }
+    }
+
+    if (checkedShop.length != listShopId.length) {
+      checkedShop = List.generate(listShopId.length, (index) => false);
+    }
+    for (var shopId in listShopId) {
+      final shop = cart.getShop(shopId);
+      if (shop != null) {
+        if (!checkedProduct.containsKey(shopId) ||
+            checkedProduct[shopId]!.length != shop.items.length) {
+          checkedProduct[shopId] =
+              List.generate(shop.items.length, (index) => false);
+        }
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -73,48 +115,7 @@ class _CartScreenState extends State<CartScreen> {
       final cartState = context.read<CartBloc>().state;
 
       if (cartState is CartLoaded) {
-        listShopId = cartState.cart.shops.map((shop) => shop.shopId).toList();
-        listProductId = cartState.cart.shops
-            .expand((shop) => shop.items.values)
-            .map((item) => item.productId)
-            .toList();
-        listItemId =
-            cartState.cart.shops.expand((shop) => shop.items.keys).toList();
-
-        if (listShopId.isNotEmpty) {
-          context
-              .read<ListShopBloc>()
-              .add(FetchListShopEventByShopId(listShopId));
-        }
-        if (listProductId.isNotEmpty) {
-          context
-              .read<ProductCartBloc>()
-              .add(FetchMultipleProductsEvent(listProductId));
-        }
-
-        for (var shop in cartState.cart.shops) {
-          for (var item in shop.items.entries) {
-            final key = '${shop.shopId}_${item.key}';
-            if (!quantityControllers.containsKey(key)) {
-              quantityControllers[key] =
-                  TextEditingController(text: item.value.quantity.toString());
-            }
-          }
-        }
-
-        if (checkedShop.length != listShopId.length) {
-          checkedShop = List.generate(listShopId.length, (index) => false);
-        }
-        for (var shopId in listShopId) {
-          final shop = cartState.cart.getShop(shopId);
-          if (shop != null) {
-            if (!checkedProduct.containsKey(shopId) ||
-                checkedProduct[shopId]!.length != shop.items.length) {
-              checkedProduct[shopId] =
-                  List.generate(shop.items.length, (index) => false);
-            }
-          }
-        }
+        _fetchData(cartState.cart);
       }
     });
   }
@@ -282,44 +283,60 @@ class _CartScreenState extends State<CartScreen> {
                     ],
                   ),
                 )
-              : SingleChildScrollView(
-                  child: Container(
-                    color: Colors.grey[200],
-                    padding: const EdgeInsets.only(
-                        left: 10, right: 10, top: 90, bottom: 60),
-                    constraints: BoxConstraints(
-                        minHeight: MediaQuery.of(context).size.height),
-                    child: Column(
-                      children: [
-                        ListView.builder(
-                          padding: EdgeInsets.zero,
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: cart.shops.length,
-                          itemBuilder: (context, index) {
-                            if (index >= listShopId.length) {
-                              return const SizedBox.shrink();
-                            }
-                            final shopId = listShopId[index];
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    final authState = context.read<AuthBloc>().state;
+                    if (authState is AuthAuthenticated) {
+                      context
+                          .read<CartBloc>()
+                          .add(FetchCartEventUserId(authState.user.uid));
+                      final cartState = context.read<CartBloc>().state;
+                      if (cartState is CartLoaded) {
+                        await _fetchData(cartState.cart);
+                      }
+                    }
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Container(
+                      color: Colors.grey[200],
+                      padding: const EdgeInsets.only(
+                          left: 10, right: 10, top: 90, bottom: 60),
+                      constraints: BoxConstraints(
+                          minHeight: MediaQuery.of(context).size.height),
+                      child: Column(
+                        children: [
+                          ListView.builder(
+                            padding: EdgeInsets.zero,
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: cart.shops.length,
+                            itemBuilder: (context, index) {
+                              if (index >= listShopId.length) {
+                                return const SizedBox.shrink();
+                              }
+                              final shopId = listShopId[index];
 
-                            return ShopItemWidget(
-                              shopId: shopId,
-                              cart: cart,
-                              checkedShop: checkedShop,
-                              onCheckedShopChanged: onCheckedShopChanged,
-                              checkedProduct: checkedProduct,
-                              onCheckedProductChanged: onCheckedProductChanged,
-                              quantityControllers: quantityControllers,
-                              maxSwipe: _maxSwipe,
-                              onDeleteProduct: _deleteProduct,
-                              onDeleteShop: _deleteShop,
-                              onUpdateQuantity: _updateQuantity,
-                              onShowConfirmDelete:
-                                  _showConfirmDeleteProductDialog,
-                            );
-                          },
-                        ),
-                      ],
+                              return ShopItemWidget(
+                                shopId: shopId,
+                                cart: cart,
+                                checkedShop: checkedShop,
+                                onCheckedShopChanged: onCheckedShopChanged,
+                                checkedProduct: checkedProduct,
+                                onCheckedProductChanged:
+                                    onCheckedProductChanged,
+                                quantityControllers: quantityControllers,
+                                maxSwipe: _maxSwipe,
+                                onDeleteProduct: _deleteProduct,
+                                onDeleteShop: _deleteShop,
+                                onUpdateQuantity: _updateQuantity,
+                                onShowConfirmDelete:
+                                    _showConfirmDeleteProductDialog,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -542,14 +559,13 @@ class _CartScreenState extends State<CartScreen> {
                                 }
                               }
 
+                              final updatedShops =
+                                  List<CartShop>.from(cart.shops);
                               for (String shopId in shopsToDelete) {
-                                final updatedShops =
-                                    List<CartShop>.from(cart.shops);
                                 updatedShops.removeWhere(
                                     (shop) => shop.shopId == shopId);
-                                newCart = newCart.copyWith(shops: updatedShops);
                               }
-
+                              newCart = newCart.copyWith(shops: updatedShops);
                               for (String shopId in productsToDelete.keys) {
                                 if (!shopsToDelete.contains(shopId)) {
                                   for (String itemId

@@ -81,18 +81,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     ],
                   ),
                 ),
-              if (order.status == OrderStatus.shipped ||
-                  order.status == OrderStatus.returned ||
-                  order.status == OrderStatus.cancelled)
-                SizedBox(
-                  child: Row(
-                    children: [
-                      _buildShopContactButton(order),
-                      SizedBox(
-                        width: 16,
-                      )
-                    ],
-                  ),
+              if (order.status == OrderStatus.processing ||
+                  order.status == OrderStatus.shipped ||
+                  order.status == OrderStatus.returned)
+                Container(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: _buildShopContactButton(order),
+                ),
+              if (order.status == OrderStatus.delivered)
+                Container(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: _buildShopContactButton(order),
                 ),
             ],
           ),
@@ -129,6 +128,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       case OrderStatus.returned:
         statusColor = Colors.grey;
         statusText = 'Đã trả hàng';
+        break;
+      case OrderStatus.reviewed:
+        statusColor = Colors.green;
+        statusText = 'Đã đánh giá';
         break;
     }
 
@@ -249,7 +252,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           AnimatedContainer(
             curve: Curves.easeInOut,
             duration: const Duration(milliseconds: 300),
-            height: isShowMoreDetailOrderDate ? 65 : 0,
+            height: isShowMoreDetailOrderDate
+                ? (order.statusHistory.isNotEmpty &&
+                        order.statusHistory.any(
+                            (element) => element.status == OrderStatus.shipped)
+                    ? 105
+                    : (order.statusHistory.isNotEmpty &&
+                            order.statusHistory.any((element) =>
+                                element.status == OrderStatus.processing)
+                        ? 85
+                        : 65))
+                : 0,
             child: SingleChildScrollView(
               child: Column(
                 children: [
@@ -270,6 +283,32 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           order.estimatedDeliveryDate ?? DateTime.now())),
                     ],
                   ),
+                  if (order.statusHistory.isNotEmpty &&
+                      order.statusHistory.any((element) =>
+                          element.status == OrderStatus.processing))
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Thời gian người bán xác nhận:'),
+                        Text(formatDate(order.statusHistory
+                            .firstWhere((element) =>
+                                element.status == OrderStatus.processing)
+                            .timestamp)),
+                      ],
+                    ),
+                  if (order.statusHistory.isNotEmpty &&
+                      order.statusHistory.any(
+                          (element) => element.status == OrderStatus.shipped))
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Thời gian người bán chuẩn bị hàng:'),
+                        Text(formatDate(order.statusHistory
+                            .firstWhere((element) =>
+                                element.status == OrderStatus.shipped)
+                            .timestamp)),
+                      ],
+                    ),
                 ],
               ),
             ),

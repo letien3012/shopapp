@@ -22,7 +22,7 @@ class ChangeEmail extends StatefulWidget {
 class _ChangeEmailState extends State<ChangeEmail> {
   TextEditingController _usernameController = TextEditingController();
   bool _isChange = false;
-  String username = '';
+  String email = '';
   final _formKey = GlobalKey<FormState>();
   String? _emailEror;
   @override
@@ -30,13 +30,13 @@ class _ChangeEmailState extends State<ChangeEmail> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        username = ModalRoute.of(context)!.settings.arguments as String;
-        _usernameController.text = username;
+        email = ModalRoute.of(context)!.settings.arguments as String;
+        _usernameController.text = email;
       });
     });
     _usernameController.addListener(() {
       setState(() {
-        _isChange = _usernameController.text != username;
+        _isChange = _usernameController.text != email;
       });
     });
   }

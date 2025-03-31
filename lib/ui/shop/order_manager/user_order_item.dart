@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/blocs/chat/chat_bloc.dart';
+import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_state.dart';
-import 'package:luanvan/blocs/listuserordershop/list_user_order_bloc.dart';
-import 'package:luanvan/blocs/listuserordershop/list_user_order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:luanvan/ui/order/product_order_widget.dart';
+import 'package:luanvan/ui/shop/chat/shop_chat_detail_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_detail_shop_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/location/pick_location_order_screen.dart';
 
 class UserOrderItem extends StatefulWidget {
   Order order;
+  final Function(String) onConfirmOrder;
   UserOrderItem({
     required this.order,
+    required this.onConfirmOrder,
   });
 
   @override
@@ -227,12 +231,7 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                   onTap: () {
                                     if (widget.order.status ==
                                         OrderStatus.pending) {
-                                      // context.read<OrderBloc>().add(
-                                      //       UpdateOrderStatusEvent(
-                                      //         widget.order.orderId,
-                                      //         OrderStatus.processing,
-                                      //       ),
-                                      //     );
+                                      widget.onConfirmOrder(widget.order.id);
                                     } else if (widget.order.status ==
                                         OrderStatus.processing) {
                                       // context.read<OrderBloc>().add(
@@ -241,9 +240,24 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                       //         OrderStatus.shipped,
                                       //       ),
                                       //     );
+                                      Navigator.pushNamed(context,
+                                          PickLocationOrderScreen.routeName,
+                                          arguments: widget.order);
                                     } else if (widget.order.status ==
                                         OrderStatus.delivered) {
-                                      // TODO: Implement contact buyer logic
+                                      context
+                                          .read<ChatBloc>()
+                                          .add(StartChatEvent(
+                                            widget.order.userId,
+                                            widget.order.shopId,
+                                          ));
+                                      final tempChatRoomId =
+                                          '${widget.order.userId}-${widget.order.shopId}';
+                                      Navigator.pushNamed(
+                                        context,
+                                        ShopChatDetailScreen.routeName,
+                                        arguments: tempChatRoomId,
+                                      );
                                     }
                                   },
                                   child: Container(
@@ -257,9 +271,12 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                                   OrderStatus.processing
                                               ? 'Chuẩn bị hàng'
                                               : widget.order.status ==
-                                                      OrderStatus.delivered
-                                                  ? 'Liên hệ người mua'
-                                                  : '',
+                                                      OrderStatus.shipped
+                                                  ? 'Đang giao hàng'
+                                                  : widget.order.status ==
+                                                          OrderStatus.delivered
+                                                      ? 'Liên hệ người mua'
+                                                      : '',
                                       style: TextStyle(
                                         color: Colors.white,
                                       ),

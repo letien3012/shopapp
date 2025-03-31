@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:icons_plus/icons_plus.dart';
-import 'package:luanvan/blocs/auth/auth_bloc.dart';
-import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
-import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_event.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_state.dart';
 
 class ChangePhone extends StatefulWidget {
   const ChangePhone({super.key});
@@ -22,7 +22,7 @@ class ChangePhone extends StatefulWidget {
 class _ChangePhoneState extends State<ChangePhone> {
   TextEditingController _phoneController = TextEditingController();
   bool _isChange = false;
-  String username = '';
+  String phone = '';
   final _formKey = GlobalKey<FormState>();
   String? _phoneError;
   @override
@@ -30,13 +30,13 @@ class _ChangePhoneState extends State<ChangePhone> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        username = ModalRoute.of(context)!.settings.arguments as String;
-        _phoneController.text = username;
+        phone = ModalRoute.of(context)!.settings.arguments as String;
+        _phoneController.text = phone;
       });
     });
     _phoneController.addListener(() {
       setState(() {
-        _isChange = _phoneController.text != username;
+        _isChange = _phoneController.text != phone;
       });
     });
   }
@@ -49,7 +49,12 @@ class _ChangePhoneState extends State<ChangePhone> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<UserBloc, UserState>(
+    return WillPopScope(onWillPop: () async {
+      if (_isChange) {
+        return await _showConfirmDialog();
+      }
+      return true;
+    }, child: Scaffold(body: BlocBuilder<UserBloc, UserState>(
       builder: (context, userState) {
         if (userState is UserLoading) {
           return _buildLoading();
@@ -60,7 +65,7 @@ class _ChangePhoneState extends State<ChangePhone> {
         }
         return _buildInitializing();
       },
-    ));
+    )));
   }
 
   // Trạng thái đang tải
@@ -238,14 +243,53 @@ class _ChangePhoneState extends State<ChangePhone> {
                 child: InkWell(
                   splashColor: Colors.transparent.withOpacity(0.2),
                   highlightColor: Colors.transparent.withOpacity(0.1),
-                  onTap: () {
+                  onTap: () async {
                     if (_formKey.currentState!.validate()) {
-                      Navigator.of(context).pop(_phoneController.text);
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.brown,
+                            ),
+                          );
+                        },
+                      );
+
+                      final phoneExists =
+                          await _checkPhoneExists(_phoneController.text);
+
+                      Navigator.of(context).pop(); // Đóng loading dialog
+
+                      if (phoneExists) {
+                        await showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Lỗi'),
+                              content: Text('Số điện thoại đã được sử dụng'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: Text('OK')),
+                              ],
+                            );
+                          },
+                        );
+                      } else {
+                        context.read<UserBloc>().add(UpdateUserEvent(userState
+                            .user
+                            .copyWith(phone: _phoneController.text)));
+                        Navigator.of(context).pop(_phoneController.text);
+                      }
                     }
                   },
                   child: Center(
                     child: Text(
-                      "Tiếp theo",
+                      "Xác nhận",
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.white,
@@ -280,7 +324,14 @@ class _ChangePhoneState extends State<ChangePhone> {
           children: [
             GestureDetector(
               onTap: () async {
-                Navigator.of(context).pop();
+                if (_isChange) {
+                  final shouldPop = await _showConfirmDialog();
+                  if (shouldPop) {
+                    Navigator.of(context).pop();
+                  }
+                } else {
+                  Navigator.of(context).pop();
+                }
               },
               child: Container(
                 height: 40,
@@ -304,5 +355,54 @@ class _ChangePhoneState extends State<ChangePhone> {
         ),
       ),
     );
+  }
+
+  // Thêm method hiển thị dialog xác nhận
+  Future<bool> _showConfirmDialog() async {
+    final confirmed = await ConfirmDialog(
+      title: "Bạn có chắc muốn hủy thay đổi số điện thoại?",
+    ).show(context);
+    return confirmed;
+  }
+
+  // Thêm phương thức kiểm tra số điện thoại
+  Future<bool> _checkPhoneExists(String phone) async {
+    try {
+      context.read<CheckBloc>().add(CheckPhoneNumberEvent(phone));
+
+      bool exists = await Future.any([
+        context.read<CheckBloc>().stream.firstWhere((state) {
+          if (state is PhoneNumberExists) {
+            return true;
+          } else if (state is PhoneNumberAvailable) {
+            return true;
+          }
+          return false;
+        }).then((state) => state is PhoneNumberExists),
+        Future.delayed(Duration(seconds: 10)).then((_) {
+          throw Exception('Timeout');
+        }),
+      ]);
+
+      return exists;
+    } catch (e) {
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Lỗi'),
+            content: Text('Đã xảy ra lỗi khi kiểm tra số điện thoại'),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK')),
+            ],
+          );
+        },
+      );
+      return false;
+    }
   }
 }

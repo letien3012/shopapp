@@ -10,7 +10,6 @@ import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
-import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
@@ -26,6 +25,7 @@ import 'package:luanvan/models/shipping_calculator.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
+import 'package:luanvan/ui/checkout/pick_location_checkout_screen.dart';
 import 'package:luanvan/ui/checkout/shop_checkout_item.dart';
 import 'package:luanvan/ui/order/order_success_screen.dart';
 import 'package:luanvan/ui/widgets/confirm_diablog.dart';
@@ -54,9 +54,12 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   double totalProductPrice = 0.0;
   Map<String, ShippingMethod> shipMethod = {};
   Map<String, List<ShippingMethod>> listShipMethod = {};
+  int _completedOrders = 0;
+
   @override
   void initState() {
     super.initState();
+    _completedOrders = 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUserAddress();
       final arg = ModalRoute.of(context)!.settings.arguments as Map;
@@ -356,7 +359,25 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   // Address Section
   Widget _buildAddressSection(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.of(context).pushNamed(LocationScreen.routeName),
+      onTap: () async {
+        // Navigate to pick location screen and wait for result
+        final selectedAddress = await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PickLocationCheckoutScreen(
+              selectedAddress: receiverAddress.addressLine.isNotEmpty
+                  ? receiverAddress
+                  : null,
+            ),
+          ),
+        );
+
+        // Update receiver address if an address was selected
+        if (selectedAddress != null) {
+          setState(() {
+            receiverAddress = selectedAddress as Address;
+          });
+        }
+      },
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -383,91 +404,90 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
   Widget _buildAddressDetails() {
     return Expanded(
-      child: GestureDetector(
-        onTap: () {},
-        child: BlocBuilder<UserBloc, UserState>(builder: (context, userState) {
-          if (userState is UserLoaded) {
-            if (userState.user.addresses.isEmpty) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: const [
-                      Text("Địa chỉ nhận hàng",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w500),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  const Text("Chọn địa chỉ",
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.brown)),
-                  const SizedBox(
-                    height: 10,
-                  )
-                ],
-              );
-            } else {
-              receiverAddress = userState.user.addresses[0];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(receiverAddress.receiverName,
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w500),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      SizedBox(width: 10),
-                      Text("(${receiverAddress.receiverPhone})",
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w300)),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Text(receiverAddress.addressLine,
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w400)),
-                  Text(
-                      "${receiverAddress.ward}, ${receiverAddress.district}, ${receiverAddress.city}",
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                ],
+      child: BlocBuilder<UserBloc, UserState>(builder: (context, userState) {
+        if (userState is UserLoaded) {
+          if (userState.user.addresses.isEmpty) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Text("Địa chỉ nhận hàng",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                const Text("Chọn địa chỉ",
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.brown)),
+                const SizedBox(height: 10)
+              ],
+            );
+          } else {
+            // Use selected address if available, otherwise use default address
+            if (receiverAddress.addressLine.isEmpty) {
+              receiverAddress = userState.user.addresses.firstWhere(
+                (addr) => addr.isDefault,
+                orElse: () => userState.user.addresses.first,
               );
             }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(receiverAddress.receiverName,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(width: 10),
+                    Text("(${receiverAddress.receiverPhone})",
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w300)),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(receiverAddress.addressLine,
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w400)),
+                Text(
+                    "${receiverAddress.ward}, ${receiverAddress.district}, ${receiverAddress.city}",
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w400),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ],
+            );
           }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: const [
-                  Text("Địa chỉ nhận hàng",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                ],
-              ),
-              const SizedBox(height: 5),
-              const Text("Chọn địa chỉ",
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.brown)),
-              const SizedBox(
-                height: 10,
-              )
-            ],
-          );
-        }),
-      ),
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: const [
+                Text("Địa chỉ nhận hàng",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ],
+            ),
+            const SizedBox(height: 5),
+            const Text("Chọn địa chỉ",
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.brown)),
+            const SizedBox(height: 10)
+          ],
+        );
+      }),
     );
   }
 
@@ -696,119 +716,110 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                 if (authState is AuthAuthenticated) {
                   final userState = context.read<UserBloc>().state;
                   if (userState is UserLoaded) {
+                    // Kiểm tra xem đã chọn địa chỉ chưa
+                    if (receiverAddress.addressLine.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Vui lòng chọn địa chỉ nhận hàng'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                    Cart cart = Cart(shops: [], id: '', userId: '');
+                    final cartState = context.read<CartBloc>().state;
+                    if (cartState is CartLoaded) {
+                      cart = cartState.cart;
+                    }
+                    List<Order> orders = [];
                     for (var shopId in listShopId) {
-                      final cartState = context.read<CartBloc>().state;
-                      if (cartState is CartLoaded) {
-                        final cartShop = cartState.cart.getShop(shopId);
-                        if (cartShop == null) continue;
+                      final cartShop = cart.getShop(shopId);
+                      if (cartShop == null) continue;
+                      final listItemId = productCheckOut[shopId]!;
+                      final items = listItemId
+                          .map((itemId) => cartShop.items[itemId]!)
+                          .toList();
 
-                        final listItemId = productCheckOut[shopId]!;
-                        print(listItemId);
-                        final items = listItemId
-                            .map((itemId) => cartShop.items[itemId]!)
-                            .toList();
-
-                        // Kiểm tra xem phương thức vận chuyển có hợp lệ không
-                        bool isValidShippingMethod = true;
-                        final productCartState =
-                            context.read<ProductCartBloc>().state;
-                        if (productCartState is ProductCartListLoaded) {
-                          for (var item in items) {
-                            final product =
-                                productCartState.products.firstWhere(
-                              (p) => p.id == item.productId,
-                            );
-                            if (!product.shippingMethods.any(
-                              (method) =>
-                                  method.isEnabled &&
-                                  method.name == shipMethod[shopId]?.name,
-                            )) {
-                              isValidShippingMethod = false;
-                              break;
-                            }
-                          }
-                        }
-
-                        if (!isValidShippingMethod) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Phương thức vận chuyển không hợp lệ cho một số sản phẩm'),
-                            ),
+                      // Kiểm tra xem phương thức vận chuyển có hợp lệ không
+                      bool isValidShippingMethod = true;
+                      final productCartState =
+                          context.read<ProductCartBloc>().state;
+                      if (productCartState is ProductCartListLoaded) {
+                        for (var item in items) {
+                          final product = productCartState.products.firstWhere(
+                            (p) => p.id == item.productId,
                           );
-                          return;
-                        }
-
-                        final now = DateTime.now();
-                        final estimatedDays =
-                            shipMethod[shopId]?.estimatedDeliveryDays ?? 3;
-                        final estimatedDeliveryDate =
-                            now.add(Duration(days: estimatedDays));
-
-                        // Tạo đơn hàng mới
-                        final order = Order(
-                          id: '', // ID sẽ được Firestore tự động tạo
-                          item: items,
-                          shopId: shopId,
-                          userId: authState.user.uid,
-                          createdAt: now,
-                          receiveAdress: userState.user.addresses
-                              .firstWhere((addr) => addr.isDefault),
-                          totalProductPrice: totalProductPrice,
-                          totalShipFee: totalShipPrice,
-                          totalPrice: totalProductPrice + totalShipPrice,
-                          estimatedDeliveryDate: estimatedDeliveryDate,
-                          shipMethod: shipMethod[shopId]!,
-                        );
-
-                        // Gửi event tạo đơn hàng
-                        context.read<OrderBloc>().add(CreateOrder(order));
-
-                        // Lắng nghe sự kiện OrderCreated để xóa sản phẩm khỏi giỏ hàng
-                        context.read<OrderBloc>().stream.listen((state) {
-                          if (state is OrderCreated) {
-                            // Xóa sản phẩm khỏi giỏ hàng
-                            final updatedItems =
-                                Map<String, CartItem>.from(cartShop.items);
-                            for (var itemId in listItemId) {
-                              updatedItems.remove(itemId);
-                            }
-
-                            if (updatedItems.isEmpty) {
-                              // Nếu không còn sản phẩm nào, xóa shop khỏi giỏ hàng
-                              final updatedShops =
-                                  List<CartShop>.from(cartState.cart.shops);
-                              updatedShops
-                                  .removeWhere((shop) => shop.shopId == shopId);
-                              final newCart =
-                                  cartState.cart.copyWith(shops: updatedShops);
-                              context
-                                  .read<CartBloc>()
-                                  .add(UpdateCartEvent(newCart));
-                            } else {
-                              // Cập nhật lại shop với các sản phẩm còn lại
-                              final updatedShop =
-                                  cartShop.copyWith(items: updatedItems);
-                              final updatedShops =
-                                  List<CartShop>.from(cartState.cart.shops);
-                              final shopIndex = updatedShops
-                                  .indexWhere((shop) => shop.shopId == shopId);
-                              if (shopIndex != -1) {
-                                updatedShops[shopIndex] = updatedShop;
-                              }
-                              final newCart =
-                                  cartState.cart.copyWith(shops: updatedShops);
-                              context
-                                  .read<CartBloc>()
-                                  .add(UpdateCartEvent(newCart));
-                            }
-
-                            // Chuyển đến màn hình thành công
-                            Navigator.pushNamed(
-                                context, OrderSuccessScreen.routeName);
+                          if (!product.shippingMethods.any(
+                            (method) =>
+                                method.isEnabled &&
+                                method.name == shipMethod[shopId]?.name,
+                          )) {
+                            isValidShippingMethod = false;
+                            break;
                           }
-                        });
+                        }
                       }
+
+                      if (!isValidShippingMethod) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                                'Phương thức vận chuyển không hợp lệ cho một số sản phẩm'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final now = DateTime.now();
+                      final estimatedDays =
+                          shipMethod[shopId]?.estimatedDeliveryDays ?? 3;
+                      final estimatedDeliveryDate =
+                          now.add(Duration(days: estimatedDays));
+
+                      // Tạo đơn hàng mới
+                      orders.add(Order(
+                        id: '', // ID sẽ được Firestore tự động tạo
+                        item: items,
+                        shopId: shopId,
+                        userId: authState.user.uid,
+                        createdAt: now,
+                        receiveAdress: receiverAddress,
+                        totalProductPrice: totalProductPrice,
+                        totalShipFee: totalShipPrice,
+                        totalPrice: totalProductPrice + totalShipPrice,
+                        estimatedDeliveryDate: estimatedDeliveryDate,
+                        shipMethod: shipMethod[shopId]!,
+                      ));
+
+                      // Gửi event tạo đơn hàng
+
+                      // Xóa sản phẩm khỏi giỏ hàng
+                      final updatedItems =
+                          Map<String, CartItem>.from(cartShop.items);
+                      for (var itemId in listItemId) {
+                        updatedItems.remove(itemId);
+                      }
+                      if (updatedItems.isEmpty) {
+                        // Nếu không còn sản phẩm nào, xóa shop khỏi giỏ hàng
+                        final updatedShops = List<CartShop>.from(cart.shops);
+                        updatedShops
+                            .removeWhere((shop) => shop.shopId == shopId);
+
+                        cart = cart.copyWith(shops: updatedShops);
+                      } else {
+                        // Cập nhật lại shop với các sản phẩm còn lại
+                        final updatedShop =
+                            cartShop.copyWith(items: updatedItems);
+                        final updatedShops = List<CartShop>.from(cart.shops);
+                        final shopIndex = updatedShops
+                            .indexWhere((shop) => shop.shopId == shopId);
+                        if (shopIndex != -1) {
+                          updatedShops[shopIndex] = updatedShop;
+                        }
+                        cart = cart.copyWith(shops: updatedShops);
+                      }
+
+                      _handleOrderCreated(cart, orders);
                     }
                   }
                 }
@@ -861,5 +872,18 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
       // Tính toán lại phí vận chuyển
       totalShipPrice = calculateTotalShippingFee();
     });
+  }
+
+  void _handleOrderCreated(Cart newCart, List<Order> orders) {
+    setState(() {
+      _completedOrders++;
+    });
+
+    // Chỉ chuyển hướng khi tất cả các đơn hàng đã được tạo
+    if (_completedOrders == listShopId.length) {
+      context.read<CartBloc>().add(UpdateCartEvent(newCart));
+      context.read<OrderBloc>().add(CreateOrder(orders));
+      Navigator.of(context).pushReplacementNamed(OrderSuccessScreen.routeName);
+    }
   }
 }

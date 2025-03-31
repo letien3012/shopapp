@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:luanvan/blocs/auth/auth_bloc.dart';
-import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_event.dart';
 import 'package:luanvan/blocs/list_user/list_user_state.dart';
@@ -18,6 +16,7 @@ import 'package:luanvan/models/order.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/shop/order_manager/user_order_item.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class OrderShopScreen extends StatefulWidget {
   static const String routeName = 'order_shop_screen';
@@ -34,6 +33,8 @@ class _OrderShopScreenState extends State<OrderShopScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late ScrollController _scrollController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   List<String> listUserId = [];
   List<String> listProductId = [];
   String? selectedShipMethodPending;
@@ -59,6 +60,11 @@ class _OrderShopScreenState extends State<OrderShopScreen>
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
     _scrollController = ScrollController();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
     _loadOrders();
 
     _tabController.addListener(() {
@@ -100,13 +106,91 @@ class _OrderShopScreenState extends State<OrderShopScreen>
   }
 
   void _loadOrders() {
-    final authState = context.read<AuthBloc>().state;
-    if (authState is AuthAuthenticated) {
-      final shopState = context.read<ShopBloc>().state;
-      if (shopState is ShopLoaded) {
-        context
-            .read<OrderBloc>()
-            .add(FetchOrdersByShopId(shopState.shop.shopId!));
+    final shopState = context.read<ShopBloc>().state;
+    if (shopState is ShopLoaded) {
+      context
+          .read<OrderBloc>()
+          .add(FetchOrdersByShopId(shopState.shop.shopId!));
+    }
+  }
+
+  Future<bool> _showConfirmAgreeProductDialog() async {
+    final confirmed = await ConfirmDialog(
+      title: "Xác nhận đơn hàng?",
+      cancelText: "Không",
+      confirmText: "Đồng ý",
+    ).show(context);
+    return confirmed;
+  }
+
+  void handleOrderConfirmation(String orderId) async {
+    final confirmed = await _showConfirmAgreeProductDialog();
+    if (confirmed) {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      try {
+        // Update order status to processing
+        context.read<OrderBloc>().add(
+              UpdateOrderStatus(
+                orderId,
+                OrderStatus.processing,
+                note: "Đơn hàng đã được xác nhận",
+              ),
+            );
+
+        // Wait for the status update to complete
+        await for (final state in context.read<OrderBloc>().stream) {
+          if (state is OrderDetailLoaded) {
+            // Reload orders after successful update
+            _loadOrders();
+
+            // Show success message
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Đơn hàng đã được xác nhận thành công'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+            break;
+          } else if (state is OrderError) {
+            // Show error message
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Lỗi xác nhận đơn hàng: ${state.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            break;
+          }
+        }
+      } catch (e) {
+        // Show error message
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi xác nhận đơn hàng: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        // Hide loading indicator
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
       }
     }
   }
@@ -115,6 +199,7 @@ class _OrderShopScreenState extends State<OrderShopScreen>
   void dispose() {
     _tabController.dispose();
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -130,18 +215,61 @@ class _OrderShopScreenState extends State<OrderShopScreen>
         ),
         title: const Text(
           'Đơn hàng',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.black, fontSize: 18),
         ),
         actions: [
-          SvgPicture.asset(
-            IconHelper.chatIcon,
-            color: Colors.brown,
-            height: 30,
-            width: 30,
+          Container(
+            width: 160,
+            height: 36,
+            margin: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Center(
+              child: TextField(
+                controller: _searchController,
+                textAlignVertical: TextAlignVertical.center,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: 'Tìm kiếm...',
+                  hintStyle: const TextStyle(fontSize: 13),
+                  prefixIcon:
+                      const Icon(Icons.search, color: Colors.grey, size: 20),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.clear,
+                              color: Colors.grey, size: 20),
+                          onPressed: () {
+                            setState(() {
+                              _searchController.clear();
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                ),
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
           ),
-          const SizedBox(
-            width: 10,
-          )
+          const SizedBox(width: 8),
+          IconButton(
+            icon: SvgPicture.asset(
+              IconHelper.chatIcon,
+              color: Colors.brown,
+              height: 24,
+              width: 24,
+            ),
+            onPressed: () {
+              // Handle chat button press
+            },
+          ),
+          const SizedBox(width: 4),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -253,6 +381,86 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                   return matchesStatus && matchesShipMethod;
                 }).toList();
 
+                // Apply search if query exists
+                if (_searchQuery.isNotEmpty) {
+                  final query = _searchQuery.toLowerCase();
+                  return BlocBuilder<ListUserBloc, ListUserState>(
+                    builder: (context, listUserState) {
+                      if (listUserState is ListUserOrderedLoaded) {
+                        return BlocBuilder<ProductOrderBloc, ProductOrderState>(
+                          builder: (context, productState) {
+                            if (productState is ProductOrderListLoaded) {
+                              filteredOrders = filteredOrders.where((order) {
+                                // Search by order ID
+                                if (order.id.toLowerCase().contains(query)) {
+                                  return true;
+                                }
+
+                                // Search by user name
+                                final user = listUserState.users.firstWhere(
+                                  (user) => user.id == order.userId,
+                                  orElse: () => listUserState.users.first,
+                                );
+                                final userName = user.name?.toLowerCase() ?? '';
+                                if (userName.contains(query)) {
+                                  return true;
+                                }
+
+                                // Search by product name
+                                final orderProducts = order.item.map((item) {
+                                  return productState.products.firstWhere(
+                                    (product) => product.id == item.productId,
+                                    orElse: () => productState.products.first,
+                                  );
+                                }).toList();
+
+                                return orderProducts.any((product) =>
+                                    product.name.toLowerCase().contains(query));
+                              }).toList();
+
+                              if (filteredOrders.isEmpty) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Image.asset(
+                                        ImageHelper.no_order,
+                                        width: 300,
+                                        height: 300,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Không tìm thấy đơn hàng nào',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+
+                              return ListView.builder(
+                                padding: EdgeInsets.zero,
+                                itemCount: filteredOrders.length,
+                                itemBuilder: (context, index) {
+                                  return UserOrderItem(
+                                    order: filteredOrders[index],
+                                    onConfirmOrder: handleOrderConfirmation,
+                                  );
+                                },
+                              );
+                            }
+                            return const SizedBox();
+                          },
+                        );
+                      }
+                      return const SizedBox();
+                    },
+                  );
+                }
+
                 // Sắp xếp đơn hàng theo ngày
                 if (status == 'Chờ lấy hàng') {
                   filteredOrders.sort((a, b) {
@@ -304,6 +512,7 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                                   }
                                   return UserOrderItem(
                                     order: filteredOrders[index],
+                                    onConfirmOrder: handleOrderConfirmation,
                                   );
                                 });
                           }

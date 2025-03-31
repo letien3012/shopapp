@@ -11,6 +11,11 @@ class ListShopLoaded extends ListShopState {
   ListShopLoaded(this.shops);
 }
 
+class ListShopSearchLoaded extends ListShopState {
+  final List<Shop> shops;
+  ListShopSearchLoaded(this.shops);
+}
+
 class ListShopError extends ListShopState {
   final String message;
   ListShopError(this.message);

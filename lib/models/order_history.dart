@@ -1,5 +1,6 @@
 // Class để lưu lịch sử trạng thái đơn hàng
 import 'package:luanvan/models/order.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OrderStatusHistory {
   OrderStatus status; // Trạng thái
@@ -19,7 +20,7 @@ class OrderStatusHistory {
         (e) => e.toString() == 'OrderStatus.${map['status']}',
         orElse: () => OrderStatus.pending,
       ),
-      timestamp: DateTime.parse(map['timestamp']),
+      timestamp: (map['timestamp'] as Timestamp).toDate(),
       note: map['note'],
     );
   }
@@ -28,7 +29,7 @@ class OrderStatusHistory {
   Map<String, dynamic> toMap() {
     return {
       'status': status.toString().split('.').last,
-      'timestamp': timestamp.toIso8601String(),
+      'timestamp': Timestamp.fromDate(timestamp),
       'note': note,
     };
   }

@@ -176,15 +176,19 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
               "Điện thoại",
               trailingText: _maskPhoneNumber(userState.user.phone ?? ""),
               showArrow: true,
-              onTap: () =>
-                  Navigator.of(context).pushNamed(ChangePhone.routeName),
+              onTap: () => Navigator.of(context).pushNamed(
+                ChangePhone.routeName,
+                arguments: userState.user.phone,
+              ),
             ),
             _buildAccountItem(
               "Email",
               trailingText: _maskEmail(userState.user.email ?? ""),
               showArrow: true,
-              onTap: () =>
-                  Navigator.of(context).pushNamed(ChangeEmail.routeName),
+              onTap: () => Navigator.of(context).pushNamed(
+                ChangeEmail.routeName,
+                arguments: userState.user.email,
+              ),
             ),
             _buildAccountItem("Đổi mật khẩu", showArrow: true),
             _buildAccountItem("Xác thực bằng vân tay", showArrow: true),

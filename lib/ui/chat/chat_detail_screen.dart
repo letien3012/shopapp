@@ -9,7 +9,6 @@ import 'package:luanvan/blocs/chat/chat_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/models/chat_room.dart';
 import 'package:luanvan/models/shop.dart';
 
 class ChatDetailScreen extends StatefulWidget {

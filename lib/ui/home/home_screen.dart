@@ -316,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const Expanded(
                               child: Text(
-                                "tiền đẹp trai",
+                                "Tìm kiếm sản phẩm",
                                 style: TextStyle(color: Colors.brown),
                                 textAlign: TextAlign.start,
                                 maxLines: 1,

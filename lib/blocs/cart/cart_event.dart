@@ -71,14 +71,22 @@ class FetchCartEventUserId extends CartEvent {
 }
 
 class UpdateProductVariantEvent extends CartEvent {
+  final String userId;
+  final String itemId;
   final String productId;
+  final String shopId;
   final String? variant1Id;
+  final int quantity;
   final String? option1Id;
   final String? variant2Id;
   final String? option2Id;
 
   UpdateProductVariantEvent(
-    this.productId, {
+    this.productId,
+    this.shopId,
+    this.userId,
+    this.itemId,
+    this.quantity, {
     this.variant1Id,
     this.option1Id,
     this.variant2Id,

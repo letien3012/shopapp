@@ -7,6 +7,7 @@ import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/models/cart.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/cart/product_item.dart';
 
 class ShopItemWidget extends StatelessWidget {
@@ -73,12 +74,18 @@ class ShopItemWidget extends StatelessWidget {
               if (listShopState is ListShopLoading) {
                 return _buildShopSkeleton();
               } else if (listShopState is ListShopLoaded) {
-                final shop = listShopState.shops.firstWhere(
-                  (element) => element.shopId == shopId,
-                );
+                Shop? shop;
+                try {
+                  shop = listShopState.shops.firstWhere(
+                    (element) => element.shopId == shopId,
+                  );
+                } catch (e) {
+                  return const SizedBox
+                      .shrink(); // Don't display if shop doesn't exist
+                }
                 if (shop == null) {
                   return const SizedBox
-                      .shrink(); // Không hiển thị nếu shop không tồn tại
+                      .shrink(); // Don't display if shop doesn't exist
                 }
 
                 // Đảm bảo checkedProduct[shopId] được khởi tạo đúng

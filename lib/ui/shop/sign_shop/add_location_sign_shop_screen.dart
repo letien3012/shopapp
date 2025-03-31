@@ -4,15 +4,17 @@ import 'package:luanvan/models/address.dart';
 import 'package:luanvan/ui/checkout/add_addressline_screen.dart.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
 
-class AddLocationShopScreen extends StatefulWidget {
-  const AddLocationShopScreen({super.key});
-  static String routeName = "add_location_shop_screen";
+class AddLocationShopSignShopScreen extends StatefulWidget {
+  const AddLocationShopSignShopScreen({super.key});
+  static String routeName = "add_location_shop_sign_shop_screen";
 
   @override
-  State<AddLocationShopScreen> createState() => _AddLocationShopScreenState();
+  State<AddLocationShopSignShopScreen> createState() =>
+      _AddLocationShopSignShopScreenState();
 }
 
-class _AddLocationShopScreenState extends State<AddLocationShopScreen> {
+class _AddLocationShopSignShopScreenState
+    extends State<AddLocationShopSignShopScreen> {
   late Address address = Address(
     addressLine: '',
     city: '',
@@ -37,15 +39,22 @@ class _AddLocationShopScreenState extends State<AddLocationShopScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController.text = address.receiverName;
-    _phoneController.text = address.receiverPhone;
-    _selectedLocation = address.city.isNotEmpty
-        ? "${address.ward}, ${address.district}, ${address.city}"
-        : 'Tỉnh/Thành phố, Quận/Huyện, Phường/Xã';
-    _addressLine = address.addressLine.isNotEmpty
-        ? address.addressLine
-        : "Tên đường, Tòa nhà, Số nhà";
-    isAddDefault = address.isDefault;
+    Future.microtask(() {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null) {
+        address = args as Address;
+      }
+      _nameController.text = address.receiverName;
+      _phoneController.text = address.receiverPhone;
+      _selectedLocation = address.city.isNotEmpty
+          ? "${address.ward}, ${address.district}, ${address.city}"
+          : 'Tỉnh/Thành phố, Quận/Huyện, Phường/Xã';
+      _addressLine = address.addressLine.isNotEmpty
+          ? address.addressLine
+          : "Tên đường, Tòa nhà, Số nhà";
+      isAddDefault = address.isDefault;
+    });
+
     _focusName.addListener(_checkFormCompletion);
     _focusPhone.addListener(_checkFormCompletion);
     _nameController.addListener(_checkFormCompletion);
@@ -74,8 +83,6 @@ class _AddLocationShopScreenState extends State<AddLocationShopScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Address;
-    address = args;
   }
 
   void _submitForm() {

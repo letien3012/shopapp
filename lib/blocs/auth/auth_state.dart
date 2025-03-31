@@ -31,9 +31,9 @@ class AuthEmailVerified extends AuthState {}
 
 class AuthPasswordResetEmailSent extends AuthState {}
 
-class PhoneNumberExists extends AuthState {}
+// class PhoneNumberExists extends AuthState {}
 
-class PhoneNumberAvailable extends AuthState {}
+// class PhoneNumberAvailable extends AuthState {}
 
 class EmailExists extends AuthState {}
 

@@ -12,8 +12,6 @@ import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/edit_location_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/location/add_location_shop_screen.dart';
-import 'package:luanvan/ui/shop/shop_manager/location/edit_location_shop_screen.dart';
-import 'package:luanvan/ui/shop/sign_shop/add_location_sign_shop_screen.dart';
 
 class LocationShopScreen extends StatefulWidget {
   const LocationShopScreen({super.key});
@@ -105,7 +103,7 @@ class _LocationShopScreenState extends State<LocationShopScreen> {
                         onTap: () {
                           Navigator.pushNamed(
                             context,
-                            EditLocationShopScreen.routeName,
+                            EditLocationScreen.routeName,
                             arguments: {"index": index, "shop": shop},
                           );
                         },
@@ -211,7 +209,6 @@ class _LocationShopScreenState extends State<LocationShopScreen> {
                     onTap: () {
                       Navigator.of(context).pushNamed(
                         AddLocationShopScreen.routeName,
-                        arguments: shop,
                       );
                     },
                     child: Container(

@@ -35,7 +35,6 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   List<String> shopIds = [];
-  ChatFilter _selectedFilter = ChatFilter.all;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -108,7 +107,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.only(top: 80, bottom: 20),
                           child: Column(
                             children: [
-                              _buildFilterDropdown(),
                               _buildSearchBar(context),
                               if (chatState is ChatRoomLoading)
                                 const Center(child: CircularProgressIndicator())
@@ -118,7 +116,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                     : _buildFilteredChatRoomList(
                                         context,
                                         chatState.chatRooms,
-                                        _selectedFilter,
                                       )
                               else if (chatState is ChatRoomError)
                                 Center(child: Text(chatState.message))
@@ -136,47 +133,6 @@ class _ChatScreenState extends State<ChatScreen> {
           return const Center(
               child: Text('Vui lòng đăng nhập để sử dụng chat'));
         },
-      ),
-    );
-  }
-
-  Widget _buildFilterDropdown() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Row(
-        children: [
-          PopupMenuButton<ChatFilter>(
-            initialValue: _selectedFilter,
-            onSelected: (ChatFilter filter) {
-              setState(() {
-                _selectedFilter = filter;
-              });
-            },
-            color: Colors.white,
-            itemBuilder: (BuildContext context) => ChatFilter.values
-                .map((filter) => PopupMenuItem<ChatFilter>(
-                      value: filter,
-                      child: Text(filter.label),
-                    ))
-                .toList(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(_selectedFilter.label),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_drop_down, size: 20),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -271,22 +227,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildFilteredChatRoomList(
-      BuildContext context, List<ChatRoom> chatRooms, ChatFilter filter) {
+      BuildContext context, List<ChatRoom> chatRooms) {
     if (chatRooms.isEmpty) {
       return const Center(child: Text('No chat rooms available'));
     }
 
     var filteredRooms = chatRooms;
-
-    // Apply filter
-    if (filter == ChatFilter.unread) {
-      filteredRooms =
-          filteredRooms.where((room) => room.unreadCountBuyer > 0).toList();
-    } else if (filter == ChatFilter.unanswered) {
-      filteredRooms = filteredRooms
-          .where((room) => room.lastMessageSenderId == room.shopId)
-          .toList();
-    }
 
     // Apply search
     if (_searchQuery.isNotEmpty) {
@@ -294,12 +240,15 @@ class _ChatScreenState extends State<ChatScreen> {
         builder: (context, listShopState) {
           if (listShopState is ListShopLoaded) {
             filteredRooms = filteredRooms.where((room) {
-              final shop = listShopState.shops.firstWhere(
-                (shop) => shop.shopId == room.shopId,
-                orElse: () => listShopState.shops.first,
-              );
-              final shopName = shop.name.toLowerCase();
-              return shopName.contains(_searchQuery.toLowerCase());
+              try {
+                final shop = listShopState.shops.firstWhere(
+                  (shop) => shop.shopId == room.shopId,
+                );
+                final shopName = shop.name.toLowerCase();
+                return shopName.contains(_searchQuery.toLowerCase());
+              } catch (e) {
+                return false; // Skip rooms where shop is not found
+              }
             }).toList();
           }
           return _buildChatRoomList(context, filteredRooms);
@@ -324,114 +273,120 @@ class _ChatScreenState extends State<ChatScreen> {
                   .read<ChatBloc>()
                   .add(LoadMessagesEvent(chatRooms[index].chatRoomId));
               final chatRoom = chatRooms[index];
-              final shop = listShopState.shops
-                  .firstWhere((shop) => shop.shopId == chatRoom.shopId);
-              return Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(width: 1, color: Colors.grey[300]!),
+              try {
+                final shop = listShopState.shops.firstWhere(
+                  (shop) => shop.shopId == chatRoom.shopId,
+                );
+                return Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(width: 1, color: Colors.grey[300]!),
+                    ),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pushNamed(
-                      ChatDetailScreen.routeName,
-                      arguments: chatRoom.chatRoomId,
-                    );
-                  },
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ClipOval(
-                        child: Image.network(
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          shop.avatarUrl ?? '',
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Text(
-                            "Lỗi",
-                            style: TextStyle(fontSize: 15),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pushNamed(
+                        ChatDetailScreen.routeName,
+                        arguments: chatRoom.chatRoomId,
+                      );
+                    },
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ClipOval(
+                          child: Image.network(
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            shop.avatarUrl ?? '',
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Text(
+                              "Lỗi",
+                              style: TextStyle(fontSize: 15),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: SizedBox(
-                          height: 50,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    shop.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      shop.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    chatRoom.createdAt
-                                        .toString()
-                                        .substring(11, 16),
-                                    maxLines: 1,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
+                                    Text(
+                                      chatRoom.createdAt
+                                          .toString()
+                                          .substring(11, 16),
+                                      maxLines: 1,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w400,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              BlocSelector<ChatBloc, ChatState, String>(
-                                selector: (state) {
-                                  if (state is MessagesLoaded) {
-                                    return state.messages.last.content;
-                                  }
-                                  return "";
-                                },
-                                builder:
-                                    (BuildContext context, String lastMessage) {
-                                  return Text(
-                                    lastMessage,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  );
-                                },
-                              ),
-                            ],
+                                  ],
+                                ),
+                                BlocSelector<ChatBloc, ChatState, String>(
+                                  selector: (state) {
+                                    if (state is MessagesLoaded) {
+                                      return state.messages.last.content;
+                                    }
+                                    return "";
+                                  },
+                                  builder: (BuildContext context,
+                                      String lastMessage) {
+                                    return Text(
+                                      lastMessage,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      if (chatRoom.unreadCountBuyer > 0)
-                        Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
+                        if (chatRoom.unreadCountBuyer > 0)
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '${chatRoom.unreadCountBuyer}',
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 12),
+                            ),
                           ),
-                          child: Text(
-                            '${chatRoom.unreadCountBuyer}',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 12),
-                          ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
+                );
+              } catch (e) {
+                return const SizedBox
+                    .shrink(); // Skip items where shop is not found
+              }
             },
           );
         }

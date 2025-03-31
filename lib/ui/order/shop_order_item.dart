@@ -4,12 +4,22 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
+import 'package:luanvan/blocs/order/order_bloc.dart';
+import 'package:luanvan/blocs/order/order_event.dart';
+import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/user/user_bloc.dart';
+import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/item/add_review_screen.dart';
 import 'package:luanvan/ui/order/order_detail_screen.dart';
 import 'package:luanvan/ui/order/product_order_widget.dart';
+
+import '../../blocs/shop/shop_state.dart';
 
 class ShopOrderItem extends StatefulWidget {
   Order order;
@@ -23,6 +33,14 @@ class ShopOrderItem extends StatefulWidget {
 
 class _ShopOrderItemState extends State<ShopOrderItem> {
   bool _showAllProducts = false;
+  String? _selectedReason;
+  final List<String> _returnReasons = [
+    'Sản phẩm bị lỗi/hỏng',
+    'Sản phẩm không đúng mô tả',
+    'Nhận sai sản phẩm',
+    'Không vừa ý với sản phẩm',
+    'Lý do khác'
+  ];
 
   @override
   void initState() {
@@ -76,6 +94,129 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
     return formatter.format(price);
   }
 
+  Shop? _findShop(List<Shop> shops) {
+    try {
+      return shops.firstWhere(
+        (element) => element.shopId == widget.order.shopId,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _showReturnDialog() async {
+    _selectedReason = null;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Chọn lý do trả hàng'),
+              content: Container(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: _returnReasons.map((reason) {
+                    return RadioListTile<String>(
+                      title: Text(reason),
+                      value: reason,
+                      groupValue: _selectedReason,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedReason = value;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Hủy'),
+                ),
+                TextButton(
+                  onPressed: _selectedReason == null
+                      ? null
+                      : () async {
+                          context.read<OrderBloc>().add(
+                                UpdateOrderStatus(
+                                  widget.order.id,
+                                  OrderStatus.returned,
+                                  note: _selectedReason,
+                                ),
+                              );
+                          try {
+                            await for (final state
+                                in context.read<OrderBloc>().stream) {
+                              if (state is OrderDetailLoaded) {
+                                final userState =
+                                    context.read<UserBloc>().state;
+                                if (userState is UserLoaded) {
+                                  context.read<OrderBloc>().add(
+                                      FetchOrdersByUserId(userState.user.id));
+                                }
+
+                                // Show success message
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Yêu cầu trả hàng thành công'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                                break;
+                              } else if (state is OrderError) {
+                                // Show error message
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'Lỗi trả hàng: ${state.message}'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                                break;
+                              }
+                            }
+                          } catch (e) {
+                            // Show error message
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Lỗi xác nhận đơn hàng: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            // Hide loading indicator
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          }
+                        },
+                  child:
+                      Text('Xác nhận', style: TextStyle(color: Colors.white)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.brown,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ListShopBloc, ListShopState>(
@@ -83,9 +224,10 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
         if (listShopState is ListShopLoading) {
           return _buildShopSkeleton();
         } else if (listShopState is ListShopLoaded) {
-          final shop = listShopState.shops.firstWhere(
-            (element) => element.shopId == widget.order.shopId,
-          );
+          final shop = _findShop(listShopState.shops);
+          if (shop == null) {
+            return const SizedBox.shrink();
+          }
 
           return GestureDetector(
             onTap: () {
@@ -197,6 +339,72 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
                                 ],
                               ),
                             ),
+                            (widget.order.status == OrderStatus.delivered)
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Container(
+                                        height: 60,
+                                        alignment: Alignment.centerRight,
+                                        child: Material(
+                                          color: Colors.brown,
+                                          child: InkWell(
+                                            onTap: _showReturnDialog,
+                                            child: Container(
+                                              height: 40,
+                                              width: 120,
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'Trả hàng',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
+                                      Container(
+                                        height: 60,
+                                        alignment: Alignment.centerRight,
+                                        child: Material(
+                                          color: Colors.white,
+                                          child: InkWell(
+                                            onTap: () {
+                                              Navigator.pushNamed(context,
+                                                  AddReviewScreen.routeName,
+                                                  arguments: widget.order);
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              width: 120,
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'Đánh giá',
+                                                style: TextStyle(
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : SizedBox.shrink(),
                           ],
                         );
                       } else if (productOrderState is ProductOrderError) {

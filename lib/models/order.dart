@@ -2,6 +2,7 @@ import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/order_history.dart';
 import 'package:luanvan/models/shipping_method.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum OrderStatus {
   pending, // Đang chờ xử lý
@@ -10,6 +11,7 @@ enum OrderStatus {
   delivered, // Đã giao hàng
   cancelled, // Đã hủy
   returned, // Đã trả hàng
+  reviewed, // Đã đánh giá
 }
 
 // Enum để định nghĩa phương thức thanh toán
@@ -30,6 +32,7 @@ class Order {
   DateTime createdAt; // Thời gian tạo đơn hàng
   DateTime? updateAt; // Thời gian cập nhật đơn hàng
   Address receiveAdress; // Địa chỉ nhận hàng
+  Address? pickUpAdress; // Địa chỉ lấy hàng
   PaymentMethod paymentMethod; // Phương thức thanh toán
   double totalProductPrice; // Tổng tiền hàng
   double totalShipFee; // Tổng phí vận chuyển
@@ -67,52 +70,57 @@ class Order {
     this.discountCode,
     this.note,
     this.isRated = false,
+    this.pickUpAdress,
   });
 
   // Chuyển từ Map sang Order
   factory Order.fromMap(Map<String, dynamic> map) {
     return Order(
-      id: map['id'] ?? '',
-      item: (map['item'] as List<dynamic>?)
-              ?.map((e) => CartItem.fromMap(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-      shopId: map['shopId'] ?? '',
-      userId: map['userId'] ?? '',
+      id: map['id'] as String,
+      item: (map['item'] as List<dynamic>)
+          .map((e) => CartItem.fromMap(e as Map<String, dynamic>))
+          .toList(),
+      shopId: map['shopId'] as String,
+      userId: map['userId'] as String,
       shipMethod:
           ShippingMethod.fromMap(map['shipMethod'] as Map<String, dynamic>),
       status: OrderStatus.values.firstWhere(
         (e) => e.toString() == 'OrderStatus.${map['status']}',
         orElse: () => OrderStatus.pending,
       ),
-      createdAt: DateTime.parse(map['createdAt']),
-      updateAt:
-          map['updateAt'] != null ? DateTime.parse(map['updateAt']) : null,
-      receiveAdress: Address.fromMap(map['receiveAdress'] ?? {}),
       paymentMethod: PaymentMethod.values.firstWhere(
-        (e) => e.toString() == 'PaymentMethod.${map['paymentMethod']}',
+        (e) => e.toString() == map['paymentMethod'],
         orElse: () => PaymentMethod.cod,
       ),
-      totalProductPrice: (map['totalProductPrice'] as num?)?.toDouble() ?? 0.0,
-      totalShipFee: (map['totalShipFee'] as num?)?.toDouble() ?? 0.0,
-      totalPrice: (map['totalPrice'] as num?)?.toDouble() ?? 0.0,
+      totalProductPrice: (map['totalProductPrice'] as num).toDouble(),
+      totalShipFee: (map['totalShipFee'] as num).toDouble(),
+      totalPrice: (map['totalPrice'] as num).toDouble(),
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      updateAt: map['updateAt'] != null
+          ? (map['updateAt'] as Timestamp).toDate()
+          : null,
+      receiveAdress:
+          Address.fromMap(map['receiveAdress'] as Map<String, dynamic>),
+      note: map['note'] as String?,
+      isRated: map['isRated'] as bool? ?? false,
+      pickUpAdress: map['pickUpAddress'] != null
+          ? Address.fromMap(map['pickUpAddress'] as Map<String, dynamic>)
+          : null,
       statusHistory: (map['statusHistory'] as List<dynamic>?)
               ?.map(
                   (e) => OrderStatusHistory.fromMap(e as Map<String, dynamic>))
               .toList() ??
           [],
-      trackingNumber: map['trackingNumber'],
-      shippingCode: map['shippingCode'],
+      trackingNumber: map['trackingNumber'] as String?,
+      shippingCode: map['shippingCode'] as String?,
       estimatedDeliveryDate: map['estimatedDeliveryDate'] != null
-          ? DateTime.parse(map['estimatedDeliveryDate'])
+          ? (map['estimatedDeliveryDate'] as Timestamp).toDate()
           : null,
       actualDeliveryDate: map['actualDeliveryDate'] != null
-          ? DateTime.parse(map['actualDeliveryDate'])
+          ? (map['actualDeliveryDate'] as Timestamp).toDate()
           : null,
       discountAmount: (map['discountAmount'] as num?)?.toDouble() ?? 0.0,
-      discountCode: map['discountCode'] ?? '',
-      note: map['note'] ?? '',
-      isRated: map['isRated'] ?? false,
+      discountCode: map['discountCode'] as String?,
     );
   }
 
@@ -125,22 +133,27 @@ class Order {
       'userId': userId,
       'shipMethod': shipMethod.toMap(),
       'status': status.toString().split('.').last,
-      'createdAt': createdAt.toIso8601String(),
-      'updateAt': updateAt?.toIso8601String(),
-      'receiveAdress': receiveAdress.toMap(),
-      'paymentMethod': paymentMethod.toString().split('.').last,
+      'paymentMethod': paymentMethod.toString(),
       'totalProductPrice': totalProductPrice,
       'totalShipFee': totalShipFee,
       'totalPrice': totalPrice,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updateAt': updateAt != null ? Timestamp.fromDate(updateAt!) : null,
+      'receiveAdress': receiveAdress.toMap(),
+      'note': note,
+      'isRated': isRated,
+      'pickUpAddress': pickUpAdress?.toMap(),
       'statusHistory': statusHistory.map((e) => e.toMap()).toList(),
       'trackingNumber': trackingNumber,
       'shippingCode': shippingCode,
-      'estimatedDeliveryDate': estimatedDeliveryDate?.toIso8601String(),
-      'actualDeliveryDate': actualDeliveryDate?.toIso8601String(),
+      'estimatedDeliveryDate': estimatedDeliveryDate != null
+          ? Timestamp.fromDate(estimatedDeliveryDate!)
+          : null,
+      'actualDeliveryDate': actualDeliveryDate != null
+          ? Timestamp.fromDate(actualDeliveryDate!)
+          : null,
       'discountAmount': discountAmount,
       'discountCode': discountCode,
-      'note': note,
-      'isRated': isRated,
     };
   }
 
@@ -188,6 +201,9 @@ class Order {
       discountCode: json['discountCode'],
       note: json['note'],
       isRated: json['isRated'] ?? false,
+      pickUpAdress: json['pickUpAddress'] != null
+          ? Address.fromMap(json['pickUpAddress'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -216,13 +232,13 @@ class Order {
       'discountCode': discountCode,
       'note': note,
       'isRated': isRated,
+      'pickUpAddress': pickUpAdress?.toMap(),
     };
   }
 
   // Phương thức copyWith để tạo bản sao với các giá trị thay đổi
   Order copyWith({
     String? id,
-    String? productId,
     List<CartItem>? item,
     String? shopId,
     String? userId,
@@ -244,6 +260,7 @@ class Order {
     String? discountCode,
     String? note,
     bool? isRated,
+    Address? pickUpAdress,
   }) {
     return Order(
       id: id ?? this.id,
@@ -269,6 +286,7 @@ class Order {
       discountCode: discountCode ?? this.discountCode,
       note: note ?? this.note,
       isRated: isRated ?? this.isRated,
+      pickUpAdress: pickUpAdress ?? this.pickUpAdress,
     );
   }
 

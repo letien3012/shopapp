@@ -10,13 +10,7 @@ class AddAddresslineScreen extends StatefulWidget {
 
 class _AddAddresslineScreenState extends State<AddAddresslineScreen> {
   final TextEditingController _addressController = TextEditingController();
-  List<String> suggestions = [
-    "Số 447, Ấp Bình Quới 1",
-    "Nhà Trọ Kim Ngan, Ấp Bình Quới 1",
-    "Số 447, Bình Quới 1",
-    "Số 447, Ấp Bình Quới 1",
-    "Số 447, Ấp Bq 1",
-  ];
+  List<String> suggestions = [];
 
   @override
   void dispose() {

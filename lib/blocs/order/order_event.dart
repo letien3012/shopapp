@@ -20,8 +20,8 @@ class FetchOrderById extends OrderEvent {
 }
 
 class CreateOrder extends OrderEvent {
-  final Order order;
-  const CreateOrder(this.order);
+  final List<Order> orders;
+  const CreateOrder(this.orders);
 }
 
 class UpdateOrder extends OrderEvent {

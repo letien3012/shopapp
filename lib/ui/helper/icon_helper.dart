@@ -32,4 +32,7 @@ class IconHelper {
   static const String package_box = "${imagePath}package_box.svg";
   static const String locaiton_pin = "${imagePath}location_pin.svg";
   static const String dollar = "${imagePath}dollar.svg";
+  static const String chat_round_dots = "${imagePath}chat-round-dots.svg";
+  static const String chat_round_dots_filled =
+      "${imagePath}chat-round-dots-filled.svg";
 }

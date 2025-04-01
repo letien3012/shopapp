@@ -56,6 +56,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       shopId: '',
       isViolated: false,
       isHidden: false,
+      isDeleted: false,
       hasVariantImages: false,
       hasWeightVariant: false,
       shippingMethods: [],

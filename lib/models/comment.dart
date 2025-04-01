@@ -8,13 +8,14 @@ class Comment {
   final int rating;
   final List<String> images;
   final DateTime createdAt;
-  final String? replyContent;
-  final DateTime? replyAt;
+  String? replyContent;
+  DateTime? replyAt;
   final String? shopId;
   final bool isVerified;
-  final CommentVariant? variant;
+  final String? variant;
   final String orderId;
   final String? videoUrl;
+  final String? imageProduct;
 
   Comment({
     required this.id,
@@ -31,6 +32,7 @@ class Comment {
     this.variant,
     required this.orderId,
     this.videoUrl,
+    this.imageProduct,
   });
 
   // Tạo Comment từ Map (JSON)
@@ -49,11 +51,10 @@ class Comment {
           : null,
       shopId: map['shopId'] as String?,
       isVerified: map['isVerified'] as bool? ?? false,
-      variant: map['variant'] != null
-          ? CommentVariant.fromMap(map['variant'] as Map<String, dynamic>)
-          : null,
+      variant: map['variant'] as String?,
       orderId: map['orderId'] as String,
       videoUrl: map['videoUrl'] as String?,
+      imageProduct: map['imageProduct'] as String?,
     );
   }
 
@@ -71,9 +72,10 @@ class Comment {
       'replyAt': replyAt != null ? Timestamp.fromDate(replyAt!) : null,
       'shopId': shopId,
       'isVerified': isVerified,
-      'variant': variant?.toMap(),
+      'variant': variant,
       'orderId': orderId,
       'videoUrl': videoUrl,
+      'imageProduct': imageProduct,
     };
   }
 
@@ -90,9 +92,10 @@ class Comment {
     DateTime? replyAt,
     String? shopId,
     bool? isVerified,
-    CommentVariant? variant,
+    String? variant,
     String? orderId,
     String? videoUrl,
+    String? imageProduct,
   }) {
     return Comment(
       id: id ?? this.id,
@@ -109,6 +112,7 @@ class Comment {
       variant: variant ?? this.variant,
       orderId: orderId ?? this.orderId,
       videoUrl: videoUrl ?? this.videoUrl,
+      imageProduct: imageProduct ?? this.imageProduct,
     );
   }
 
@@ -128,7 +132,8 @@ class Comment {
         other.isVerified == isVerified &&
         other.variant == variant &&
         other.orderId == orderId &&
-        other.videoUrl == videoUrl;
+        other.videoUrl == videoUrl &&
+        other.imageProduct == imageProduct;
   }
 
   @override
@@ -144,12 +149,13 @@ class Comment {
         isVerified.hashCode ^
         variant.hashCode ^
         orderId.hashCode ^
-        videoUrl.hashCode;
+        videoUrl.hashCode ^
+        imageProduct.hashCode;
   }
 
   @override
   String toString() {
-    return 'Comment(id: $id, userId: $userId,  rating: $rating, content: $content)';
+    return 'Comment(id: $id, userId: $userId, rating: $rating, content: $content)';
   }
 
   factory Comment.fromFirestore(DocumentSnapshot doc) {
@@ -172,11 +178,10 @@ class Comment {
           : null,
       shopId: data['shopId'] as String?,
       isVerified: data['isVerified'] as bool? ?? false,
-      variant: data['variant'] != null
-          ? CommentVariant.fromMap(data['variant'] as Map<String, dynamic>)
-          : null,
+      variant: data['variant'] as String?,
       orderId: data['orderId'] as String? ?? '',
       videoUrl: data['videoUrl'] as String?,
+      imageProduct: data['imageProduct'] as String?,
     );
   }
 }

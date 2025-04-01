@@ -4,22 +4,26 @@ class ProductOption {
   String id;
   String name;
   String? imageUrl;
+  int optionIndex;
 
   ProductOption({
     required this.id,
     required this.name,
     this.imageUrl,
+    this.optionIndex = 0,
   });
 
   ProductOption copyWith({
     String? id,
     String? name,
     String? imageUrl,
+    int? optionIndex,
   }) {
     return ProductOption(
       id: id ?? this.id,
       name: name ?? this.name,
       imageUrl: imageUrl ?? this.imageUrl,
+      optionIndex: optionIndex ?? this.optionIndex,
     );
   }
 
@@ -28,6 +32,7 @@ class ProductOption {
       'id': id,
       'name': name,
       'imageUrl': imageUrl,
+      'optionIndex': optionIndex,
     };
   }
 
@@ -36,6 +41,7 @@ class ProductOption {
       id: map['id'] as String? ?? '',
       name: map['name'] as String,
       imageUrl: map['imageUrl'] as String?,
+      optionIndex: map['optionIndex'] as int? ?? 0,
     );
   }
 
@@ -46,6 +52,6 @@ class ProductOption {
 
   @override
   String toString() {
-    return 'ProductOption(id: $id, name: $name, imageUrl: $imageUrl)';
+    return 'ProductOption(id: $id, name: $name, imageUrl: $imageUrl, optionIndex: $optionIndex)';
   }
 }

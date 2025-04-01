@@ -1,10 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CartItem {
-  final String productId;
-  final int quantity;
-  final String? variantId1;
-  final String? optionId1;
-  final String? variantId2;
-  final String? optionId2;
+  String productId;
+  int quantity;
+  String? variantId1;
+  String? optionId1;
+  String? variantId2;
+  String? optionId2;
+  Timestamp updatedAt;
 
   CartItem({
     required this.productId,
@@ -13,7 +16,8 @@ class CartItem {
     this.optionId1,
     this.variantId2,
     this.optionId2,
-  });
+    Timestamp? updatedAt,
+  }) : updatedAt = updatedAt ?? Timestamp.now();
 
   CartItem copyWith({
     String? productId,
@@ -22,6 +26,7 @@ class CartItem {
     String? optionId1,
     String? variantId2,
     String? optionId2,
+    Timestamp? updatedAt,
   }) {
     return CartItem(
       productId: productId ?? this.productId,
@@ -30,6 +35,7 @@ class CartItem {
       optionId1: optionId1 ?? this.optionId1,
       variantId2: variantId2 ?? this.variantId2,
       optionId2: optionId2 ?? this.optionId2,
+      updatedAt: updatedAt ?? Timestamp.now(),
     );
   }
 
@@ -41,6 +47,7 @@ class CartItem {
       'optionId1': optionId1,
       'variantId2': variantId2,
       'optionId2': optionId2,
+      'updatedAt': updatedAt,
     };
   }
 
@@ -52,6 +59,7 @@ class CartItem {
       optionId1: map['optionId1'] as String?,
       variantId2: map['variantId2'] as String?,
       optionId2: map['optionId2'] as String?,
+      updatedAt: map['updatedAt'] as Timestamp? ?? Timestamp.now(),
     );
   }
 }

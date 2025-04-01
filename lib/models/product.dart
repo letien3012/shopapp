@@ -20,12 +20,13 @@ class Product {
   bool isViolated;
   String violationReason;
   bool isHidden;
+  bool isDeleted;
   bool hasVariantImages;
   bool hasWeightVariant;
   double? weight;
   double? price;
   List<ShippingMethod> shippingMethods;
-  List<OptionInfo> optionInfos; // Mảng 1 chiều lưu giá, kho, trọng lượng
+  List<OptionInfo> optionInfos;
   DateTime createdAt;
 
   Product({
@@ -43,12 +44,13 @@ class Product {
     this.isViolated = false,
     this.violationReason = '',
     this.isHidden = false,
+    this.isDeleted = false,
     this.hasVariantImages = false,
     this.hasWeightVariant = false,
     this.weight,
     this.price,
     required this.shippingMethods,
-    this.optionInfos = const [], // Khởi tạo mảng rỗng
+    this.optionInfos = const [],
     DateTime? createdAt,
   }) : this.createdAt = createdAt ?? DateTime.now();
 
@@ -67,6 +69,7 @@ class Product {
     bool? isViolated,
     String? violationReason,
     bool? isHidden,
+    bool? isDeleted,
     bool? hasVariantImages,
     bool? hasWeightVariant,
     double? weight,
@@ -90,6 +93,7 @@ class Product {
       isViolated: isViolated ?? this.isViolated,
       violationReason: violationReason ?? this.violationReason,
       isHidden: isHidden ?? this.isHidden,
+      isDeleted: isDeleted ?? this.isDeleted,
       hasVariantImages: hasVariantImages ?? this.hasVariantImages,
       hasWeightVariant: hasWeightVariant ?? this.hasWeightVariant,
       weight: weight ?? this.weight,
@@ -108,7 +112,6 @@ class Product {
       'quantitySold': quantitySold,
       'description': description,
       'averageRating': averageRating,
-      'variants': variants.map((x) => x.toMap()).toList(),
       'imageUrl': imageUrl,
       'category': category,
       'videoUrl': videoUrl,
@@ -116,6 +119,7 @@ class Product {
       'isViolated': isViolated,
       'violationReason': violationReason,
       'isHidden': isHidden,
+      'isDeleted': isDeleted,
       'hasVariantImages': hasVariantImages,
       'hasWeightVariant': hasWeightVariant,
       'weight': weight,
@@ -146,6 +150,7 @@ class Product {
       isViolated: map['isViolated'] as bool? ?? false,
       violationReason: map['violationReason'] as String? ?? '',
       isHidden: map['isHidden'] as bool? ?? false,
+      isDeleted: map['isDeleted'] as bool? ?? false,
       hasVariantImages: map['hasVariantImages'] as bool? ?? false,
       hasWeightVariant: map['hasWeightVariant'] as bool? ?? false,
       weight: map['weight'] as double?,
@@ -190,6 +195,7 @@ class Product {
       isViolated: data['isViolated'] as bool? ?? false,
       violationReason: data['violationReason'] as String? ?? '',
       isHidden: data['isHidden'] as bool? ?? false,
+      isDeleted: data['isDeleted'] as bool? ?? false,
       hasVariantImages: data['hasVariantImages'] as bool? ?? false,
       hasWeightVariant: data['hasWeightVariant'] as bool? ?? false,
       weight: data['weight'] as double?,
@@ -221,7 +227,7 @@ class Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isViolated: $isViolated, violationReason: $violationReason, isHidden: $isHidden, hasVariantImages: $hasVariantImages, hasWeightVariant: $hasWeightVariant, weight: $weight, price: $price, shippingMethods: $shippingMethods, optionInfos: $optionInfos)';
+    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isViolated: $isViolated, violationReason: $violationReason, isHidden: $isHidden, isDeleted: $isDeleted, hasVariantImages: $hasVariantImages, hasWeightVariant: $hasWeightVariant, weight: $weight, price: $price, shippingMethods: $shippingMethods, optionInfos: $optionInfos)';
   }
 
   double getMaxOptionPrice() {

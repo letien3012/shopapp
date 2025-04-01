@@ -1,25 +1,26 @@
 import 'package:luanvan/models/cart_item.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CartShop {
-  final String shopId;
-  final Map<String, CartItem> items;
-  final DateTime updatedAt;
+  String shopId;
+  Map<String, CartItem> items;
+  Timestamp updatedAt;
 
   CartShop({
     required this.shopId,
     required this.items,
-    DateTime? updatedAt,
-  }) : updatedAt = updatedAt ?? DateTime.now();
+    Timestamp? updatedAt,
+  }) : updatedAt = updatedAt ?? Timestamp.now();
 
   CartShop copyWith({
     String? shopId,
     Map<String, CartItem>? items,
-    DateTime? updatedAt,
+    Timestamp? updatedAt,
   }) {
     return CartShop(
       shopId: shopId ?? this.shopId,
       items: items ?? this.items,
-      updatedAt: updatedAt ?? DateTime.now(),
+      updatedAt: updatedAt ?? Timestamp.now(),
     );
   }
 
@@ -27,7 +28,7 @@ class CartShop {
     return {
       'shopId': shopId,
       'items': items.map((key, value) => MapEntry(key, value.toMap())),
-      'updatedAt': updatedAt.toIso8601String(),
+      'updatedAt': updatedAt,
     };
   }
 
@@ -37,9 +38,7 @@ class CartShop {
       items: (map['items'] as Map<String, dynamic>).map(
         (key, value) => MapEntry(key, CartItem.fromMap(value)),
       ),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.parse(map['updatedAt'] as String)
-          : DateTime.now(),
+      updatedAt: map['updatedAt'] as Timestamp? ?? Timestamp.now(),
     );
   }
 

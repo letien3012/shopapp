@@ -18,17 +18,21 @@ class CommentService {
   }
 
   // Lấy tất cả comment của một user
-  Stream<List<Comment>> getCommentsByUserId(String userId) {
-    return _firestore
+  Future<List<Comment>> getCommentsByUserId(String userId) async {
+    final response = await _firestore
         .collection('comments')
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Comment.fromMap({...doc.data(), 'id': doc.id}))
-          .toList();
-    });
+        .get();
+    return response.docs.map((doc) => Comment.fromMap(doc.data())).toList();
+  }
+
+  // Lấy tất cả comment của một shop
+  Future<List<Comment>> getCommentsByShopId(String shopId) async {
+    final response = await _firestore
+        .collection('comments')
+        .where('shopId', isEqualTo: shopId)
+        .get();
+    return response.docs.map((doc) => Comment.fromMap(doc.data())).toList();
   }
 
   // Lấy trung bình rating của sản phẩm từ collection products
@@ -86,8 +90,8 @@ class CommentService {
     try {
       List<Comment> createdComments = [];
 
-      // Create all comments sequentially
       for (var comment in comments) {
+        print('comment: ${comment.toMap()}');
         try {
           // Create the comment document
           final docRef =

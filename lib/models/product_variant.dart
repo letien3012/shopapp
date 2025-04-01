@@ -5,22 +5,26 @@ class ProductVariant {
   String id;
   String label;
   List<ProductOption> options;
+  int variantIndex;
 
   ProductVariant({
     required this.id,
     required this.label,
     required this.options,
+    this.variantIndex = 0,
   });
 
   ProductVariant copyWith({
     String? id,
     String? label,
     List<ProductOption>? options,
+    int? variantIndex,
   }) {
     return ProductVariant(
       id: id ?? this.id,
       label: label ?? this.label,
       options: options ?? this.options,
+      variantIndex: variantIndex ?? this.variantIndex,
     );
   }
 
@@ -28,7 +32,16 @@ class ProductVariant {
     return <String, dynamic>{
       'id': id,
       'label': label,
-      'options': options.map((x) => x.toMap()).toList(),
+      'options': options.map((option) => option.toMap()).toList(),
+      'variantIndex': variantIndex,
+    };
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return <String, dynamic>{
+      'id': id,
+      'label': label,
+      'variantIndex': variantIndex,
     };
   }
 
@@ -36,13 +49,12 @@ class ProductVariant {
     return ProductVariant(
       id: map['id'] as String? ?? '',
       label: map['label'] as String? ?? '',
-      options: map['options'] != null
-          ? List<ProductOption>.from(
-              (map['options'] as List<dynamic>).map<ProductOption>(
-                (x) => ProductOption.fromMap(x as Map<String, dynamic>),
-              ),
-            )
-          : [],
+      options: (map['options'] as List<dynamic>?)
+              ?.map((option) =>
+                  ProductOption.fromMap(option as Map<String, dynamic>))
+              .toList() ??
+          [],
+      variantIndex: map['variantIndex'] as int? ?? 0,
     );
   }
 
@@ -53,5 +65,5 @@ class ProductVariant {
 
   @override
   String toString() =>
-      'ProductVariant(id: $id, label: $label, options: $options)';
+      'ProductVariant(id: $id, label: $label, options: $options, variantIndex: $variantIndex)';
 }

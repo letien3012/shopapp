@@ -3,6 +3,7 @@ import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/order_history.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luanvan/models/order_item.dart';
 
 enum OrderStatus {
   pending, // Đang chờ xử lý
@@ -24,7 +25,7 @@ enum PaymentMethod {
 
 class Order {
   String id; // ID đơn hàng
-  List<CartItem> item; // Danh sách các mục trong đơn hàng
+  List<OrderItem> item; // Danh sách các mục trong đơn hàng
   String shopId; // ID cửa hàng
   ShippingMethod shipMethod; // Phương thức vận chuyển
   String userId; // ID người dùng (người mua)
@@ -78,7 +79,7 @@ class Order {
     return Order(
       id: map['id'] as String,
       item: (map['item'] as List<dynamic>)
-          .map((e) => CartItem.fromMap(e as Map<String, dynamic>))
+          .map((e) => OrderItem.fromMap(e as Map<String, dynamic>))
           .toList(),
       shopId: map['shopId'] as String,
       userId: map['userId'] as String,
@@ -162,7 +163,7 @@ class Order {
     return Order(
       id: json['id'] ?? '',
       item: (json['item'] as List<dynamic>?)
-              ?.map((e) => CartItem.fromMap(e as Map<String, dynamic>))
+              ?.map((e) => OrderItem.fromMap(e as Map<String, dynamic>))
               .toList() ??
           [],
       shopId: json['shopId'] ?? '',
@@ -239,7 +240,7 @@ class Order {
   // Phương thức copyWith để tạo bản sao với các giá trị thay đổi
   Order copyWith({
     String? id,
-    List<CartItem>? item,
+    List<OrderItem>? item,
     String? shopId,
     String? userId,
     ShippingMethod? shipMethod,

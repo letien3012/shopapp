@@ -12,9 +12,11 @@ import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/list_shop_search/list_shop_search_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_bloc.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
+import 'package:luanvan/blocs/productcomment/product_comment_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/search/search_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
@@ -39,6 +41,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui' as ui;
 
 import 'blocs/comment/comment_bloc.dart';
+import 'package:luanvan/blocs/home/home_bloc.dart';
+import 'package:luanvan/services/home_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -146,6 +150,18 @@ class ShopApp extends StatelessWidget {
         BlocProvider<ListShopSearchBloc>(
           create: (context) => ListShopSearchBloc(ShopService()),
         ),
+        BlocProvider<ListproductinshopBloc>(
+          create: (context) => ListproductinshopBloc(ProductService()),
+        ),
+        BlocProvider<HomeBloc>(
+          create: (context) => HomeBloc(HomeService()),
+        ),
+        BlocProvider<ProductCommentBloc>(
+          create: (context) => ProductCommentBloc(ProductService()),
+        ),
+        BlocProvider<ListUserCommentBloc>(
+          create: (context) => ListUserCommentBloc(UserService()),
+        ),
       ],
       child: MaterialApp(
         locale: const Locale('vi'), // Đặt ngôn ngữ chính là tiếng Việt
@@ -165,7 +181,21 @@ class ShopApp extends StatelessWidget {
         ),
         debugShowCheckedModeBanner: false,
         routes: routes,
-        home: SplashScreen(),
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (context) => AuthBloc(AuthService())),
+            BlocProvider(create: (context) => UserBloc(UserService())),
+            BlocProvider(create: (context) => ShopBloc(ShopService())),
+            BlocProvider(create: (context) => ListShopBloc(ShopService())),
+            BlocProvider(
+                create: (context) => ProductCartBloc(ProductService())),
+            BlocProvider(create: (context) => OrderBloc(OrderService())),
+            BlocProvider(
+                create: (context) => ProductOrderBloc(ProductService())),
+            BlocProvider(create: (context) => HomeBloc(HomeService())),
+          ],
+          child: const SplashScreen(),
+        ),
         // initialRoute: '/home',
         // routes: {
         //   '/home': (_) => const HomeScreen(),

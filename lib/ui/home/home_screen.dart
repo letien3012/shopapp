@@ -8,9 +8,9 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
+import 'package:luanvan/blocs/home/home_bloc.dart';
+import 'package:luanvan/blocs/home/home_event.dart';
+import 'package:luanvan/blocs/home/home_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -41,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (authState is AuthAuthenticated) {
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
       }
+      context.read<HomeBloc>().add(FetchAllProducts());
     });
   }
 
@@ -65,17 +66,13 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (BuildContext context, AuthState authState) {
         if (authState is AuthLoading) return _buildLoading();
         if (authState is AuthAuthenticated) {
-          context
-              .read<ListProductBloc>()
-              .add(FetchListProductEventByShopId('2Lw9i4fKbZO9x8L4Yieh'));
-
-          return BlocBuilder<ListProductBloc, ListProductState>(
-            builder: (context, productState) {
-              if (productState is ListProductLoading) return _buildLoading();
-              if (productState is ListProductLoaded) {
-                return _buildHomeScreen(context, productState.listProduct);
-              } else if (productState is ListProductError) {
-                return _buildError(productState.message);
+          return BlocBuilder<HomeBloc, HomeState>(
+            builder: (context, homeState) {
+              if (homeState is HomeLoading) return _buildLoading();
+              if (homeState is HomeLoaded) {
+                return _buildHomeScreen(context, homeState.products);
+              } else if (homeState is HomeError) {
+                return _buildError(homeState.message);
               }
               return _buildInitializing();
             },
@@ -107,172 +104,179 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          SingleChildScrollView(
-            child: Container(
-              padding: EdgeInsets.only(bottom: 10),
-              color: Colors.grey[200],
-              constraints:
-                  BoxConstraints(minHeight: MediaQuery.of(context).size.height),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 90,
-                  ),
-                  StatefulBuilder(builder: (context, setState) {
-                    return SizedBox(
-                      height: MediaQuery.of(context).size.height * .25,
-                      width: MediaQuery.of(context).size.width,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                              child: CarouselSlider(
-                                  carouselController: _bannercontroller,
-                                  items: imgList
-                                      .map((item) => Image.network(
-                                            item,
-                                            fit: BoxFit.cover,
-                                            height: MediaQuery.of(context)
-                                                    .size
-                                                    .height *
-                                                .25,
-                                            width: MediaQuery.of(context)
-                                                .size
-                                                .width,
-                                          ))
-                                      .toList(),
-                                  options: CarouselOptions(
-                                    autoPlay: true,
-                                    enlargeCenterPage: true,
-                                    enableInfiniteScroll: true,
-                                    viewportFraction: 1,
-                                    onPageChanged: (index, reason) {
-                                      setState(() {
-                                        bannerCurrentPage = index;
-                                      });
-                                    },
-                                  ))),
-                          Positioned(
-                            bottom: MediaQuery.of(context).size.height * .02,
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  imgList.length,
-                                  (index) {
-                                    bool isSelected =
-                                        bannerCurrentPage == index;
-                                    return GestureDetector(
-                                      onTap: () {
-                                        _bannercontroller.animateToPage(index);
+          RefreshIndicator(
+            onRefresh: () async {
+              context.read<HomeBloc>().add(FetchAllProducts());
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Container(
+                padding: EdgeInsets.only(bottom: 10),
+                color: Colors.grey[200],
+                constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 90,
+                    ),
+                    StatefulBuilder(builder: (context, setState) {
+                      return SizedBox(
+                        height: MediaQuery.of(context).size.height * .25,
+                        width: MediaQuery.of(context).size.width,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                                child: CarouselSlider(
+                                    carouselController: _bannercontroller,
+                                    items: imgList
+                                        .map((item) => Image.network(
+                                              item,
+                                              fit: BoxFit.cover,
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  .25,
+                                              width: MediaQuery.of(context)
+                                                  .size
+                                                  .width,
+                                            ))
+                                        .toList(),
+                                    options: CarouselOptions(
+                                      autoPlay: true,
+                                      enlargeCenterPage: true,
+                                      enableInfiniteScroll: true,
+                                      viewportFraction: 1,
+                                      onPageChanged: (index, reason) {
+                                        setState(() {
+                                          bannerCurrentPage = index;
+                                        });
                                       },
-                                      child: AnimatedContainer(
-                                        width: 8,
-                                        height: 8,
-                                        margin: const EdgeInsets.symmetric(
-                                            horizontal: 3),
-                                        decoration: BoxDecoration(
-                                            color: isSelected
-                                                ? Colors.brown
-                                                : Colors.white,
-                                            shape: BoxShape.circle),
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        curve: Curves.ease,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  GridView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 7),
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 5,
-                              crossAxisSpacing: 5,
-                              mainAxisExtent: 280
-                              // childAspectRatio: 0.8,
-                              ),
-                      itemCount: listProduct.length,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).pushNamed(
-                                DetaiItemScreen.routeName,
-                                arguments: listProduct[index].id);
-                          },
-                          child: Container(
-                            color: Colors.white,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Image.network(
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
-                                  listProduct[index].imageUrl[0],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        height: 42,
-                                        child: Text(
-                                          listProduct[index].name,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                    ))),
+                            Positioned(
+                              bottom: MediaQuery.of(context).size.height * .02,
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    imgList.length,
+                                    (index) {
+                                      bool isSelected =
+                                          bannerCurrentPage == index;
+                                      return GestureDetector(
+                                        onTap: () {
+                                          _bannercontroller
+                                              .animateToPage(index);
+                                        },
+                                        child: AnimatedContainer(
+                                          width: 8,
+                                          height: 8,
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 3),
+                                          decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? Colors.brown
+                                                  : Colors.white,
+                                              shape: BoxShape.circle),
+                                          duration:
+                                              const Duration(milliseconds: 300),
+                                          curve: Curves.ease,
                                         ),
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            "đ${formatPrice(listProduct[index].getMinOptionPrice())}",
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Color.fromARGB(
-                                                    255, 151, 14, 4)),
-                                            maxLines: 1,
-                                          ),
-                                          Text(
-                                            'Đã bán ${listProduct[index].quantitySold.toString()}',
-                                            style: TextStyle(fontSize: 12),
-                                            maxLines: 1,
-                                          )
-                                        ],
-                                      )
-                                    ],
+                                      );
+                                    },
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        );
-                      })
-                ],
+                          ],
+                        ),
+                      );
+                    }),
+                    Container(
+                      height: 10,
+                      width: double.infinity,
+                      color: Colors.grey[300],
+                    ),
+                    GridView.builder(
+                        padding: EdgeInsets.symmetric(horizontal: 7),
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 5,
+                                crossAxisSpacing: 5,
+                                mainAxisExtent: 280
+                                // childAspectRatio: 0.8,
+                                ),
+                        itemCount: listProduct.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pushNamed(
+                                  DetaiItemScreen.routeName,
+                                  arguments: listProduct[index].id);
+                            },
+                            child: Container(
+                              color: Colors.white,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Image.network(
+                                    width: double.infinity,
+                                    height: 200,
+                                    fit: BoxFit.cover,
+                                    listProduct[index].imageUrl[0],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          height: 42,
+                                          child: Text(
+                                            listProduct[index].name,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              "đ${formatPrice(listProduct[index].getMinOptionPrice())}",
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Color.fromARGB(
+                                                      255, 151, 14, 4)),
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              'Đã bán ${listProduct[index].quantitySold.toString()}',
+                                              style: TextStyle(fontSize: 12),
+                                              maxLines: 1,
+                                            )
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        })
+                  ],
+                ),
               ),
             ),
           ),

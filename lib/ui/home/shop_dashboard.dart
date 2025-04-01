@@ -4,6 +4,9 @@ import 'package:flutter_svg/svg.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
+import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_bloc.dart';
+import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_event.dart';
+import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/product.dart';
@@ -82,8 +85,8 @@ class _ShopDashboardState extends State<ShopDashboard>
         if (state is ShopLoaded) {
           final shop = state.shop;
           context
-              .read<ListProductBloc>()
-              .add(FetchListProductEventByShopId(shop.shopId!));
+              .read<ListproductinshopBloc>()
+              .add(FetchListproductinshopEventByShopId(shop.shopId!));
 
           return Container(
             decoration: BoxDecoration(
@@ -295,9 +298,9 @@ class _ShopDashboardState extends State<ShopDashboard>
   }
 
   Widget _buildProductGrid() {
-    return BlocBuilder<ListProductBloc, ListProductState>(
+    return BlocBuilder<ListproductinshopBloc, ListproductinshopState>(
       builder: (context, state) {
-        if (state is ListProductLoaded) {
+        if (state is ListProducInShoptLoaded) {
           var products = state.listProduct;
           final filteredProducts = products.where((product) {
             if (_searchQuery.isEmpty) return true;

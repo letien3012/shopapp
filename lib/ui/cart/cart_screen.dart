@@ -177,14 +177,131 @@ class _CartScreenState extends State<CartScreen> {
     return 0.0;
   }
 
+  int _getMaxStock(dynamic product, CartItem item) {
+    if (product.variants.isEmpty) {
+      return (product.quantity ?? 0).toInt();
+    } else if (product.variants.length == 1) {
+      if (item.optionId1 != null) {
+        int optionIndex = product.variants[0].options
+            .indexWhere((opt) => opt.id == item.optionId1);
+        if (optionIndex != -1 && optionIndex < product.optionInfos.length) {
+          return product.optionInfos[optionIndex].stock.toInt();
+        }
+      }
+    } else if (product.variants.length > 1) {
+      if (item.optionId1 != null && item.optionId2 != null) {
+        int option1Index = product.variants[0].options
+            .indexWhere((opt) => opt.id == item.optionId1);
+        int option2Index = product.variants[1].options
+            .indexWhere((opt) => opt.id == item.optionId2);
+        if (option1Index != -1 && option2Index != -1) {
+          int optionInfoIndex =
+              (option1Index * product.variants[1].options.length + option2Index)
+                  .toInt();
+          if (optionInfoIndex < product.optionInfos.length) {
+            return product.optionInfos[optionInfoIndex].stock.toInt();
+          }
+        }
+      }
+    }
+    return 0;
+  }
+
   void _updateQuantity(String shopId, String itemId, int newQuantity) {
     final userId =
         (context.read<AuthBloc>().state as AuthAuthenticated).user.uid;
-    if (newQuantity > 0) {
-      context.read<CartBloc>().add(
-            UpdateQuantityEvent(userId, itemId, newQuantity, shopId),
-          );
+    final cartState = context.read<CartBloc>().state;
+    if (cartState is CartLoaded) {
+      final shop = cartState.cart.getShop(shopId);
+      if (shop != null && shop.items.containsKey(itemId)) {
+        final item = shop.items[itemId]!;
+        final productState = context.read<ProductCartBloc>().state;
+        if (productState is ProductCartListLoaded) {
+          final product =
+              productState.products.firstWhere((p) => p.id == item.productId);
+          int maxStock = _getMaxStock(product, item);
+
+          // Nếu số lượng mới vượt quá kho, hiển thị alert và điều chỉnh về số lượng kho
+          if (newQuantity > maxStock) {
+            showAlertDialog(
+              context,
+              message:
+                  "Số lượng sản phẩm trong kho chỉ còn $maxStock. Số lượng sẽ được điều chỉnh tự động.",
+              iconPath: IconHelper.warning,
+              duration: const Duration(seconds: 2),
+            );
+            newQuantity = maxStock;
+          }
+
+          if (newQuantity > 0) {
+            // Cập nhật giá trị trong controller với setState
+            final key = '${shopId}_${itemId}';
+            if (quantityControllers.containsKey(key)) {
+              setState(() {
+                quantityControllers[key]?.text = newQuantity.toString();
+              });
+            }
+
+            context.read<CartBloc>().add(
+                  UpdateQuantityEvent(userId, itemId, newQuantity, shopId),
+                );
+          }
+        }
+      }
     }
+  }
+
+  void _handleProductCheck(String shopId, int productIndex, bool? isChecked) {
+    setState(() {
+      // Update the individual product selection
+      if (checkedProduct.containsKey(shopId)) {
+        if (productIndex < checkedProduct[shopId]!.length) {
+          checkedProduct[shopId]![productIndex] = isChecked ?? false;
+        }
+      }
+
+      // Check if all products in the shop are selected
+      final cartState = context.read<CartBloc>().state;
+      if (cartState is CartLoaded) {
+        final shopIndex = listShopId.indexOf(shopId);
+        if (shopIndex != -1) {
+          // Check if all products in this shop are selected
+          bool allProductsChecked =
+              checkedProduct[shopId]!.every((isChecked) => isChecked);
+
+          // Only set shop checkbox if all products are checked
+          checkedShop[shopIndex] = allProductsChecked;
+
+          // Update global check all state
+          bool allShopsChecked = true;
+          for (int i = 0; i < checkedShop.length; i++) {
+            if (!checkedShop[i]) {
+              allShopsChecked = false;
+              break;
+            }
+          }
+          checkAllProduct = allShopsChecked;
+        }
+      }
+    });
+  }
+
+  bool _canIncreaseQuantity(String shopId, String itemId) {
+    final cartState = context.read<CartBloc>().state;
+    if (cartState is CartLoaded) {
+      final shop = cartState.cart.getShop(shopId);
+      if (shop != null && shop.items.containsKey(itemId)) {
+        final item = shop.items[itemId]!;
+        final productState = context.read<ProductCartBloc>().state;
+        if (productState is ProductCartListLoaded) {
+          final product =
+              productState.products.firstWhere((p) => p.id == item.productId);
+          int maxStock = _getMaxStock(product, item);
+          return item.quantity < maxStock;
+        }
+      }
+    }
+    return false;
   }
 
   void _deleteProduct(String shopId, String itemId) {
@@ -250,6 +367,36 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildInitializing() {
     return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  bool _isProductOutOfStock(dynamic product, CartItem item) {
+    if (product.variants.isEmpty) {
+      return (product.quantity ?? 0) == 0;
+    } else if (product.variants.length == 1) {
+      if (item.optionId1 != null) {
+        int optionIndex = product.variants[0].options
+            .indexWhere((opt) => opt.id == item.optionId1);
+        if (optionIndex != -1 && optionIndex < product.optionInfos.length) {
+          return product.optionInfos[optionIndex].stock == 0;
+        }
+      }
+    } else if (product.variants.length > 1) {
+      if (item.optionId1 != null && item.optionId2 != null) {
+        int option1Index = product.variants[0].options
+            .indexWhere((opt) => opt.id == item.optionId1);
+        int option2Index = product.variants[1].options
+            .indexWhere((opt) => opt.id == item.optionId2);
+        if (option1Index != -1 && option2Index != -1) {
+          int optionInfoIndex =
+              (option1Index * product.variants[1].options.length + option2Index)
+                  .toInt();
+          if (optionInfoIndex < product.optionInfos.length) {
+            return product.optionInfos[optionInfoIndex].stock == 0;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   Widget _buildCartScreen(BuildContext context, Cart cart) {
@@ -332,6 +479,7 @@ class _CartScreenState extends State<CartScreen> {
                                 onUpdateQuantity: _updateQuantity,
                                 onShowConfirmDelete:
                                     _showConfirmDeleteProductDialog,
+                                onProductCheck: _handleProductCheck,
                               );
                             },
                           ),
@@ -443,6 +591,7 @@ class _CartScreenState extends State<CartScreen> {
               height: 60,
               width: MediaQuery.of(context).size.width,
               color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 5),
               child: Row(
                 children: [
                   GestureDetector(
@@ -464,11 +613,27 @@ class _CartScreenState extends State<CartScreen> {
                               checkAllProduct = newValue ?? false;
                               checkedShop = List.filled(
                                   checkedShop.length, newValue ?? false);
+
+                              // Chỉ check các sản phẩm còn hàng
                               for (var shopId in listShopId) {
                                 final shop = cart.getShop(shopId);
                                 if (shop != null) {
-                                  checkedProduct[shopId] = List.filled(
-                                      shop.items.length, newValue ?? false);
+                                  final productState =
+                                      context.read<ProductCartBloc>().state;
+                                  if (productState is ProductCartListLoaded) {
+                                    List<bool> productChecks = [];
+                                    shop.items.forEach((itemId, item) {
+                                      final product = productState.products
+                                          .firstWhere(
+                                              (p) => p.id == item.productId);
+                                      bool isOutOfStock =
+                                          _isProductOutOfStock(product, item);
+                                      productChecks.add(isOutOfStock
+                                          ? false
+                                          : (newValue ?? false));
+                                    });
+                                    checkedProduct[shopId] = productChecks;
+                                  }
                                 }
                               }
                             });
@@ -479,16 +644,16 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                         const Text("Tất cả",
                             style:
-                                TextStyle(color: Colors.black, fontSize: 16)),
+                                TextStyle(color: Colors.black, fontSize: 14)),
                       ],
                     ),
                   ),
-                  editProduct
-                      ? Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Container(
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        editProduct
+                            ? Container(
                                 width: 130,
                                 height: 45,
                                 alignment: Alignment.center,
@@ -498,207 +663,214 @@ class _CartScreenState extends State<CartScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text("Lưu vào đã thích"),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Expanded(
-                          child: GestureDetector(
-                            onTap: () {},
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Text(
-                                      "Tổng thanh toán ",
-                                      style: TextStyle(
-                                          color: Colors.black, fontSize: 13),
-                                    ),
-                                    Text(
-                                      "đ${formatPrice(totalPrice)}",
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                              Color.fromARGB(255, 151, 14, 4)),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+                              )
+                            : _buildBuyButton(cart, selectedItemsCount),
+                        const SizedBox(width: 5),
+                        editProduct
+                            ? GestureDetector(
+                                onTap: () async {
+                                  if (await _showConfirmDeleteProductDialog()) {
+                                    List<String> shopsToDelete = [];
+                                    Map<String, List<String>> productsToDelete =
+                                        {};
+                                    Cart newCart = cart;
+                                    for (int i = 0;
+                                        i < checkedShop.length;
+                                        i++) {
+                                      if (checkedShop[i]) {
+                                        shopsToDelete.add(listShopId[i]);
+                                      }
+                                      String shopId = listShopId[i];
+                                      if (checkedProduct[shopId] != null) {
+                                        final shop = cart.getShop(shopId);
+                                        if (shop != null) {
+                                          List<String> shopItemIds =
+                                              shop.items.keys.toList();
+                                          for (int j = 0;
+                                              j <
+                                                      checkedProduct[shopId]!
+                                                          .length &&
+                                                  j < shopItemIds.length;
+                                              j++) {
+                                            if (checkedProduct[shopId]![j]) {
+                                              productsToDelete.putIfAbsent(
+                                                  shopId, () => []);
+                                              productsToDelete[shopId]!
+                                                  .add(shopItemIds[j]);
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+
+                                    final updatedShops =
+                                        List<CartShop>.from(cart.shops);
+                                    for (String shopId in shopsToDelete) {
+                                      updatedShops.removeWhere(
+                                          (shop) => shop.shopId == shopId);
+                                    }
+                                    newCart =
+                                        newCart.copyWith(shops: updatedShops);
+                                    for (String shopId
+                                        in productsToDelete.keys) {
+                                      if (!shopsToDelete.contains(shopId)) {
+                                        for (String itemId
+                                            in productsToDelete[shopId]!) {
+                                          final shop = newCart.getShop(shopId);
+                                          if (shop != null &&
+                                              shop.items.containsKey(itemId)) {
+                                            final updatedItems =
+                                                Map<String, CartItem>.from(
+                                                    shop.items);
+                                            updatedItems.remove(itemId);
+
+                                            final updatedShop = shop.copyWith(
+                                                items: updatedItems);
+                                            final updatedShops =
+                                                List<CartShop>.from(
+                                                    newCart.shops);
+                                            final existingShopIndex =
+                                                updatedShops.indexWhere(
+                                                    (shop) =>
+                                                        shop.shopId == shopId);
+                                            if (existingShopIndex != -1) {
+                                              if (updatedItems.isEmpty) {
+                                                updatedShops.removeAt(
+                                                    existingShopIndex);
+                                              } else {
+                                                updatedShops[
+                                                        existingShopIndex] =
+                                                    updatedShop;
+                                              }
+                                            }
+                                            newCart = newCart.copyWith(
+                                                shops: updatedShops);
+                                          }
+                                        }
+                                      }
+                                    }
+
+                                    context
+                                        .read<CartBloc>()
+                                        .add(UpdateCartEvent(newCart));
+                                    setState(() {
+                                      cart = newCart;
+                                      listShopId = newCart.shops
+                                          .map((shop) => shop.shopId)
+                                          .toList();
+                                      checkedShop = List.generate(
+                                          listShopId.length, (index) => false);
+                                      checkedProduct = {
+                                        for (var shopId in listShopId)
+                                          shopId: List.generate(
+                                              newCart
+                                                      .getShop(shopId)
+                                                      ?.items
+                                                      .length ??
+                                                  0,
+                                              (index) => false)
+                                      };
+                                      checkAllProduct = false;
+                                      editProduct = false;
+                                    });
+                                  } else {
+                                    setState(() {
+                                      editProduct = !editProduct;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 5),
+                                  height: 45,
+                                  width: 60,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        width: 2, color: Colors.brown),
+                                  ),
+                                  child: const Text("Xóa",
+                                      style: TextStyle(color: Colors.brown)),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                  editProduct
-                      ? GestureDetector(
-                          onTap: () async {
-                            if (await _showConfirmDeleteProductDialog()) {
-                              List<String> shopsToDelete = [];
-                              Map<String, List<String>> productsToDelete = {};
-                              Cart newCart = cart;
-                              for (int i = 0; i < checkedShop.length; i++) {
-                                if (checkedShop[i]) {
-                                  shopsToDelete.add(listShopId[i]);
-                                }
-                                String shopId = listShopId[i];
-                                if (checkedProduct[shopId] != null) {
-                                  for (int j = 0;
-                                      j < checkedProduct[shopId]!.length;
-                                      j++) {
-                                    if (checkedProduct[shopId]![j]) {
-                                      productsToDelete.putIfAbsent(
-                                          shopId, () => []);
-                                      productsToDelete[shopId]!
-                                          .add(listItemId[j]);
-                                    }
-                                  }
-                                }
-                              }
-
-                              final updatedShops =
-                                  List<CartShop>.from(cart.shops);
-                              for (String shopId in shopsToDelete) {
-                                updatedShops.removeWhere(
-                                    (shop) => shop.shopId == shopId);
-                              }
-                              newCart = newCart.copyWith(shops: updatedShops);
-                              for (String shopId in productsToDelete.keys) {
-                                if (!shopsToDelete.contains(shopId)) {
-                                  for (String itemId
-                                      in productsToDelete[shopId]!) {
-                                    final shop = newCart.getShop(shopId);
-                                    if (shop != null &&
-                                        shop.items.containsKey(itemId)) {
-                                      final updatedItems =
-                                          Map<String, CartItem>.from(
-                                              shop.items);
-                                      updatedItems.remove(itemId);
-
-                                      final updatedShop =
-                                          shop.copyWith(items: updatedItems);
-                                      final updatedShops =
-                                          List<CartShop>.from(newCart.shops);
-                                      final existingShopIndex =
-                                          updatedShops.indexWhere(
-                                              (shop) => shop.shopId == shopId);
-                                      if (existingShopIndex != -1) {
-                                        if (updatedItems.isEmpty) {
-                                          updatedShops
-                                              .removeAt(existingShopIndex);
-                                        } else {
-                                          updatedShops[existingShopIndex] =
-                                              updatedShop;
+                              )
+                            : GestureDetector(
+                                onTap: () {
+                                  if (selectedItemsCount > 0) {
+                                    productCheckOut = {};
+                                    for (var shopId in listShopId) {
+                                      if (checkedProduct.containsKey(shopId)) {
+                                        final shop = cart.getShop(shopId);
+                                        if (shop != null) {
+                                          List<String> shopItemIds =
+                                              shop.items.keys.toList();
+                                          for (int i = 0;
+                                              i <
+                                                      checkedProduct[shopId]!
+                                                          .length &&
+                                                  i < shopItemIds.length;
+                                              i++) {
+                                            if (checkedProduct[shopId]![i]) {
+                                              productCheckOut.putIfAbsent(
+                                                  shopId, () => []);
+                                              productCheckOut[shopId]!
+                                                  .add(shopItemIds[i]);
+                                            }
+                                          }
                                         }
                                       }
-                                      newCart =
-                                          newCart.copyWith(shops: updatedShops);
                                     }
-                                  }
-                                }
-                              }
 
-                              context
-                                  .read<CartBloc>()
-                                  .add(UpdateCartEvent(newCart));
-                              setState(() {
-                                cart = newCart;
-                                listShopId = newCart.shops
-                                    .map((shop) => shop.shopId)
-                                    .toList();
-                                checkedShop = List.generate(
-                                    listShopId.length, (index) => false);
-                                checkedProduct = {
-                                  for (var shopId in listShopId)
-                                    shopId: List.generate(
-                                        newCart.getShop(shopId)?.items.length ??
-                                            0,
-                                        (index) => false)
-                                };
-                                checkAllProduct = false;
-                                editProduct = false;
-                              });
-                            } else {
-                              setState(() {
-                                editProduct = !editProduct;
-                              });
-                            }
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 10),
-                            height: 45,
-                            width: 60,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(width: 2, color: Colors.brown),
-                            ),
-                            child: const Text("Xóa",
-                                style: TextStyle(color: Colors.brown)),
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () {
-                            if (selectedItemsCount > 0) {
-                              productCheckOut = {};
-                              for (var shopId in checkedProduct.keys) {
-                                if (checkedProduct[shopId] != null) {
-                                  for (int i = 0;
-                                      i < checkedProduct[shopId]!.length;
-                                      i++) {
-                                    if (checkedProduct[shopId]![i]) {
-                                      productCheckOut.putIfAbsent(
-                                          shopId, () => []);
-                                      String itemId = '';
-                                      int j = 0;
-                                      for (var key
-                                          in cart.getShop(shopId)!.items.keys) {
-                                        if (i == j) {
-                                          itemId = key;
-                                        }
-                                        j++;
-                                      }
-                                      productCheckOut[shopId]!.add(itemId);
-                                    }
+                                    Navigator.of(context).pushNamed(
+                                        CheckOutScreen.routeName,
+                                        arguments: {
+                                          'productCheckOut': productCheckOut,
+                                        });
+                                  } else {
+                                    _showAlertDialog();
                                   }
-                                }
-                              }
-
-                              Navigator.of(context).pushNamed(
-                                  CheckOutScreen.routeName,
-                                  arguments: {
-                                    'productCheckOut': productCheckOut,
-                                  });
-                            } else {
-                              _showAlertDialog();
-                            }
-                          },
-                          child: Container(
-                            height: 45,
-                            width: 110,
-                            decoration: BoxDecoration(
-                                color: Colors.brown,
-                                borderRadius: BorderRadius.circular(8)),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text("Mua hàng ",
-                                    style: TextStyle(
-                                        fontSize: 14, color: Colors.white)),
-                                Text("($selectedItemsCount)",
-                                    style: const TextStyle(
-                                        fontSize: 14, color: Colors.white)),
-                              ],
-                            ),
-                          ),
-                        ),
-                  const SizedBox(width: 10),
+                                },
+                                child: Container(
+                                  height: 45,
+                                  width: 120,
+                                  margin: const EdgeInsets.only(right: 5),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                      color: Colors.brown,
+                                      borderRadius: BorderRadius.circular(8)),
+                                  child: Text("Mua ($selectedItemsCount)",
+                                      style: TextStyle(
+                                          fontSize: 14, color: Colors.white)),
+                                ),
+                              ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBuyButton(Cart cart, int selectedItemsCount) {
+    return Container(
+      margin: const EdgeInsets.only(right: 5),
+      height: 45,
+      width: 120,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Tổng thanh toán",
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+          Text(
+            "₫${formatPrice(_calculateTotalPrice(cart))}",
+            style: const TextStyle(
+                fontSize: 14, fontWeight: FontWeight.bold, color: Colors.brown),
           ),
         ],
       ),

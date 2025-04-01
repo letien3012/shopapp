@@ -31,7 +31,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
     super.initState();
     Future.microtask(() {
       product = ModalRoute.of(context)!.settings.arguments as Product;
-      print(product.optionInfos);
+
       enableImageForVariant = product.hasVariantImages;
       if (product.variants.isNotEmpty) {
         groupOptionCount = product.variants.length == 2
@@ -198,8 +198,12 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
         }
         try {
           final stock = int.parse(_stockOptionControllers[i].text);
-          if (stock <= 0) {
-            _stockOptionErrors[i] = "Kho phải lớn hơn 0";
+          // Kiểm tra nếu có optionId thì cho phép stock = 0
+          final hasOptionId = product.optionInfos[i].optionId1 != null ||
+              product.optionInfos[i].optionId2 != null;
+          if (stock < 0 || (!hasOptionId && stock == 0)) {
+            _stockOptionErrors[i] =
+                hasOptionId ? "Kho không được âm" : "Kho phải lớn hơn 0";
             isValid = false;
           }
         } catch (e) {
@@ -243,6 +247,10 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
     _batchPriceController.clear();
     _batchStockController.clear();
 
+    // Kiểm tra xem có bất kỳ option nào có ID không
+    bool hasAnyOptionId = product.optionInfos
+        .any((info) => info.optionId1 != null || info.optionId2 != null);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -275,8 +283,9 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
               TextField(
                 controller: _batchStockController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Kho hàng",
+                decoration: InputDecoration(
+                  labelText:
+                      "Kho hàng${hasAnyOptionId ? ' (có thể đặt 0)' : ''}",
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -286,7 +295,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); // Đóng BottomSheet
+                        Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
@@ -298,11 +307,25 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // Áp dụng giá và kho hàng loạt
                         final batchPrice = _validatePrice(
                             _batchPriceController.text, _batchPriceController);
                         final batchStock = _validateStock(
                             _batchStockController.text, _batchStockController);
+
+                        // Kiểm tra giá trị hợp lệ trước khi áp dụng
+                        if (batchPrice <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Giá phải lớn hơn 0")),
+                          );
+                          return;
+                        }
+
+                        if (!hasAnyOptionId && batchStock == 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Kho phải lớn hơn 0")),
+                          );
+                          return;
+                        }
 
                         setState(() {
                           for (int i = 0; i < groupOptionCount; i++) {
@@ -317,7 +340,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
                             }
                           }
                         });
-                        Navigator.pop(context); // Đóng BottomSheet
+                        Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.brown,

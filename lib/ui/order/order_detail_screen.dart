@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:luanvan/blocs/chat/chat_bloc.dart';
+import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/order/shop_order_detail.dart';
 
@@ -397,7 +400,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 16, top: 16),
       child: GestureDetector(
-        onTap: () {},
+        onTap: () {
+          context.read<ChatBloc>().add(StartChatEvent(
+                order.userId,
+                order.shopId,
+              ));
+          final tempChatRoomId = '$order.userId-${order.shopId}';
+          Navigator.pushNamed(
+            context,
+            ChatDetailScreen.routeName,
+            arguments: tempChatRoomId,
+          );
+        },
         child: Container(
           width: double.infinity,
           height: 40,

@@ -39,6 +39,7 @@ import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/ui/widgets/add_to_cart.dart';
 import 'package:luanvan/ui/widgets/image_viewer.dart';
+import 'package:video_player/video_player.dart';
 
 class DetaiItemScreen extends StatefulWidget {
   const DetaiItemScreen({super.key});
@@ -53,6 +54,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   final PageController _imageController = PageController();
   final ScrollController _appBarScrollController = ScrollController();
   final GlobalKey _details = GlobalKey();
+  Map<String, VideoPlayerController> _videoControllers = {};
   int _currentImage = 0;
   bool _isExpanded = false;
   Color _appBarColor = Colors.transparent;
@@ -64,11 +66,13 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   final TextEditingController _quantityController = TextEditingController();
   int selectedIndexVariant1 = -1;
   String productId = '';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       productId = ModalRoute.of(context)!.settings.arguments as String;
+      print('productId: $productId');
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
@@ -98,6 +102,10 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
 
   @override
   void dispose() {
+    for (var controller in _videoControllers.values) {
+      controller.dispose();
+    }
+    _videoControllers.clear();
     _imageController.dispose();
     _appBarScrollController.dispose();
     _quantityController.dispose();
@@ -530,36 +538,113 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                         comment.videoUrl!.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: Stack(
-                          children: [
-                            Image.network(
-                              comment.videoUrl!,
-                              width: 110,
-                              height: 110,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                width: 110,
-                                height: 110,
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.error),
-                              ),
+                        child: GestureDetector(
+                          onTap: () => _showFullScreenMedia(
+                            context,
+                            comment.videoUrl!,
+                            true,
+                          ),
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            child: FutureBuilder(
+                              future: _initializeVideo(comment.videoUrl!),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.done) {
+                                  final controller =
+                                      _videoControllers[comment.videoUrl!];
+                                  if (controller != null &&
+                                      controller.value.isInitialized) {
+                                    return Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          child: InteractiveViewer(
+                                            minScale: 0.5,
+                                            maxScale: 4.0,
+                                            child: SizedBox(
+                                              width: MediaQuery.of(context)
+                                                  .size
+                                                  .width,
+                                              height: MediaQuery.of(context)
+                                                  .size
+                                                  .height,
+                                              child: AspectRatio(
+                                                aspectRatio: controller
+                                                    .value.aspectRatio,
+                                                child: VideoPlayer(controller),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        // Video Controls
+                                        Positioned(
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.bottomCenter,
+                                                end: Alignment.topCenter,
+                                                colors: [
+                                                  Colors.black.withOpacity(0.7),
+                                                  Colors.transparent,
+                                                ],
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () => _togglePlay(
+                                                      comment.videoUrl!),
+                                                  child: Icon(
+                                                    controller.value.isPlaying
+                                                        ? Icons.pause
+                                                        : Icons.play_arrow,
+                                                    color: Colors.white,
+                                                    size: 18,
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 4),
+                                                  child: Text(
+                                                    _formatDuration(controller
+                                                        .value.duration),
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 9,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }
+                                }
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              },
                             ),
-                            Positioned(
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.5),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.play_arrow,
-                                  color: Colors.white,
-                                  size: 30,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
 
@@ -569,17 +654,28 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                           .take(comment.videoUrl?.isNotEmpty == true ? 2 : 3)
                           .map((imageUrl) => Padding(
                                 padding: const EdgeInsets.only(right: 8),
-                                child: Image.network(
-                                  imageUrl,
-                                  width: 110,
-                                  height: 110,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                    width: 110,
-                                    height: 110,
-                                    color: Colors.grey[300],
-                                    child: const Icon(Icons.error),
+                                child: GestureDetector(
+                                  onTap: () => _showFullScreenMedia(
+                                    context,
+                                    imageUrl,
+                                    false,
+                                    imageUrls: comment.images,
+                                    initialIndex:
+                                        comment.images.indexOf(imageUrl),
+                                  ),
+                                  child: Hero(
+                                    tag: imageUrl,
+                                    child: Container(
+                                      width: 100,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(4),
+                                        image: DecorationImage(
+                                          image: NetworkImage(imageUrl),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               )),
@@ -1517,5 +1613,253 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
 
   Widget _buildInitializing() {
     return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  Future<void> _initializeVideo(String videoUrl) async {
+    if (_videoControllers.containsKey(videoUrl)) return;
+
+    final controller = VideoPlayerController.network(videoUrl);
+    _videoControllers[videoUrl] = controller;
+
+    try {
+      await controller.initialize();
+      controller.setLooping(true);
+      controller.setVolume(0);
+      setState(() {});
+    } catch (e) {
+      print('Error initializing video: $e');
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
+  void _togglePlay(String videoUrl) {
+    final controller = _videoControllers[videoUrl];
+    if (controller != null) {
+      if (controller.value.isPlaying) {
+        controller.pause();
+      } else {
+        controller.play();
+      }
+    }
+  }
+
+  void _toggleMute(String videoUrl) {
+    final controller = _videoControllers[videoUrl];
+    if (controller != null) {
+      controller.setVolume(controller.value.volume == 0 ? 1 : 0);
+      setState(() {});
+    }
+  }
+
+  void _showFullScreenMedia(BuildContext context, String url, bool isVideo,
+      {List<String>? imageUrls, int? initialIndex}) {
+    if (isVideo) {
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Stack(
+            children: [
+              Center(
+                child: FutureBuilder(
+                  future: _initializeVideo(url),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      final controller = _videoControllers[url];
+                      if (controller != null &&
+                          controller.value.isInitialized) {
+                        return Stack(
+                          children: [
+                            InteractiveViewer(
+                              minScale: 0.5,
+                              maxScale: 4.0,
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width,
+                                height: MediaQuery.of(context).size.height,
+                                child: AspectRatio(
+                                  aspectRatio: controller.value.aspectRatio,
+                                  child: VideoPlayer(controller),
+                                ),
+                              ),
+                            ),
+                            // Video Controls
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.black.withOpacity(0.7),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Progress Bar
+                                    VideoProgressIndicator(
+                                      controller,
+                                      allowScrubbing: true,
+                                      colors: const VideoProgressColors(
+                                        playedColor: Colors.white,
+                                        bufferedColor: Colors.white24,
+                                        backgroundColor: Colors.white12,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Controls
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            IconButton(
+                                              icon: Icon(
+                                                controller.value.isPlaying
+                                                    ? Icons.pause
+                                                    : Icons.play_arrow,
+                                                color: Colors.white,
+                                              ),
+                                              onPressed: () => _togglePlay(url),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(
+                                                controller.value.volume == 0
+                                                    ? Icons.volume_off
+                                                    : Icons.volume_up,
+                                                color: Colors.white,
+                                              ),
+                                              onPressed: () => _toggleMute(url),
+                                            ),
+                                          ],
+                                        ),
+                                        StreamBuilder(
+                                          stream: Stream.periodic(
+                                              const Duration(
+                                                  milliseconds: 100)),
+                                          builder: (context, snapshot) {
+                                            return Text(
+                                              _formatDuration(controller
+                                                      .value.position) +
+                                                  ' / ' +
+                                                  _formatDuration(controller
+                                                      .value.duration),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Close Button
+                            Positioned(
+                              top: 40,
+                              right: 20,
+                              child: IconButton(
+                                icon: const Icon(Icons.close,
+                                    color: Colors.white),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    }
+                    return const CircularProgressIndicator();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: Stack(
+              children: [
+                // Photo Gallery
+                PageView.builder(
+                  itemCount: imageUrls?.length ?? 1,
+                  controller: PageController(initialPage: initialIndex ?? 0),
+                  onPageChanged: (index) {
+                    setState(() {
+                      initialIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 4.0,
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                        child: Hero(
+                          tag: imageUrls?[index] ?? url,
+                          child: Image.network(
+                            imageUrls?[index] ?? url,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                // Close Button
+                Positioned(
+                  top: 40,
+                  right: 20,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                // Image Counter
+                if (imageUrls != null && imageUrls.length > 1)
+                  Positioned(
+                    bottom: 20,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      color: Colors.black.withOpacity(0.5),
+                      child: Text(
+                        '${(initialIndex ?? 0) + 1}/${imageUrls.length}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
   }
 }

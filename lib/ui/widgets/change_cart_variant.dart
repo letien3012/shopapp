@@ -441,22 +441,66 @@ class _ChangeCartVariantState extends State<ChangeCartVariant> {
     final isSelected = variantIndex == 0
         ? index == selectedIndexVariant1
         : index == selectedIndexVariant2;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (variantIndex == 0) {
-            selectedIndexVariant1 = isSelected ? -1 : index;
-          } else {
-            selectedIndexVariant2 = isSelected ? -1 : index;
+
+    // Kiểm tra xem option có bị tắt không
+    bool isDisabled = false;
+    if (variantIndex == 0) {
+      if (widget.product.variants.length == 1) {
+        // Nếu chỉ có 1 variant, tắt option có stock = 0
+        isDisabled = index < widget.product.optionInfos.length &&
+            widget.product.optionInfos[index].stock == 0;
+      } else {
+        // Nếu có 2 variant, tắt option có tổng stock của tất cả option thứ 2 = 0
+        bool hasStock = false;
+        for (int i = 0; i < widget.product.variants[1].options.length; i++) {
+          int optionInfoIndex =
+              index * widget.product.variants[1].options.length + i;
+          if (optionInfoIndex < widget.product.optionInfos.length &&
+              widget.product.optionInfos[optionInfoIndex].stock > 0) {
+            hasStock = true;
+            break;
           }
-        });
-      },
+        }
+        isDisabled = !hasStock;
+      }
+    }
+
+    return GestureDetector(
+      onTap: isDisabled
+          ? null
+          : () {
+              setState(() {
+                if (variantIndex == 0) {
+                  selectedIndexVariant1 = isSelected ? -1 : index;
+                  // Kiểm tra và cập nhật số lượng khi chọn variant đầu tiên
+                  if (selectedIndexVariant1 != -1) {
+                    int currentStock = maxStock;
+                    if (_quantityAddToCart > currentStock) {
+                      _quantityAddToCart = currentStock;
+                      _quantityController.text = currentStock.toString();
+                    }
+                  }
+                } else {
+                  selectedIndexVariant2 = isSelected ? -1 : index;
+                  // Kiểm tra và cập nhật số lượng khi chọn variant thứ hai
+                  if (selectedIndexVariant2 != -1) {
+                    int currentStock = maxStock;
+                    if (_quantityAddToCart > currentStock) {
+                      _quantityAddToCart = currentStock;
+                      _quantityController.text = currentStock.toString();
+                    }
+                  }
+                }
+              });
+            },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: isDisabled ? Colors.grey[50] : Colors.grey[100],
           border: Border.all(
-            color: isSelected ? Colors.brown : Colors.grey[300]!,
+            color: isSelected
+                ? Colors.brown
+                : (isDisabled ? Colors.grey[200]! : Colors.grey[300]!),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(4),
@@ -494,7 +538,9 @@ class _ChangeCartVariantState extends State<ChangeCartVariant> {
             Text(
               widget.product.variants[variantIndex].options[index].name,
               style: TextStyle(
-                color: isSelected ? Colors.brown : Colors.black,
+                color: isDisabled
+                    ? Colors.grey[400]
+                    : (isSelected ? Colors.brown : Colors.black),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),

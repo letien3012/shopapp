@@ -39,8 +39,8 @@ class _MainScreenState extends State<MainScreen> {
                   IconHelper.homeFilledIcon),
               _buildNavItem(IconHelper.questionOutlineIcon, "Hỏi đáp", 1,
                   IconHelper.questionFilledIcon),
-              _buildNavItem(IconHelper.cartIcon, "Tin nhắn", 2,
-                  IconHelper.cartFilledIcon),
+              _buildNavItem(IconHelper.chat_round_dots, "Tin nhắn", 2,
+                  IconHelper.chat_round_dots_filled),
               _buildNavItem(IconHelper.userOutlineIcon, "Tôi", 3,
                   IconHelper.userFilledIcon)
             ],

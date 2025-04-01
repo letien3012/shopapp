@@ -68,7 +68,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
       }
 
       product = args['product'] as Product;
-
       _nameController.text = product.name;
       _descriptionController.text = product.description;
       _category =
@@ -501,7 +500,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     onTap: () async {
                       final result = await Navigator.pushNamed(
                           context, AddCategoryScreen.routeName,
-                          arguments: _category) as String;
+                          arguments: {'selectedCategory': _category}) as String;
                       if (result.isNotEmpty) {
                         setState(() {
                           _category = result;
@@ -555,7 +554,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         EditVariantScreen.routeName,
                         arguments: product,
                       );
-                      print(product.variants);
+
                       if (updatedProduct != null && updatedProduct is Product) {
                         setState(() {
                           product = updatedProduct;

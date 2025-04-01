@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
@@ -7,6 +8,8 @@ import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/widgets/add_to_cart.dart';
 import 'package:luanvan/ui/widgets/change_cart_variant.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 
 class ProductItemWidget extends StatefulWidget {
   final String shopId;
@@ -20,6 +23,7 @@ class ProductItemWidget extends StatefulWidget {
   final Function(String, String) onDeleteProduct;
   final Function(String, String, int) onUpdateQuantity;
   final Future<bool> Function() onShowConfirmDelete;
+  final Function(String, int, bool?)? onProductCheck;
 
   const ProductItemWidget({
     required this.shopId,
@@ -33,6 +37,7 @@ class ProductItemWidget extends StatefulWidget {
     required this.onDeleteProduct,
     required this.onUpdateQuantity,
     required this.onShowConfirmDelete,
+    this.onProductCheck,
   });
 
   @override
@@ -147,40 +152,52 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
               children: [
                 Row(
                   children: [
-                    Checkbox(
-                      fillColor:
-                          WidgetStateProperty.resolveWith<Color>((states) {
-                        if (states.contains(WidgetState.selected)) {
-                          return Colors.brown;
-                        }
-                        return Colors.transparent;
-                      }),
-                      value: widget.checked,
-                      onChanged: widget.onCheckChanged,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4)),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
+                    _isOutOfStock(product)
+                        ? const SizedBox()
+                        : Checkbox(
+                            fillColor: WidgetStateProperty.resolveWith<Color>(
+                                (states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return Colors.brown;
+                              }
+                              return Colors.transparent;
+                            }),
+                            value: widget.checked,
+                            onChanged: (bool? newValue) {
+                              if (widget.onProductCheck != null) {
+                                widget.onProductCheck!(
+                                    widget.shopId, 0, newValue);
+                              } else {
+                                widget.onCheckChanged(newValue);
+                              }
+                            },
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4)),
+                          ),
+                    Opacity(
+                      opacity: _isOutOfStock(product) ? 0.5 : 1.0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.grey, width: 0.6)),
+                        child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey, width: 0.6)),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          width: 110,
-                          height: 110,
-                          fit: BoxFit.cover,
-                          (product.hasVariantImages &&
-                                  product.variants.isNotEmpty)
-                              ? (product
-                                      .variants[0]
-                                      .options[product.variants[0].options
-                                          .indexWhere((option) =>
-                                              option.id ==
-                                              widget.item.optionId1)]
-                                      .imageUrl ??
-                                  product.imageUrl[0])
-                              : product.imageUrl[0],
+                          child: Image.network(
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
+                            (product.hasVariantImages &&
+                                    product.variants.isNotEmpty)
+                                ? (product
+                                        .variants[0]
+                                        .options[product.variants[0].options
+                                            .indexWhere((option) =>
+                                                option.id ==
+                                                widget.item.optionId1)]
+                                        .imageUrl ??
+                                    product.imageUrl[0])
+                                : product.imageUrl[0],
+                          ),
                         ),
                       ),
                     ),
@@ -292,7 +309,9 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                               ),
                             )
                           : SizedBox(height: 30),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 5),
+                      _buildStockStatus(product),
+                      const SizedBox(height: 5),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -304,98 +323,105 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                               color: Color.fromARGB(255, 151, 14, 4),
                             ),
                           ),
-                          Container(
-                            height: 20,
-                            decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: Colors.grey, width: 1)),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                GestureDetector(
-                                  onTap: () async {
-                                    final newQuantity =
-                                        int.tryParse(widget.controller.text) ??
-                                            1;
-                                    if (newQuantity > 1) {
-                                      widget.onUpdateQuantity(widget.shopId,
-                                          widget.itemId, newQuantity - 1);
-                                      widget.controller.text =
-                                          (newQuantity - 1).toString();
-                                    } else {
-                                      if (await widget.onShowConfirmDelete()) {
-                                        widget.onDeleteProduct(
-                                            widget.shopId, widget.itemId);
-                                      }
-                                    }
-                                  },
-                                  child: Container(
-                                    height: double.infinity,
-                                    width: 19,
-                                    alignment: Alignment.center,
-                                    decoration: const BoxDecoration(
-                                        border: Border(
-                                            right: BorderSide(
-                                                color: Colors.grey, width: 1))),
-                                    child: Icon(FontAwesomeIcons.minus,
-                                        color: Colors.grey[700], size: 13),
-                                  ),
-                                ),
-                                Container(
-                                  alignment: Alignment.center,
-                                  height: 20,
-                                  width: 30,
-                                  child: TextField(
-                                    controller: widget.controller,
-                                    textAlignVertical: TextAlignVertical.center,
-                                    textAlign: TextAlign.center,
-                                    keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                        border: InputBorder.none,
-                                        contentPadding:
-                                            EdgeInsets.only(bottom: 13)),
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        textBaseline: TextBaseline.alphabetic),
-                                    onSubmitted: (value) {
-                                      final newQuantity =
-                                          int.tryParse(value) ?? 1;
-                                      if (newQuantity > 0) {
+                          if (!_isOutOfStock(product))
+                            Container(
+                              height: 20,
+                              decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey, width: 1)),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final newQuantity = int.tryParse(
+                                              widget.controller.text) ??
+                                          1;
+                                      if (newQuantity > 1) {
                                         widget.onUpdateQuantity(widget.shopId,
-                                            widget.itemId, newQuantity);
+                                            widget.itemId, newQuantity - 1);
+                                        widget.controller.text =
+                                            (newQuantity - 1).toString();
                                       } else {
-                                        widget.controller.text = '1';
-                                        widget.onUpdateQuantity(
-                                            widget.shopId, widget.itemId, 1);
+                                        if (await widget
+                                            .onShowConfirmDelete()) {
+                                          widget.onDeleteProduct(
+                                              widget.shopId, widget.itemId);
+                                        }
                                       }
                                     },
+                                    child: Container(
+                                      height: double.infinity,
+                                      width: 19,
+                                      alignment: Alignment.center,
+                                      decoration: const BoxDecoration(
+                                          border: Border(
+                                              right: BorderSide(
+                                                  color: Colors.grey,
+                                                  width: 1))),
+                                      child: Icon(FontAwesomeIcons.minus,
+                                          color: Colors.grey[700], size: 13),
+                                    ),
                                   ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    final newQuantity =
-                                        int.tryParse(widget.controller.text) ??
-                                            1;
-                                    widget.onUpdateQuantity(widget.shopId,
-                                        widget.itemId, newQuantity + 1);
-                                    widget.controller.text =
-                                        (newQuantity + 1).toString();
-                                  },
-                                  child: Container(
-                                    height: double.infinity,
-                                    width: 19,
+                                  Container(
                                     alignment: Alignment.center,
-                                    decoration: const BoxDecoration(
-                                        border: Border(
-                                            left: BorderSide(
-                                                color: Colors.grey, width: 1))),
-                                    child: Icon(FontAwesomeIcons.plus,
-                                        color: Colors.grey[700], size: 13),
+                                    height: 20,
+                                    width: 30,
+                                    child: TextField(
+                                      controller: widget.controller,
+                                      textAlignVertical:
+                                          TextAlignVertical.center,
+                                      textAlign: TextAlign.center,
+                                      keyboardType: TextInputType.number,
+                                      decoration: const InputDecoration(
+                                          border: InputBorder.none,
+                                          contentPadding:
+                                              EdgeInsets.only(bottom: 13)),
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          textBaseline:
+                                              TextBaseline.alphabetic),
+                                      onSubmitted: (value) {
+                                        final newQuantity =
+                                            int.tryParse(value) ?? 1;
+                                        if (newQuantity > 0) {
+                                          widget.onUpdateQuantity(widget.shopId,
+                                              widget.itemId, newQuantity);
+                                        } else {
+                                          widget.controller.text = '1';
+                                          widget.onUpdateQuantity(
+                                              widget.shopId, widget.itemId, 1);
+                                        }
+                                      },
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  GestureDetector(
+                                    onTap: () {
+                                      final newQuantity = int.tryParse(
+                                              widget.controller.text) ??
+                                          1;
+                                      widget.onUpdateQuantity(widget.shopId,
+                                          widget.itemId, newQuantity + 1);
+                                      widget.controller.text =
+                                          (newQuantity + 1).toString();
+                                    },
+                                    child: Container(
+                                      height: double.infinity,
+                                      width: 19,
+                                      alignment: Alignment.center,
+                                      decoration: const BoxDecoration(
+                                          border: Border(
+                                              left: BorderSide(
+                                                  color: Colors.grey,
+                                                  width: 1))),
+                                      child: Icon(FontAwesomeIcons.plus,
+                                          color: Colors.grey[700], size: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ],
@@ -407,5 +433,87 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
         ),
       ],
     );
+  }
+
+  bool _isOutOfStock(Product product) {
+    int currentStock = 0;
+    if (product.variants.isEmpty) {
+      currentStock = product.quantity ?? 0;
+    } else if (product.variants.length == 1) {
+      if (widget.item.optionId1 != null) {
+        int optionIndex = product.variants[0].options
+            .indexWhere((opt) => opt.id == widget.item.optionId1);
+        if (optionIndex != -1 && optionIndex < product.optionInfos.length) {
+          currentStock = product.optionInfos[optionIndex].stock;
+        }
+      }
+    } else if (product.variants.length > 1) {
+      if (widget.item.optionId1 != null && widget.item.optionId2 != null) {
+        int option1Index = product.variants[0].options
+            .indexWhere((opt) => opt.id == widget.item.optionId1);
+        int option2Index = product.variants[1].options
+            .indexWhere((opt) => opt.id == widget.item.optionId2);
+        if (option1Index != -1 && option2Index != -1) {
+          int optionInfoIndex =
+              (option1Index * product.variants[1].options.length + option2Index)
+                  .toInt();
+          if (optionInfoIndex < product.optionInfos.length) {
+            currentStock = product.optionInfos[optionInfoIndex].stock;
+          }
+        }
+      }
+    }
+    return currentStock == 0;
+  }
+
+  Widget _buildStockStatus(Product product) {
+    if (_isOutOfStock(product)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Loại hàng đã chọn không còn",
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 5),
+          GestureDetector(
+            onTap: () {
+              if (product.variants.isEmpty || product.optionInfos.length <= 1) {
+                // TODO: Navigate to similar products
+              } else {
+                if (product.variants.length > 1) {
+                  showAddToCart(context, product,
+                      optionId1: widget.item.optionId1,
+                      optionId2: widget.item.optionId2);
+                } else {
+                  showAddToCart(context, product,
+                      optionId1: widget.item.optionId1);
+                }
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.red[300]!),
+                borderRadius: BorderRadius.circular(2),
+              ),
+              child: Text(
+                product.variants.isEmpty || product.optionInfos.length <= 1
+                    ? "Tìm sản phẩm tương tự"
+                    : "Đổi loại khác",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.red[300],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
   }
 }

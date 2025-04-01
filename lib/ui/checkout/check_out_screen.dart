@@ -20,11 +20,11 @@ import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/cart_shop.dart';
 import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/order_item.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shipping_calculator.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
-import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/checkout/pick_location_checkout_screen.dart';
 import 'package:luanvan/ui/checkout/shop_checkout_item.dart';
 import 'package:luanvan/ui/order/order_success_screen.dart';
@@ -776,10 +776,91 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                       final estimatedDeliveryDate =
                           now.add(Duration(days: estimatedDays));
 
-                      // Tạo đơn hàng mới
+                      // Tạo danh sách OrderItem từ các sản phẩm được chọn
+                      List<OrderItem> orderItems = [];
+                      for (var itemId in listItemId) {
+                        final cartItem = cartShop.items[itemId];
+                        if (cartItem == null) continue;
+
+                        final productState =
+                            context.read<ProductCartBloc>().state;
+                        if (productState is ProductCartListLoaded) {
+                          final product = productState.products.firstWhere(
+                            (p) => p.id == cartItem.productId,
+                          );
+
+                          // Tính giá sản phẩm dựa trên biến thể
+                          double productPrice = 0;
+                          if (product.variants.isEmpty) {
+                            productPrice = product.price ?? 0;
+                          } else if (product.variants.length > 1) {
+                            int i = product.variants[0].options.indexWhere(
+                                (opt) => opt.id == cartItem.optionId1);
+                            int j = product.variants[1].options.indexWhere(
+                                (opt) => opt.id == cartItem.optionId2);
+                            if (i == -1) i = 0;
+                            if (j == -1) j = 0;
+                            int optionInfoIndex =
+                                i * product.variants[1].options.length + j;
+                            if (optionInfoIndex < product.optionInfos.length) {
+                              productPrice =
+                                  product.optionInfos[optionInfoIndex].price;
+                            }
+                          }
+
+                          // Tạo OrderItem mới
+                          orderItems.add(OrderItem(
+                            productId: cartItem.productId,
+                            quantity: cartItem.quantity,
+                            price: productPrice,
+                            productName: product.name,
+                            productImage: (product.hasVariantImages &&
+                                    product.variants.isNotEmpty)
+                                ? (product
+                                        .variants[0]
+                                        .options[product.variants[0].options
+                                            .indexWhere((option) =>
+                                                option.id ==
+                                                cartItem.optionId1)]
+                                        .imageUrl ??
+                                    product.imageUrl[0])
+                                : product.imageUrl[0],
+                            createdAt: now,
+                            productVariation: cartItem.optionId1 != null &&
+                                    cartItem.optionId2 != null
+                                ? '${product.variants.firstWhere((variant) => variant.id == cartItem.variantId1).options.firstWhere((option) => option.id == cartItem.optionId1).name}, ${product.variants.firstWhere((variant) => variant.id == cartItem.variantId2).options.firstWhere((option) => option.id == cartItem.optionId2).name}'
+                                : cartItem.optionId1 != null
+                                    ? product.variants
+                                        .firstWhere((variant) =>
+                                            variant.id == cartItem.variantId1)
+                                        .options
+                                        .firstWhere((option) =>
+                                            option.id == cartItem.optionId1)
+                                        .name
+                                    : cartItem.optionId2 != null
+                                        ? product.variants
+                                            .firstWhere((variant) =>
+                                                variant.id ==
+                                                cartItem.variantId2)
+                                            .options
+                                            .firstWhere((option) =>
+                                                option.id == cartItem.optionId2)
+                                            .name
+                                        : null,
+                            productDescription: product.description,
+                            productCategory: product.category,
+                            productSubCategory:
+                                '', // Không có trường này trong model Product
+                            productBrand:
+                                '', // Không có trường này trong model Product
+                          ));
+                        }
+                      }
+
+                      // Tạo đơn hàng mới với danh sách OrderItem
                       orders.add(Order(
                         id: '', // ID sẽ được Firestore tự động tạo
-                        item: items,
+                        item: orderItems,
                         shopId: shopId,
                         userId: authState.user.uid,
                         createdAt: now,
@@ -790,8 +871,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         estimatedDeliveryDate: estimatedDeliveryDate,
                         shipMethod: shipMethod[shopId]!,
                       ));
-
-                      // Gửi event tạo đơn hàng
 
                       // Xóa sản phẩm khỏi giỏ hàng
                       final updatedItems =

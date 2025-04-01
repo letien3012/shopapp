@@ -62,74 +62,256 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   void _showFullScreenVideo(String videoUrl) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black,
-          body: Center(
-            child: VideoPlayer(_videoControllers[videoUrl]!),
-          ),
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Stack(
+          children: [
+            Center(
+              child: FutureBuilder(
+                future: _initializeVideo(videoUrl),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    final controller = _videoControllers[videoUrl];
+                    if (controller != null && controller.value.isInitialized) {
+                      return Stack(
+                        children: [
+                          InteractiveViewer(
+                            minScale: 0.5,
+                            maxScale: 4.0,
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width,
+                              child: AspectRatio(
+                                aspectRatio: controller.value.aspectRatio,
+                                child: VideoPlayer(controller),
+                              ),
+                            ),
+                          ),
+                          // Video Controls
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                  colors: [
+                                    Colors.black.withOpacity(0.7),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Progress Bar
+                                  VideoProgressIndicator(
+                                    controller,
+                                    allowScrubbing: true,
+                                    colors: const VideoProgressColors(
+                                      playedColor: Colors.white,
+                                      bufferedColor: Colors.white24,
+                                      backgroundColor: Colors.white12,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Controls
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              controller.value.isPlaying
+                                                  ? Icons.pause
+                                                  : Icons.play_arrow,
+                                              color: Colors.white,
+                                            ),
+                                            onPressed: () =>
+                                                _togglePlay(videoUrl),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              controller.value.volume == 0
+                                                  ? Icons.volume_off
+                                                  : Icons.volume_up,
+                                              color: Colors.white,
+                                            ),
+                                            onPressed: () =>
+                                                _toggleMute(videoUrl),
+                                          ),
+                                        ],
+                                      ),
+                                      StreamBuilder(
+                                        stream: Stream.periodic(
+                                            const Duration(milliseconds: 100)),
+                                        builder: (context, snapshot) {
+                                          return Text(
+                                            _formatDuration(
+                                                    controller.value.position) +
+                                                ' / ' +
+                                                _formatDuration(
+                                                    controller.value.duration),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Close Button
+                          Positioned(
+                            top: 40,
+                            right: 20,
+                            child: IconButton(
+                              icon:
+                                  const Icon(Icons.close, color: Colors.white),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                  }
+                  return const CircularProgressIndicator();
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
+  void _togglePlay(String videoUrl) {
+    final controller = _videoControllers[videoUrl];
+    if (controller != null) {
+      if (controller.value.isPlaying) {
+        controller.pause();
+      } else {
+        controller.play();
+      }
+    }
+  }
+
+  void _toggleMute(String videoUrl) {
+    final controller = _videoControllers[videoUrl];
+    if (controller != null) {
+      controller.setVolume(controller.value.volume == 0 ? 1 : 0);
+      setState(() {});
+    }
   }
 
   void _showFullScreenImage(String imageUrl) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black,
-          body: PhotoView(
-            imageProvider: NetworkImage(imageUrl),
-            minScale: PhotoViewComputedScale.contained,
-            maxScale: PhotoViewComputedScale.covered * 2,
-            initialScale: PhotoViewComputedScale.contained,
-            backgroundDecoration: const BoxDecoration(color: Colors.black),
-          ),
+    showDialog(
+      context: context,
+      builder: (context) => Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            PhotoView(
+              imageProvider: NetworkImage(imageUrl),
+              minScale: PhotoViewComputedScale.contained,
+              maxScale: PhotoViewComputedScale.covered * 3,
+              initialScale: PhotoViewComputedScale.contained,
+              backgroundDecoration: const BoxDecoration(color: Colors.black),
+              enableRotation: true,
+              enablePanAlways: true,
+            ),
+            // Close Button
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _showFullScreenMedia(Comment comment) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
+  void _showFullScreenMedia(Comment comment, {int initialIndex = 0}) {
+    int currentIndex = initialIndex;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Scaffold(
           backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            leading: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          body: PageView.builder(
-            itemCount:
-                (comment.images.length + (comment.videoUrl != null ? 1 : 0)),
-            itemBuilder: (context, index) {
-              if (comment.videoUrl != null) {
-                if (index == 0) {
-                  return Center(
-                    child: VideoPlayer(_videoControllers[comment.videoUrl!]!),
+          body: Stack(
+            children: [
+              // Photo Gallery
+              PageView.builder(
+                itemCount: comment.images.length,
+                controller: PageController(initialPage: initialIndex),
+                onPageChanged: (index) {
+                  setState(() {
+                    currentIndex = index;
+                  });
+                },
+                itemBuilder: (context, index) {
+                  return PhotoView(
+                    imageProvider: NetworkImage(comment.images[index]),
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.covered * 3,
+                    initialScale: PhotoViewComputedScale.contained,
+                    backgroundDecoration:
+                        const BoxDecoration(color: Colors.black),
+                    enableRotation: true,
+                    enablePanAlways: true,
                   );
-                }
-                return PhotoView(
-                  imageProvider: NetworkImage(comment.images[index - 1]),
-                  minScale: PhotoViewComputedScale.contained,
-                  maxScale: PhotoViewComputedScale.covered * 2,
-                  initialScale: PhotoViewComputedScale.contained,
-                  backgroundDecoration:
-                      const BoxDecoration(color: Colors.black),
-                );
-              }
-              return PhotoView(
-                imageProvider: NetworkImage(comment.images[index]),
-                minScale: PhotoViewComputedScale.contained,
-                maxScale: PhotoViewComputedScale.covered * 2,
-                initialScale: PhotoViewComputedScale.contained,
-                backgroundDecoration: const BoxDecoration(color: Colors.black),
-              );
-            },
+                },
+              ),
+              // Close Button
+              Positioned(
+                top: 40,
+                right: 20,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              // Image Counter
+              if (comment.images.length > 1)
+                Positioned(
+                  bottom: 20,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    color: Colors.black.withOpacity(0.5),
+                    child: Text(
+                      '${currentIndex + 1}/${comment.images.length}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -182,6 +364,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
                       return Container(
                         color: Colors.grey[200],
+                        constraints: BoxConstraints(
+                          minHeight: MediaQuery.of(context).size.height,
+                        ),
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.only(top: 130, bottom: 70),
                           child: Column(
@@ -195,7 +380,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                     Column(
                                       children: [
                                         Text(
-                                          "${product.averageRating}/5",
+                                          "${product.averageRating.toStringAsFixed(1)}/5",
                                           style: const TextStyle(
                                             fontSize: 24,
                                             fontWeight: FontWeight.bold,
@@ -203,9 +388,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                         ),
                                         Row(
                                           children: List.generate(5, (index) {
-                                            return const Icon(
+                                            return Icon(
                                               Icons.star,
-                                              color: Colors.yellow,
+                                              color:
+                                                  index < product.averageRating
+                                                      ? Colors.yellow
+                                                      : Colors.grey[300],
                                               size: 16,
                                             );
                                           }),
@@ -223,6 +411,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                     Expanded(
                                       child: Column(
                                         children: List.generate(5, (index) {
+                                          // Tính số lượng đánh giá cho mỗi sao
+                                          int count = comments
+                                              .where((comment) =>
+                                                  comment.rating == (5 - index))
+                                              .length;
+                                          // Tính tỷ lệ phần trăm
+                                          double percentage = comments.isEmpty
+                                              ? 0
+                                              : (count / comments.length) * 100;
+
                                           return Container(
                                             margin: const EdgeInsets.symmetric(
                                                 vertical: 2),
@@ -252,9 +450,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                                       ),
                                                       Container(
                                                         height: 4,
-                                                        width: 100 -
-                                                            (index * 20)
-                                                                .toDouble(),
+                                                        width: percentage,
                                                         decoration:
                                                             BoxDecoration(
                                                           color: Colors.yellow,
@@ -264,6 +460,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                                         ),
                                                       ),
                                                     ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  "$count",
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[600],
                                                   ),
                                                 ),
                                               ],
@@ -359,24 +563,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                                     ),
                                                     Expanded(
                                                       child: Text(
-                                                        (comment.variant!
-                                                                    .variantId1 !=
-                                                                null)
-                                                            ? product.variants
-                                                                .firstWhere((variant) =>
-                                                                    variant
-                                                                        .id ==
-                                                                    comment
-                                                                        .variant!
-                                                                        .variantId1)
-                                                                .options
-                                                                .firstWhere((option) =>
-                                                                    option.id ==
-                                                                    comment
-                                                                        .variant!
-                                                                        .optionId1)
-                                                                .name
-                                                            : '',
+                                                        comment.variant ?? '',
                                                         style: TextStyle(
                                                             fontSize: 13,
                                                             color: Colors
@@ -388,24 +575,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                       ),
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        Text(
-                                                          (comment.variant!
-                                                                      .variantId2 !=
-                                                                  null)
-                                                              ? ', ${product.variants.firstWhere((variant) => variant.id == comment.variant!.variantId2).options.firstWhere((option) => option.id == comment.variant!.optionId2).name}'
-                                                              : '',
-                                                          style: TextStyle(
-                                                              fontSize: 13,
-                                                              color: Colors
-                                                                  .grey[600],
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
-                                                        ),
-                                                      ],
                                                     ),
                                                   ],
                                                 ),
@@ -632,7 +801,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (comment.videoUrl != null) {
       mediaItems.add(
         GestureDetector(
-          onTap: () => _showFullScreenMedia(comment),
+          onTap: () => _showFullScreenVideo(comment.videoUrl!),
           child: _buildVideoTile(comment.videoUrl!),
         ),
       );
@@ -642,23 +811,59 @@ class _ReviewScreenState extends State<ReviewScreen> {
     for (int i = 0; i < comment.images.length; i++) {
       mediaItems.add(
         GestureDetector(
-          onTap: () => _showFullScreenMedia(comment),
+          onTap: () => _showFullScreenMedia(comment, initialIndex: i),
           child: _buildImageTile(comment.images, i),
         ),
       );
     }
 
+    // Luôn hiển thị 4 items khi số lượng media ≥ 4
+    final int totalItems = mediaItems.length;
+    const int maxVisibleItems = 4; // Luôn hiển thị 4 items
+
     return GridView.builder(
       padding: const EdgeInsets.only(top: 10),
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      itemCount: mediaItems.length > 4 ? 4 : mediaItems.length,
+      itemCount: totalItems > maxVisibleItems ? maxVisibleItems : totalItems,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 5,
         mainAxisSpacing: 5,
       ),
-      itemBuilder: (context, index) => mediaItems[index],
+      itemBuilder: (context, index) {
+        if (index == 3 && totalItems > 4) {
+          // Tính toán index của ảnh trong comment.images
+          int imageIndex = comment.videoUrl != null ? index - 1 : index;
+
+          return GestureDetector(
+            onTap: () =>
+                _showFullScreenMedia(comment, initialIndex: imageIndex),
+            child: Stack(
+              children: [
+                mediaItems[index],
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '+${totalItems - maxVisibleItems}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return mediaItems[index];
+      },
     );
   }
 
@@ -684,6 +889,51 @@ class _ReviewScreenState extends State<ReviewScreen> {
               const Center(
                 child: CircularProgressIndicator(),
               ),
+            // Video Controls
+            if (controller != null && controller.value.isInitialized)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.7),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => _togglePlay(videoUrl),
+                        child: Icon(
+                          controller.value.isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Text(
+                          _formatDuration(controller.value.duration),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -692,7 +942,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   Widget _buildImageTile(List<String> images, int index) {
     return GestureDetector(
-      onTap: () => _showFullScreenImage(images[index]),
+      onTap: () => _showFullScreenMedia(
+          Comment(
+            id: '',
+            userId: '',
+            productId: '',
+            content: '',
+            rating: 0,
+            createdAt: DateTime.now(),
+            images: images,
+            videoUrl: null,
+            orderId: '',
+          ),
+          initialIndex: index),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),

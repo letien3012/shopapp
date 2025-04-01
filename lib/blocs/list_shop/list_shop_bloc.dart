@@ -9,7 +9,6 @@ class ListShopBloc extends Bloc<ListShopEvent, ListShopState> {
 
   ListShopBloc(this._shopService) : super(ListShopInitial()) {
     on<FetchListShopEventByShopId>(_onFetchListShopByShopId);
-
     on<ResetListShopEvent>((event, emit) => emit(ListShopInitial()));
   }
 

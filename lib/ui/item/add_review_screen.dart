@@ -1,26 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:luanvan/blocs/comment/comment_bloc.dart';
 import 'package:luanvan/blocs/comment/comment_event.dart';
-import 'package:luanvan/blocs/comment/comment_state.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
-import 'package:luanvan/blocs/shop/shop_bloc.dart';
-import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/comment.dart';
 import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/order_item.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/models/shop_comment.dart';
-import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:io';
@@ -72,8 +67,8 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
       totalShipFee: 0,
       totalPrice: 0);
 
-  String getItemKey(CartItem item) {
-    return '${item.productId}_${item.variantId1 ?? ''}_${item.optionId1 ?? ''}_${item.variantId2 ?? ''}_${item.optionId2 ?? ''}';
+  String getItemKey(OrderItem item) {
+    return '${item.productId}_${item.productVariation ?? ''}';
   }
 
   @override
@@ -360,16 +355,13 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
             productId: item.productId,
             content: reviewText,
             rating: rating,
-            variant: CommentVariant(
-              variantId1: item.variantId1,
-              optionId1: item.optionId1,
-              variantId2: item.variantId2,
-              optionId2: item.optionId2,
-            ),
+            shopId: order.shopId,
+            variant: item.productVariation,
             videoUrl: videos.isNotEmpty ? videos.first : null,
             images: images,
             createdAt: DateTime.now(),
             orderId: order.id,
+            imageProduct: item.productImage,
           ),
         );
       }
@@ -541,7 +533,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     );
   }
 
-  Widget _buildProductReviewItem(Product product, CartItem item) {
+  Widget _buildProductReviewItem(Product product, OrderItem item) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -556,20 +548,13 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     );
   }
 
-  Widget _buildProductInfo(Product product, CartItem item) {
+  Widget _buildProductInfo(Product product, OrderItem item) {
     return Row(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: Image.network(
-            (product.hasVariantImages && product.variants.isNotEmpty)
-                ? (product
-                        .variants[0]
-                        .options[product.variants[0].options.indexWhere(
-                            (option) => option.id == item.optionId1)]
-                        .imageUrl ??
-                    product.imageUrl[0])
-                : product.imageUrl[0],
+            item.productImage,
             width: 60,
             height: 60,
             fit: BoxFit.cover,
@@ -588,24 +573,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
               ),
               Row(
                 children: [
-                  Text(
-                      (item.variantId1 != null)
-                          ? product.variants
-                              .firstWhere(
-                                  (variant) => variant.id == item.variantId1)
-                              .options
-                              .firstWhere(
-                                  (option) => option.id == item.optionId1)
-                              .name
-                          : '',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w300),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  Text(
-                      (item.variantId2 != null)
-                          ? ', ${product.variants.firstWhere((variant) => variant.id == item.variantId2).options.firstWhere((option) => option.id == item.optionId2).name}'
-                          : '',
+                  Text(item.productVariation ?? '',
                       style:
                           TextStyle(fontSize: 13, fontWeight: FontWeight.w300),
                       maxLines: 1,

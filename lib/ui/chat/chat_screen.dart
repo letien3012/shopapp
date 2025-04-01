@@ -336,7 +336,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 BlocSelector<ChatBloc, ChatState, String>(
                                   selector: (state) {
                                     if (state is MessagesLoaded) {
-                                      return state.messages.last.content;
+                                      if (state.messages.isNotEmpty) {
+                                        return state.messages.last.content;
+                                      }
                                     }
                                     return "";
                                   },

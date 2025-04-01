@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/blocs/comment/comment_bloc.dart';
+import 'package:luanvan/blocs/comment/comment_event.dart';
+import 'package:luanvan/blocs/comment/comment_state.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
@@ -13,7 +16,9 @@ import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/home/shop_dashboard.dart';
 import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
+import 'package:luanvan/ui/shop/comment/shop_review_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/ship_manager_screen.dart';
@@ -71,6 +76,9 @@ class _MyShopScreenState extends State<MyShopScreen> {
         if (shopState is ShopLoading) {
           return _buildLoading();
         } else if (shopState is ShopLoaded) {
+          context
+              .read<CommentBloc>()
+              .add(LoadCommentsShopIdEvent(shopState.shop.shopId!));
           return _buildShopContent(context, shopState.shop, user);
         } else if (shopState is ShopError) {
           return _buildError(shopState.message);
@@ -149,21 +157,27 @@ class _MyShopScreenState extends State<MyShopScreen> {
                           ),
                         ),
                       ),
-                      Container(
-                        height: 30,
-                        width: 90,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                            border: Border.all(
-                          width: 1,
-                          color: Colors.brown,
-                        )),
-                        child: Text(
-                          "Xem shop",
-                          style: TextStyle(
-                            fontSize: 14,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, ShopDashboard.routeName,
+                              arguments: shop.shopId);
+                        },
+                        child: Container(
+                          height: 30,
+                          width: 90,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                              border: Border.all(
+                            width: 1,
                             color: Colors.brown,
-                            fontWeight: FontWeight.bold,
+                          )),
+                          child: Text(
+                            "Xem shop",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.brown,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -206,7 +220,6 @@ class _MyShopScreenState extends State<MyShopScreen> {
                       int processingCount = 0;
                       int cancelledCount = 0;
                       int returnedCount = 0;
-                      int feedbackCount = 0;
 
                       if (state is OrderShopLoaded) {
                         for (var order in state.orders) {
@@ -220,12 +233,6 @@ class _MyShopScreenState extends State<MyShopScreen> {
                                 break;
                               case OrderStatus.returned:
                                 returnedCount++;
-                                break;
-                              case OrderStatus.delivered:
-                                feedbackCount++;
-                                break;
-                              case OrderStatus.reviewed:
-                                feedbackCount++;
                                 break;
                               default:
                                 break;
@@ -243,8 +250,22 @@ class _MyShopScreenState extends State<MyShopScreen> {
                               "Đơn huỷ", cancelledCount, OrderStatus.cancelled),
                           _buildOrderCountItem("Trả hàng hoàn tiền",
                               returnedCount, OrderStatus.returned),
-                          _buildOrderCountItem("Phản hôi đánh giá",
-                              feedbackCount, OrderStatus.delivered),
+                          BlocSelector<CommentBloc, CommentState, int>(
+                            selector: (state) {
+                              if (state is CommentShopLoaded) {
+                                return state.comments.length;
+                              }
+                              return 0;
+                            },
+                            builder: (context, feedbackCount) {
+                              if (feedbackCount > 0) {
+                                return _buildOrderCountItem("Phản hôi đánh giá",
+                                    feedbackCount, OrderStatus.reviewed);
+                              }
+                              return _buildOrderCountItem(
+                                  "Phản hôi đánh giá", 0, OrderStatus.reviewed);
+                            },
+                          ),
                         ],
                       );
                     },
@@ -552,35 +573,40 @@ class _MyShopScreenState extends State<MyShopScreen> {
   Widget _buildOrderCountItem(String label, int count, OrderStatus status) {
     return InkWell(
       onTap: () {
-        int index = 0;
-        switch (status) {
-          case OrderStatus.pending:
-            index = 0; // Chờ xác nhận
-            break;
-          case OrderStatus.processing:
-            index = 1; // Chờ lấy hàng
-            break;
-          case OrderStatus.shipped:
-            index = 2; // Chờ giao hàng
-            break;
-          case OrderStatus.delivered:
-            index = 3; // Đã giao
-            break;
-          case OrderStatus.returned:
-            index = 4; // Trả hàng
-            break;
-          case OrderStatus.cancelled:
-            index = 5; // Đã hủy
-            break;
-          case OrderStatus.reviewed:
-            index = 6; // Đã đánh giá
-            break;
+        if (status == OrderStatus.reviewed) {
+          Navigator.pushNamed(
+            context,
+            ShopReviewScreen.routeName,
+          );
+        } else {
+          int index = 0;
+          switch (status) {
+            case OrderStatus.pending:
+              index = 0; // Chờ xác nhận
+              break;
+            case OrderStatus.processing:
+              index = 1; // Chờ lấy hàng
+              break;
+            case OrderStatus.shipped:
+              index = 2; // Chờ giao hàng
+              break;
+            case OrderStatus.delivered:
+              index = 3; // Đã giao
+              break;
+            case OrderStatus.returned:
+              index = 4; // Trả hàng
+              break;
+            case OrderStatus.cancelled:
+              index = 5; // Đã hủy
+              break;
+            case OrderStatus.reviewed:
+          }
+          Navigator.pushNamed(
+            context,
+            OrderShopScreen.routeName,
+            arguments: index,
+          );
         }
-        Navigator.pushNamed(
-          context,
-          OrderShopScreen.routeName,
-          arguments: index,
-        );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),

@@ -15,6 +15,16 @@ class CommentLoaded extends CommentState {
   CommentLoaded(this.comments);
 }
 
+class CommentUserLoaded extends CommentState {
+  final List<Comment> comments;
+  CommentUserLoaded(this.comments);
+}
+
+class CommentShopLoaded extends CommentState {
+  final List<Comment> comments;
+  CommentShopLoaded(this.comments);
+}
+
 class CommentError extends CommentState {
   final String message;
 

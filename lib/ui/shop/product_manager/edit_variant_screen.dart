@@ -348,6 +348,26 @@ class _EditVariantScreenState extends State<EditVariantScreen> {
     if (!_validateDataBeforeSave()) return;
 
     try {
+      // Kiểm tra và upload hình ảnh nếu tính năng được bật
+      if (enableImageForVariant) {
+        bool hasEmptyImage = false;
+        for (int i = 0; i < _imageUrls.length; i++) {
+          if (_imageUrls[i].isEmpty) {
+            hasEmptyImage = true;
+            break;
+          }
+        }
+
+        if (hasEmptyImage) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    "Vui lòng upload đầy đủ hình ảnh cho tất cả phân loại")),
+          );
+          return;
+        }
+      }
+
       for (int i = 0; i < _variants.length; i++) {
         for (int j = 0; j < _options[i].length; j++) {
           final name = _labelOptionControllers[i][j].text;

@@ -581,7 +581,8 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
 
   Widget _buildProductItem(Product product, Shop shop) {
     return GestureDetector(
-      onTap: () => Navigator.of(context).pushNamed(DetaiItemScreen.routeName),
+      onTap: () => Navigator.of(context)
+          .pushNamed(DetaiItemScreen.routeName, arguments: product.id),
       child: Container(
         color: Colors.white,
         child: Column(

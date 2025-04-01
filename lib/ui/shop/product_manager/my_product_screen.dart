@@ -328,7 +328,7 @@ class _MyProductScreenState extends State<MyProductScreen>
                 onTap: () {
                   Navigator.pushNamed(
                       context, DetailsProductShopScreen.routeName,
-                      arguments: product);
+                      arguments: product.id);
                 },
                 child: Row(
                   children: [

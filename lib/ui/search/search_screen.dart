@@ -67,14 +67,16 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   // Thực hiện tìm kiếm và lưu từ khóa
-  void _performSearch() {
+  void _performSearch() async {
     final keyword = _searchController.text.trim();
     if (keyword.isNotEmpty) {
-      _saveSearch(keyword);
-      Navigator.of(context).pushNamed(
-        SearchResultScreen.routeName,
-        arguments: keyword,
-      );
+      await _saveSearch(keyword);
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(
+          SearchResultScreen.routeName,
+          arguments: keyword,
+        );
+      }
     }
   }
 
@@ -102,9 +104,14 @@ class _SearchScreenState extends State<SearchScreen> {
         productName,
         style: const TextStyle(fontSize: 14),
       ),
-      onTap: () {
-        _searchController.text = productName;
-        _performSearch();
+      onTap: () async {
+        await _saveSearch(productName);
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed(
+            SearchResultScreen.routeName,
+            arguments: productName,
+          );
+        }
       },
     );
   }

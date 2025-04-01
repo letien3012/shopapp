@@ -16,15 +16,6 @@ import 'package:luanvan/models/chat_room.dart';
 import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 
-enum ChatFilter {
-  all('Tất cả'),
-  unread('Chưa đọc'),
-  unanswered('Chưa phản hồi');
-
-  final String label;
-  const ChatFilter(this.label);
-}
-
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
   static String routeName = "chat_screen";

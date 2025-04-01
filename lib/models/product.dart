@@ -122,7 +122,7 @@ class Product {
       'price': price,
       'shippingMethods': shippingMethods.map((x) => x.toMap()).toList(),
       'optionInfos': optionInfos.map((x) => x.toMap()).toList(),
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 
@@ -160,9 +160,7 @@ class Product {
           (x) => OptionInfo.fromMap(x as Map<String, dynamic>),
         ),
       ),
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'] as String)
-          : DateTime.now(),
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
   }
 

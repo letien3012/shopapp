@@ -116,84 +116,83 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       builder: (context, shopState) {
         if (shopState is ShopLoaded) {
           shop = shopState.shop;
-        }
-        return Container(
-          padding: const EdgeInsets.only(top: 30, bottom: 10),
-          color: Colors.white,
-          height: MediaQuery.of(context).size.height * 0.1,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  context.read<ChatBloc>().deleteEmptyChatRoom(_chatRoomId);
-                  Navigator.of(context).pop();
-                },
-                child: const Icon(
-                  Icons.arrow_back,
-                  size: 28,
-                  color: Colors.brown,
-                ),
-              ),
-              const SizedBox(width: 10),
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.brown,
-                child: ClipOval(
-                  child: Image.network(
-                    height: 40,
-                    width: 40,
-                    fit: BoxFit.cover,
-                    shop!.avatarUrl ?? '',
+
+          return Container(
+            padding: const EdgeInsets.only(top: 30, bottom: 10),
+            color: Colors.white,
+            height: MediaQuery.of(context).size.height * 0.1,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () {
+                    context.read<ChatBloc>().deleteEmptyChatRoom(_chatRoomId);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Icon(
+                    Icons.arrow_back,
+                    size: 28,
+                    color: Colors.brown,
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: BlocBuilder<ChatBloc, ChatState>(
-                  builder: (context, chatState) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          shop!.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const Text(
-                          "Truy cập 10 phút trước",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+                const SizedBox(width: 10),
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.brown,
+                  child: ClipOval(
+                    child: Image.network(
+                      height: 40,
+                      width: 40,
+                      fit: BoxFit.cover,
+                      shop!.avatarUrl ?? '',
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
+                const SizedBox(width: 10),
+                Expanded(
+                  child: BlocBuilder<ChatBloc, ChatState>(
+                    builder: (context, chatState) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            shop!.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const Text(
+                            "Truy cập 10 phút trước",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return const SizedBox.shrink();
       },
     );
   }
 
   Widget _buildMessagesArea(BuildContext context, String currentUserId) {
-    final GlobalKey contentKey = GlobalKey();
-
     return Container(
-      key: contentKey,
       padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
       decoration: BoxDecoration(
         color: Colors.grey[200],
@@ -206,8 +205,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           if (state is MessagesLoaded && state.chatRoomId == _chatRoomId) {
             final messages = state.messages;
             if (messages.isEmpty) {
-              _shouldReverse = false;
-              _hasMeasured = false;
               return const Center(
                 child: Text(
                   'Chưa có tin nhắn nào. Hãy gửi tin nhắn đầu tiên!',
@@ -216,51 +213,26 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               );
             }
 
-            if (!_hasMeasured || messages.length != _lastMessageCount) {
+            if (messages.length != _lastMessageCount) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                final RenderBox? renderBox =
-                    contentKey.currentContext?.findRenderObject() as RenderBox?;
-                if (renderBox != null && mounted) {
-                  final contentHeight = renderBox.size.height;
-                  final availableHeight = MediaQuery.of(context).size.height -
-                      MediaQuery.of(context).size.height * 0.1 -
-                      60;
-                  print('$contentHeight - $availableHeight');
-                  final newReverse = contentHeight > availableHeight;
-                  if (newReverse) {
-                    _scrollController.animateTo(
-                      _scrollController.position.maxScrollExtent,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    );
-                  }
-                  if (newReverse != _shouldReverse) {
-                    setState(() {
-                      _shouldReverse = newReverse;
-                      _hasMeasured = true; // Đánh dấu đã đo
-                      _lastMessageCount = messages.length;
-                    });
-                  }
-                }
+                _scrollController
+                    .jumpTo(_scrollController.position.maxScrollExtent);
+                _lastMessageCount = messages.length;
               });
             }
 
-            List<Widget> messageWidgets = [];
-            DateTime? lastDate;
+            return ListView.builder(
+              controller: _scrollController,
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final message = messages[index];
+                final messageDate = message.sentAt;
+                final isSender = message.senderId == currentUserId;
 
-            for (int index = 0; index < messages.length; index++) {
-              final message = messages[index];
-              final messageDate = message.sentAt; // Giả sử message có timestamp
-              final isSender = message.senderId == currentUserId;
-
-              // Kiểm tra xem có cần hiển thị nhãn ngày không
-              if (lastDate == null ||
-                  messageDate.day != lastDate.day ||
-                  messageDate.month != lastDate.month ||
-                  messageDate.year != lastDate.year) {
-                lastDate = messageDate;
-                messageWidgets.add(
-                  Center(
+                Widget? dateWidget;
+                if (index == 0 ||
+                    _shouldShowDate(messages[index - 1].sentAt, messageDate)) {
+                  dateWidget = Center(
                     child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 10),
                       padding: const EdgeInsets.symmetric(
@@ -271,91 +243,76 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       ),
                       child: Text(
                         _formatDate(messageDate),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.white),
                       ),
                     ),
-                  ),
-                );
-              }
+                  );
+                }
 
-              // Tạo widget tin nhắn
-              messageWidgets.add(
-                Row(
-                  mainAxisAlignment: isSender
-                      ? MainAxisAlignment.end
-                      : MainAxisAlignment.start,
+                return Column(
                   children: [
-                    Flexible(
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.7,
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isSender
-                              ? Colors.lightBlue[100] // Tin nhắn của người gửi
-                              : Colors.white, // Tin nhắn của người nhận
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              message.content,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black,
-                              ),
+                    if (dateWidget != null) dateWidget,
+                    Row(
+                      mainAxisAlignment: isSender
+                          ? MainAxisAlignment.end
+                          : MainAxisAlignment.start,
+                      children: [
+                        Flexible(
+                          child: Container(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.7,
                             ),
-                            if (message.imageUrl != null)
-                              Image.network(
-                                message.imageUrl!,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                            if (message.productId != null)
-                              Text('Sản phẩm: ${message.productId}'),
-                            if (message.orderId != null)
-                              Text('Đơn hàng: ${message.orderId}'),
-                            const SizedBox(height: 5),
-                            // Thêm thời gian của tin nhắn
-                            Text(
-                              _formatTime(messageDate),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.black54,
-                              ),
-                              textAlign:
-                                  isSender ? TextAlign.end : TextAlign.start,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isSender
+                                  ? Colors.lightBlue[100]
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                          ],
+                            margin: const EdgeInsets.only(bottom: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  message.content,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                if (message.imageUrl != null)
+                                  Image.network(
+                                    message.imageUrl!,
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                  ),
+                                if (message.productId != null)
+                                  Text('Sản phẩm: ${message.productId}'),
+                                if (message.orderId != null)
+                                  Text('Đơn hàng: ${message.orderId}'),
+                                const SizedBox(height: 5),
+                                Text(
+                                  _formatTime(messageDate),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black54,
+                                  ),
+                                  textAlign: isSender
+                                      ? TextAlign.end
+                                      : TextAlign.start,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
-                ),
-              );
-            }
-
-            return SingleChildScrollView(
-              controller: _scrollController,
-              reverse: _shouldReverse,
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ListView(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                children: messageWidgets,
-              ),
+                );
+              },
             );
-          }
-          if (state is ChatError) {
-            return Center(child: Text('Lỗi: ${state.message}'));
           }
           return const Center(
             child: Text(
@@ -366,6 +323,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         },
       ),
     );
+  }
+
+  bool _shouldShowDate(DateTime previous, DateTime current) {
+    return previous.day != current.day ||
+        previous.month != current.month ||
+        previous.year != current.year;
   }
 
   Widget _buildInputArea(BuildContext context, String userId) {

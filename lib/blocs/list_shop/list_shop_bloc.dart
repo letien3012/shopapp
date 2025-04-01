@@ -9,7 +9,7 @@ class ListShopBloc extends Bloc<ListShopEvent, ListShopState> {
 
   ListShopBloc(this._shopService) : super(ListShopInitial()) {
     on<FetchListShopEventByShopId>(_onFetchListShopByShopId);
-    on<FetchListShopSearchEventByShopId>(_onFetchListShopSearchByShopId);
+
     on<ResetListShopEvent>((event, emit) => emit(ListShopInitial()));
   }
 
@@ -20,19 +20,6 @@ class ListShopBloc extends Bloc<ListShopEvent, ListShopState> {
       final List<Shop> shops =
           await _shopService.fetchListShopByShopId(event.shopIds);
       emit(ListShopLoaded(shops));
-    } catch (e) {
-      emit(ListShopError(e.toString()));
-    }
-  }
-
-  Future<void> _onFetchListShopSearchByShopId(
-      FetchListShopSearchEventByShopId event,
-      Emitter<ListShopState> emit) async {
-    emit(ListShopLoading());
-    try {
-      final List<Shop> shops =
-          await _shopService.fetchListShopByShopId(event.shopIds);
-      emit(ListShopSearchLoaded(shops));
     } catch (e) {
       emit(ListShopError(e.toString()));
     }

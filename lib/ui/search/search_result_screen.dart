@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_event.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
+import 'package:luanvan/blocs/list_shop_search/list_shop_search_bloc.dart';
+import 'package:luanvan/blocs/list_shop_search/list_shop_search_event.dart';
+import 'package:luanvan/blocs/list_shop_search/list_shop_search_state.dart';
 import 'package:luanvan/blocs/search/search_bloc.dart';
 import 'package:luanvan/blocs/search/search_event.dart';
 import 'package:luanvan/blocs/search/search_state.dart';
@@ -93,16 +95,15 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       if (args != null && args is String) {
         context.read<SearchBloc>().add(SearchProducts(args));
         final searchState = context.read<SearchBloc>().state;
-        print(searchState);
+        setState(() {
+          _searchKeyword = args;
+          _searchController.text = args;
+        });
         if (searchState is SearchLoaded) {
           final shopId = searchState.products.first.shopId;
           context
-              .read<ListShopBloc>()
+              .read<ListShopSearchBloc>()
               .add(FetchListShopSearchEventByShopId([shopId]));
-          setState(() {
-            _searchKeyword = args;
-            _searchController.text = args;
-          });
         }
       }
     });
@@ -152,7 +153,13 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     return Align(
       alignment: const Alignment(1, 0.6),
       child: IconButton(
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            Navigator.of(context).pushReplacementNamed('/');
+          }
+        },
         icon: const Icon(Icons.arrow_back, color: Colors.brown, size: 30),
       ),
     );
@@ -181,7 +188,9 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           textAlign: TextAlign.start,
           textAlignVertical: TextAlignVertical.bottom,
           readOnly: true,
-          onTap: () => Navigator.of(context).pushNamed(SearchScreen.routeName),
+          onTap: () {
+            Navigator.of(context).pushReplacementNamed(SearchScreen.routeName);
+          },
         ),
       ),
     );
@@ -257,9 +266,15 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
 
   // Sửa lại phương thức _applyFilters để xử lý sắp xếp
   List<Product> _applyFilters(List<Product> products) {
-    if (!_shouldApplyFilter) return products;
+    // Luôn lọc bỏ sản phẩm từ shop đang đóng cửa, bất kể có áp dụng filter khác hay không
+    var filteredProducts = products.where((product) {
+      final shop = _getShopForProduct(product);
+      if (shop == null) return false;
+      return !shop.isClose;
+    }).toList();
 
-    var filteredProducts = List<Product>.from(products);
+    // Nếu không có filter nào được áp dụng, trả về danh sách đã lọc shop đóng cửa
+    if (!_shouldApplyFilter) return filteredProducts;
 
     // Apply place filter
     if (_selectedFiltersPlace.isNotEmpty) {
@@ -312,8 +327,6 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         }
       });
     } else if (_isRelate) {
-      // Có thể thêm logic sắp xếp theo độ liên quan ở đây
-      // Ví dụ: sắp xếp theo tên sản phẩm có chứa từ khóa tìm kiếm
       filteredProducts.sort((a, b) {
         bool aContains =
             a.name.toLowerCase().contains(_searchKeyword.toLowerCase());
@@ -329,7 +342,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   }
 
   Shop? _getShopForProduct(Product product) {
-    final state = context.read<ListShopBloc>().state;
+    final state = context.read<ListShopSearchBloc>().state;
     if (state is ListShopSearchLoaded) {
       try {
         return state.shops.firstWhere((shop) => shop.shopId == product.shopId);
@@ -518,9 +531,9 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
 
   Widget _buildProductGrid() {
     return Expanded(
-      child: BlocBuilder<ListShopBloc, ListShopState>(
+      child: BlocBuilder<ListShopSearchBloc, ListShopSearchState>(
         builder: (context, state) {
-          if (state is ListShopLoading) {
+          if (state is ListShopSearchLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is ListShopSearchLoaded) {

@@ -9,6 +9,7 @@ import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
 import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
+import 'package:luanvan/blocs/list_shop_search/list_shop_search_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
@@ -44,7 +45,6 @@ void main() async {
   ui.PlatformDispatcher.instance.onMetricsChanged = () {
     final double refreshRate =
         ui.PlatformDispatcher.instance.views.first.devicePixelRatio;
-    print("Device refresh rate: $refreshRate Hz");
   };
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate(
@@ -142,6 +142,9 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<CheckBloc>(
           create: (context) => CheckBloc(AuthService()),
+        ),
+        BlocProvider<ListShopSearchBloc>(
+          create: (context) => ListShopSearchBloc(ShopService()),
         ),
       ],
       child: MaterialApp(

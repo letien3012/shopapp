@@ -7,10 +7,11 @@ import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:intl/intl.dart';
-import 'package:luanvan/ui/chat/chat_detail_screen.dart';
+
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/chat/shop_chat_detail_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/detail_product_and_shop.dart';
+import 'package:luanvan/ui/shop/order_manager/packing_slip_screen.dart';
 
 class OrderDetailShopScreen extends StatefulWidget {
   static const String routeName = 'order_detail_shop_screen';
@@ -86,13 +87,26 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
                     ],
                   ),
                 ),
-              if (order.status == OrderStatus.shipped ||
-                  order.status == OrderStatus.returned ||
+              if (order.status == OrderStatus.returned ||
                   order.status == OrderStatus.cancelled ||
                   order.status == OrderStatus.processing)
                 Container(
                   padding: const EdgeInsets.only(right: 16),
                   child: _buildShopContactButton(order),
+                ),
+              if (order.status == OrderStatus.shipped)
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: _buildShopContactButton(order),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: _buildPrintOrderBillButton(order),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
             ],
           ),
@@ -433,6 +447,40 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
               'Liên hệ người mua',
               style: TextStyle(color: Colors.white),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrintOrderBillButton(Order order) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, top: 16),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            PackingSlipScreen.routeName,
+            arguments: order,
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.brown),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.print),
+              const SizedBox(width: 10),
+              Text(
+                'In phiếu giao hàng',
+                style: TextStyle(color: Colors.black),
+              ),
+            ],
           ),
         ),
       ),

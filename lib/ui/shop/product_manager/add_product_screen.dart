@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:luanvan/blocs/category/category_bloc.dart';
+import 'package:luanvan/blocs/category/category_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
@@ -12,12 +14,14 @@ import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
+import 'package:luanvan/blocs/category/category_state.dart';
+import 'package:luanvan/models/category.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/add_product_category_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/add_variant_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/delivery_cost_screen.dart';
 import 'package:luanvan/ui/widgets/alert_diablog.dart';
@@ -42,7 +46,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _shipController = TextEditingController();
   List<XFile> _imageFiles = [];
   String _productVariant = "Thiết lập màu sắc kích thước";
-  String _category = "Chọn ngành hàng";
+  String _category = "Chọn danh mục";
 
   @override
   void initState() {
@@ -60,10 +64,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
       hasVariantImages: false,
       hasWeightVariant: false,
       shippingMethods: [],
-      optionInfos: [], // Khởi tạo optionInfos rỗng
+      optionInfos: [],
     );
     product.shippingMethods.addAll(ShippingMethod.defaultMethods);
-
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      context.read<CategoryBloc>().add(FetchCategoriesEvent());
+    });
     super.initState();
   }
 
@@ -149,9 +155,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       );
       return;
     }
-    if (_category == "Chọn ngành hàng") {
+    if (_category == "Chọn danh mục") {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng chọn ngành hàng của sản phẩm")),
+        const SnackBar(content: Text("Vui lòng chọn danh mục của sản phẩm")),
       );
       return;
     }
@@ -188,7 +194,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
         }
       }
       if (product.getTotalOptionsCount() == 0) {
-        // Nếu không có phân loại, lưu giá và kho vào product
         double price = double.parse(_priceController.text);
         int stock = int.parse(_stockController.text);
         product.price = price;
@@ -199,7 +204,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
       context.read<ProductBloc>().add(AddProductEvent(product));
       _showAddSuccessDialog();
 
-      // Fetch lại danh sách sản phẩm sau khi thêm thành công
       context
           .read<ListProductBloc>()
           .add(FetchListProductEventByShopId(shopId));
@@ -214,36 +218,50 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Widget build(BuildContext context) {
     shopId = ModalRoute.of(context)!.settings.arguments as String;
     context.read<ShopBloc>().add(FetchShopEventByShopId(shopId));
-    return Scaffold(body: BlocBuilder<ShopBloc, ShopState>(
-      builder: (context, shopState) {
-        if (shopState is ShopLoading) {
-          return _buildLoading();
-        } else if (shopState is ShopLoaded) {
-          return _buildShopContent(context, shopState.shop);
-        } else if (shopState is ShopError) {
-          return _buildError(shopState.message);
-        }
-        return _buildInitializing();
-      },
-    ));
+    context.read<CategoryBloc>().add(FetchCategoriesEvent());
+
+    return Scaffold(
+      body: BlocBuilder<ShopBloc, ShopState>(
+        builder: (context, shopState) {
+          if (shopState is ShopLoading) {
+            return _buildLoading();
+          } else if (shopState is ShopLoaded) {
+            return BlocBuilder<CategoryBloc, CategoryState>(
+              builder: (context, categoryState) {
+                if (categoryState is CategoryLoading) {
+                  return _buildLoading();
+                } else if (categoryState is CategoryLoaded) {
+                  return _buildShopContent(
+                      context, shopState.shop, categoryState.categories);
+                } else if (categoryState is CategoryError) {
+                  return _buildError(categoryState.message);
+                }
+                return _buildInitializing();
+              },
+            );
+          } else if (shopState is ShopError) {
+            return _buildError(shopState.message);
+          }
+          return _buildInitializing();
+        },
+      ),
+    );
   }
 
-  // Trạng thái đang tải
   Widget _buildLoading() {
     return const Center(child: CircularProgressIndicator());
   }
 
-  // Trạng thái lỗi
   Widget _buildError(String message) {
     return Center(child: Text('Error: $message'));
   }
 
-  // Trạng thái khởi tạo
   Widget _buildInitializing() {
     return const Center(child: Text('Đang khởi tạo'));
   }
 
-  Widget _buildShopContent(BuildContext context, Shop shop) {
+  Widget _buildShopContent(
+      BuildContext context, Shop shop, List<Category> categories) {
     return Stack(
       children: [
         SingleChildScrollView(
@@ -256,7 +274,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hình ảnh/Video sản phẩm
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -353,8 +370,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           ),
                           onReorder: (int oldIndex, int newIndex) {
                             if (oldIndex == _imageFiles.length ||
-                                newIndex == _imageFiles.length)
-                              return; // Không cho kéo phần tử cuối
+                                newIndex == _imageFiles.length) return;
                             setState(() {
                               final item = _imageFiles.removeAt(oldIndex);
                               _imageFiles.insert(newIndex, item);
@@ -365,7 +381,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Tên sản phẩm
+
                   Container(
                     color: Colors.white,
                     padding: const EdgeInsets.all(16),
@@ -492,14 +508,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                                'Vui lòng nhập tên và mô tả sản phẩm trước khi chọn ngành hàng'),
+                                'Vui lòng nhập tên và mô tả sản phẩm trước khi chọn danh mục'),
                           ),
                         );
                         return;
                       }
                       Navigator.pushNamed(
                         context,
-                        AddCategoryScreen.routeName,
+                        AddProductCategoryScreen.routeName,
                         arguments: {
                           'selectedCategory': _category,
                           'product': Product(
@@ -516,7 +532,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       ).then((value) {
                         if (value != null) {
                           setState(() {
-                            _category = value as String;
+                            final category = value as Category;
+                            _category = category.id;
                           });
                         }
                       });
@@ -530,7 +547,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           Row(
                             children: [
                               const Text(
-                                "Ngành hàng ",
+                                "Danh mục ",
                                 style: TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w500),
                               ),
@@ -543,10 +560,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           Row(
                             children: [
                               Text(
-                                _category,
+                                _category == "Chọn danh mục"
+                                    ? _category
+                                    : categories
+                                        .firstWhere((element) =>
+                                            element.id == _category)
+                                        .name,
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: _category == "Chọn ngành hàng"
+                                  color: _category == "Chọn danh mục"
                                       ? Colors.grey
                                       : Colors.black,
                                 ),

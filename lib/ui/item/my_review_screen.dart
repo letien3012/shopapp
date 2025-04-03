@@ -379,7 +379,7 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Column(

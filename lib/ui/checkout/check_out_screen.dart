@@ -847,7 +847,6 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                                 option.id == cartItem.optionId2)
                                             .name
                                         : null,
-                            productDescription: product.description,
                             productCategory: product.category,
                             productSubCategory:
                                 '', // Không có trường này trong model Product

@@ -5,6 +5,9 @@ import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/banner/banner_bloc.dart';
+import 'package:luanvan/blocs/banner/banner_event.dart';
+import 'package:luanvan/blocs/banner/banner_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
@@ -25,12 +28,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> imgList = [
-    'https://media.licdn.com/dms/image/v2/C4E12AQGlzsYoKqxHkA/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1634130038864?e=2147483647&v=beta&t=O4Vi4cpdXFDp_Uh8Bcsq1x9tQ9TKGtwrToUFLh9_nyI',
-    'https://images.vexels.com/content/194698/preview/shop-online-slider-template-4f2c60.png',
-    'https://images.vexels.com/content/194700/preview/buy-online-slider-template-4261dd.png'
-  ];
-
+  // final List<String> imgList = [
+  //   'https://media.licdn.com/dms/image/v2/C4E12AQGlzsYoKqxHkA/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1634130038864?e=2147483647&v=beta&t=O4Vi4cpdXFDp_Uh8Bcsq1x9tQ9TKGtwrToUFLh9_nyI',
+  //   'https://images.vexels.com/content/194698/preview/shop-online-slider-template-4f2c60.png',
+  //   'https://images.vexels.com/content/194700/preview/buy-online-slider-template-4261dd.png'
+  // ];
   int bannerCurrentPage = 0;
   final CarouselSliderController _bannercontroller = CarouselSliderController();
   @override
@@ -42,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
       }
       context.read<HomeBloc>().add(FetchAllProducts());
+      context.read<BannerBloc>().add(FetchBannersEvent());
     });
   }
 
@@ -120,79 +123,100 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(
                       height: 90,
                     ),
-                    StatefulBuilder(builder: (context, setState) {
-                      return SizedBox(
-                        height: MediaQuery.of(context).size.height * .25,
-                        width: MediaQuery.of(context).size.width,
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                                child: CarouselSlider(
-                                    carouselController: _bannercontroller,
-                                    items: imgList
-                                        .map((item) => Image.network(
-                                              item,
-                                              fit: BoxFit.cover,
-                                              height: MediaQuery.of(context)
+                    BlocBuilder<BannerBloc, BannerState>(
+                      builder: (context, bannerState) {
+                        if (bannerState is BannerLoading)
+                          return _buildLoading();
+                        if (bannerState is BannerLoaded) {
+                          final banners = bannerState.banners;
+                          banners.sort(
+                              (a, b) => a.createdAt.compareTo(b.createdAt));
+                          if (banners.isEmpty) return Container();
+                          final imgList = banners.map((banner) {
+                            if (banner.isHidden) {
+                              return '';
+                            }
+                            return banner.imageUrl;
+                          }).toList();
+
+                          return SizedBox(
+                            height: MediaQuery.of(context).size.height * .25,
+                            width: MediaQuery.of(context).size.width,
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                    child: CarouselSlider(
+                                        carouselController: _bannercontroller,
+                                        items: imgList
+                                            .map((item) => Image.network(
+                                                  item,
+                                                  fit: BoxFit.fill,
+                                                  height: MediaQuery.of(context)
+                                                          .size
+                                                          .height *
+                                                      .25,
+                                                  width: MediaQuery.of(context)
                                                       .size
-                                                      .height *
-                                                  .25,
-                                              width: MediaQuery.of(context)
-                                                  .size
-                                                  .width,
-                                            ))
-                                        .toList(),
-                                    options: CarouselOptions(
-                                      autoPlay: true,
-                                      enlargeCenterPage: true,
-                                      enableInfiniteScroll: true,
-                                      viewportFraction: 1,
-                                      onPageChanged: (index, reason) {
-                                        setState(() {
-                                          bannerCurrentPage = index;
-                                        });
-                                      },
-                                    ))),
-                            Positioned(
-                              bottom: MediaQuery.of(context).size.height * .02,
-                              child: SizedBox(
-                                width: MediaQuery.of(context).size.width,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: List.generate(
-                                    imgList.length,
-                                    (index) {
-                                      bool isSelected =
-                                          bannerCurrentPage == index;
-                                      return GestureDetector(
-                                        onTap: () {
-                                          _bannercontroller
-                                              .animateToPage(index);
+                                                      .width,
+                                                ))
+                                            .toList(),
+                                        options: CarouselOptions(
+                                          autoPlay: true,
+                                          enlargeCenterPage: true,
+                                          enableInfiniteScroll: true,
+                                          viewportFraction: 1,
+                                          onPageChanged: (index, reason) {
+                                            setState(() {
+                                              bannerCurrentPage = index;
+                                            });
+                                          },
+                                        ))),
+                                Positioned(
+                                  bottom:
+                                      MediaQuery.of(context).size.height * .02,
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: List.generate(
+                                        imgList.length,
+                                        (index) {
+                                          bool isSelected =
+                                              bannerCurrentPage == index;
+                                          return GestureDetector(
+                                            onTap: () {
+                                              _bannercontroller
+                                                  .animateToPage(index);
+                                            },
+                                            child: AnimatedContainer(
+                                              width: 8,
+                                              height: 8,
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 3),
+                                              decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? Colors.brown
+                                                      : Colors.white,
+                                                  shape: BoxShape.circle),
+                                              duration: const Duration(
+                                                  milliseconds: 300),
+                                              curve: Curves.ease,
+                                            ),
+                                          );
                                         },
-                                        child: AnimatedContainer(
-                                          width: 8,
-                                          height: 8,
-                                          margin: const EdgeInsets.symmetric(
-                                              horizontal: 3),
-                                          decoration: BoxDecoration(
-                                              color: isSelected
-                                                  ? Colors.brown
-                                                  : Colors.white,
-                                              shape: BoxShape.circle),
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          curve: Curves.ease,
-                                        ),
-                                      );
-                                    },
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    }),
+                          );
+                        }
+                        return Container();
+                      },
+                    ),
                     Container(
                       height: 10,
                       width: double.infinity,

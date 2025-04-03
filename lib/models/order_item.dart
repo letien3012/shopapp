@@ -8,7 +8,6 @@ class OrderItem {
   String productName;
   String productImage;
   String? productVariation;
-  String? productDescription;
   String? productCategory;
   String? productSubCategory;
   String? productBrand;
@@ -21,7 +20,6 @@ class OrderItem {
     required this.productName,
     required this.productImage,
     this.productVariation,
-    this.productDescription,
     this.productCategory,
     this.productSubCategory,
     this.productBrand,
@@ -48,7 +46,6 @@ class OrderItem {
       productName: productName ?? this.productName,
       productImage: productImage ?? this.productImage,
       productVariation: productVariation ?? this.productVariation,
-      productDescription: productDescription ?? this.productDescription,
       productCategory: productCategory ?? this.productCategory,
       productSubCategory: productSubCategory ?? this.productSubCategory,
       productBrand: productBrand ?? this.productBrand,
@@ -64,7 +61,6 @@ class OrderItem {
       'productName': productName,
       'productImage': productImage,
       'productVariation': productVariation,
-      'productDescription': productDescription,
       'productCategory': productCategory,
       'productSubCategory': productSubCategory,
       'productBrand': productBrand,
@@ -76,11 +72,10 @@ class OrderItem {
     return OrderItem(
       productId: map['productId'] as String,
       quantity: map['quantity'] as int,
-      price: map['price'] as double,
+      price: (map['price'] as num).toDouble(),
       productName: map['productName'] as String,
       productImage: map['productImage'] as String,
       productVariation: map['productVariation'] as String?,
-      productDescription: map['productDescription'] as String?,
       productCategory: map['productCategory'] as String?,
       productSubCategory: map['productSubCategory'] as String?,
       productBrand: map['productBrand'] as String?,
@@ -98,7 +93,6 @@ class OrderItem {
       productName: data['productName'] as String? ?? '',
       productImage: data['productImage'] as String? ?? '',
       productVariation: data['productVariation'] as String?,
-      productDescription: data['productDescription'] as String? ?? '',
       productCategory: data['productCategory'] as String? ?? '',
       productSubCategory: data['productSubCategory'] as String? ?? '',
       productBrand: data['productBrand'] as String? ?? '',
@@ -115,6 +109,6 @@ class OrderItem {
 
   @override
   String toString() {
-    return 'OrderItem(productId: $productId, quantity: $quantity, price: $price, productName: $productName, productImage: $productImage, productVariation: $productVariation, productDescription: $productDescription, productCategory: $productCategory, productSubCategory: $productSubCategory, productBrand: $productBrand, createdAt: $createdAt)';
+    return 'OrderItem(productId: $productId, quantity: $quantity, price: $price, productName: $productName, productImage: $productImage, productVariation: $productVariation, productCategory: $productCategory, productSubCategory: $productSubCategory, productBrand: $productBrand, createdAt: $createdAt)';
   }
 }

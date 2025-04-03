@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/banner/banner_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
+import 'package:luanvan/blocs/category/category_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
 import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
@@ -26,7 +28,9 @@ import 'package:luanvan/blocs/usercomment/list_user_comment_bloc.dart';
 import 'package:luanvan/di.dart';
 import 'package:luanvan/routes.dart';
 import 'package:luanvan/services/auth_service.dart';
+import 'package:luanvan/services/banner_service.dart';
 import 'package:luanvan/services/cart_service.dart';
+import 'package:luanvan/services/category_service.dart';
 import 'package:luanvan/services/chat_service.dart';
 import 'package:luanvan/services/comment_service.dart';
 import 'package:luanvan/services/order_service.dart';
@@ -39,10 +43,10 @@ import 'package:luanvan/ui/splashscreen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui' as ui;
-
 import 'blocs/comment/comment_bloc.dart';
 import 'package:luanvan/blocs/home/home_bloc.dart';
 import 'package:luanvan/services/home_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -162,6 +166,12 @@ class ShopApp extends StatelessWidget {
         BlocProvider<ListUserCommentBloc>(
           create: (context) => ListUserCommentBloc(UserService()),
         ),
+        BlocProvider<CategoryBloc>(
+          create: (context) => CategoryBloc(CategoryService()),
+        ),
+        BlocProvider<BannerBloc>(
+          create: (context) => BannerBloc(BannerService()),
+        ),
       ],
       child: MaterialApp(
         locale: const Locale('vi'), // Đặt ngôn ngữ chính là tiếng Việt
@@ -176,9 +186,25 @@ class ShopApp extends StatelessWidget {
         ],
         title: 'Flutter Demo',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            useMaterial3: true,
+            textTheme: TextTheme(
+              bodyLarge: TextStyle(fontFamily: 'Noto Sans'),
+              bodyMedium: TextStyle(fontFamily: 'Noto Sans'),
+              bodySmall: TextStyle(fontFamily: 'Noto Sans'),
+              titleLarge: TextStyle(fontFamily: 'Noto Sans'),
+              titleMedium: TextStyle(fontFamily: 'Noto Sans'),
+              titleSmall: TextStyle(fontFamily: 'Noto Sans'),
+              labelLarge: TextStyle(fontFamily: 'Noto Sans'),
+              labelMedium: TextStyle(fontFamily: 'Noto Sans'),
+              labelSmall: TextStyle(fontFamily: 'Noto Sans'),
+              headlineLarge: TextStyle(fontFamily: 'Noto Sans'),
+              headlineMedium: TextStyle(fontFamily: 'Noto Sans'),
+              headlineSmall: TextStyle(fontFamily: 'Noto Sans'),
+              displayLarge: TextStyle(fontFamily: 'Noto Sans'),
+              displayMedium: TextStyle(fontFamily: 'Noto Sans'),
+              displaySmall: TextStyle(fontFamily: 'Noto Sans'),
+            )),
         debugShowCheckedModeBanner: false,
         routes: routes,
         home: MultiBlocProvider(

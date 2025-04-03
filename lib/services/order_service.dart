@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:luanvan/models/order.dart';
+import 'dart:math';
 
 class OrderService {
   final firestore.FirebaseFirestore _firestore;
@@ -119,10 +120,39 @@ class OrderService {
     }
   }
 
+  String _generateShippingCode(String shippingMethod) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    final randomChars =
+        List.generate(7, (index) => chars[random.nextInt(chars.length)]).join();
+    return shippingMethod == 'Nhanh' ? 'GHN$randomChars' : 'GHTK$randomChars';
+  }
+
   Future<void> updateOrder(Order order) async {
     try {
       final orderRef = _firestore.collection('orders').doc(order.id);
       final orderData = order.toMap();
+      // Generate shipping code only when status is processing
+      if (order.status == OrderStatus.shipped &&
+          (order.shippingCode == null || order.shippingCode!.isEmpty)) {
+        String shippingCode = _generateShippingCode(order.shipMethod.name);
+        bool isUnique = false;
+
+        while (!isUnique) {
+          // Check if shipping code exists
+          final querySnapshot = await _firestore
+              .collection('orders')
+              .where('shippingCode', isEqualTo: shippingCode)
+              .get();
+
+          isUnique = querySnapshot.docs.isEmpty;
+          if (!isUnique) {
+            shippingCode = _generateShippingCode(order.shipMethod.name);
+          }
+        }
+
+        orderData['shippingCode'] = shippingCode;
+      }
 
       await orderRef.update(orderData);
     } catch (e) {

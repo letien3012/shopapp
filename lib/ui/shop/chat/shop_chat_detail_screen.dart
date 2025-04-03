@@ -116,75 +116,77 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
       builder: (context, userState) {
         if (userState is UserChatLoaded) {
           user = userState.user;
-        }
-        return Container(
-          padding: const EdgeInsets.only(top: 30, bottom: 10),
-          color: Colors.white,
-          height: MediaQuery.of(context).size.height * 0.1,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  context.read<ChatBloc>().deleteEmptyChatRoom(_chatRoomId);
-                  Navigator.of(context).pop();
-                },
-                child: const Icon(
-                  Icons.arrow_back,
-                  size: 28,
-                  color: Colors.brown,
-                ),
-              ),
-              const SizedBox(width: 10),
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.brown,
-                child: ClipOval(
-                  child: Image.network(
-                    height: 40,
-                    width: 40,
-                    fit: BoxFit.cover,
-                    user!.avataUrl ?? '',
+
+          return Container(
+            padding: const EdgeInsets.only(top: 30, bottom: 10),
+            color: Colors.white,
+            height: MediaQuery.of(context).size.height * 0.1,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () {
+                    context.read<ChatBloc>().deleteEmptyChatRoom(_chatRoomId);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Icon(
+                    Icons.arrow_back,
+                    size: 28,
+                    color: Colors.brown,
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: BlocBuilder<ChatBloc, ChatState>(
-                  builder: (context, chatState) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          user!.name ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const Text(
-                          "Truy cập 10 phút trước",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+                const SizedBox(width: 10),
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.brown,
+                  child: ClipOval(
+                    child: Image.network(
+                      height: 40,
+                      width: 40,
+                      fit: BoxFit.cover,
+                      user!.avataUrl ?? '',
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
+                const SizedBox(width: 10),
+                Expanded(
+                  child: BlocBuilder<ChatBloc, ChatState>(
+                    builder: (context, chatState) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            user!.name ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const Text(
+                            "Truy cập 10 phút trước",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return const Center(child: CircularProgressIndicator());
       },
     );
   }

@@ -35,4 +35,8 @@ class IconHelper {
   static const String chat_round_dots = "${imagePath}chat-round-dots.svg";
   static const String chat_round_dots_filled =
       "${imagePath}chat-round-dots-filled.svg";
+  static const String category = "${imagePath}category.svg";
+  static const String userlist = "${imagePath}user_list.svg";
+  static const String warehouse = "${imagePath}warehouse.svg";
+  static const String banner = "${imagePath}banner.svg";
 }

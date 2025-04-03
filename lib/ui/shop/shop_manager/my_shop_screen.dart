@@ -17,6 +17,8 @@ import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/shop_dashboard.dart';
+import 'package:luanvan/ui/shop/baner/my_banner_screen.dart';
+import 'package:luanvan/ui/shop/category/my_category_screen.dart';
 import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
 import 'package:luanvan/ui/shop/comment/shop_review_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
@@ -278,6 +280,50 @@ class _MyShopScreenState extends State<MyShopScreen> {
                 Material(
                   color: Colors.white,
                   child: InkWell(
+                    onTap: () {},
+                    splashColor: Colors.transparent.withOpacity(0.2),
+                    highlightColor: Colors.transparent.withOpacity(0.1),
+                    child: Container(
+                      height: 60,
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(
+                        width: 0.2,
+                        color: Colors.grey,
+                      ))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                IconHelper.userlist,
+                                color: Colors.yellow[800],
+                                height: 30,
+                                width: 30,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                "Quản lý người dùng",
+                                style: TextStyle(fontSize: 16),
+                              )
+                            ],
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 15,
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Material(
+                  color: Colors.white,
+                  child: InkWell(
                     onTap: () {
                       Navigator.of(context).pushNamed(MyProductScreen.routeName,
                           arguments: shop.shopId);
@@ -454,6 +500,154 @@ class _MyShopScreenState extends State<MyShopScreen> {
                               ),
                               Text(
                                 "Phân tích bán hàng",
+                                style: TextStyle(fontSize: 16),
+                              )
+                            ],
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 15,
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Material(
+                  color: Colors.white,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        MyCategoryScreen.routeName,
+                        arguments: shop.shopId,
+                      );
+                    },
+                    splashColor: Colors.transparent.withOpacity(0.2),
+                    highlightColor: Colors.transparent.withOpacity(0.1),
+                    child: Container(
+                      height: 60,
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(
+                        width: 0.2,
+                        color: Colors.grey,
+                      ))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                IconHelper.category,
+                                color: Colors.brown[800],
+                                height: 30,
+                                width: 30,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                "Quản lý danh mục",
+                                style: TextStyle(fontSize: 16),
+                              )
+                            ],
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 15,
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Material(
+                  color: Colors.white,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        SalesAnalysisScreen.routeName,
+                      );
+                    },
+                    splashColor: Colors.transparent.withOpacity(0.2),
+                    highlightColor: Colors.transparent.withOpacity(0.1),
+                    child: Container(
+                      height: 60,
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(
+                        width: 0.2,
+                        color: Colors.grey,
+                      ))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                IconHelper.warehouse,
+                                color: Colors.pink[800],
+                                height: 30,
+                                width: 30,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                "Quản lý nhập hàng",
+                                style: TextStyle(fontSize: 16),
+                              )
+                            ],
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 15,
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Material(
+                  color: Colors.white,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        MyBannerScreen.routeName,
+                      );
+                    },
+                    splashColor: Colors.transparent.withOpacity(0.2),
+                    highlightColor: Colors.transparent.withOpacity(0.1),
+                    child: Container(
+                      height: 60,
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(
+                        width: 0.2,
+                        color: Colors.grey,
+                      ))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                IconHelper.banner,
+                                color: Colors.purple[800],
+                                height: 10,
+                                width: 10,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                "Quản lý banner",
                                 style: TextStyle(fontSize: 16),
                               )
                             ],

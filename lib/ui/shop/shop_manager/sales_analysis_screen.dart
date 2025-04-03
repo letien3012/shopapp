@@ -3,10 +3,13 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
+import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_event.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/order.dart';
 
 class SalesAnalysisScreen extends StatefulWidget {
@@ -21,7 +24,15 @@ class _SalesAnalysisScreenState extends State<SalesAnalysisScreen> {
   List<String> listProductId = [];
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final shopState = context.read<ShopBloc>().state;
+      if (shopState is ShopLoaded) {
+        final shop = shopState.shop;
+        if (shop != null) {
+          context.read<OrderBloc>().add(FetchOrdersByShopId(shop.shopId!));
+        }
+      }
+    });
     super.initState();
   }
 
@@ -197,6 +208,7 @@ class _SalesAnalysisScreenState extends State<SalesAnalysisScreen> {
                 .add(FetchMultipleProductsOrderEvent(listProductId));
             return BlocBuilder<ProductOrderBloc, ProductOrderState>(
               builder: (context, productState) {
+                print(productState);
                 if (productState is ProductOrderListLoaded) {
                   return SingleChildScrollView(
                     child: Column(

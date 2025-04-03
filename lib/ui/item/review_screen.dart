@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/comment/comment_bloc.dart';
 import 'package:luanvan/blocs/comment/comment_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
@@ -606,7 +607,51 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                                 _buildGridMediaLayout(comment),
                                             ],
                                           ),
-
+                                        if (comment.replyContent != null) ...[
+                                          const SizedBox(height: 12),
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[200],
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    const Text(
+                                                      'Phản hồi của Người bán',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      DateFormat('dd/MM/yyyy')
+                                                          .format(
+                                                              comment.replyAt!),
+                                                      style: TextStyle(
+                                                        color: Colors.grey[600],
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  comment.replyContent!,
+                                                  style: const TextStyle(
+                                                      fontSize: 13),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                         // Nút like và reply
                                       ],
                                     ),

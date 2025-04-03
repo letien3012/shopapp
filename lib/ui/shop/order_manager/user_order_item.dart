@@ -234,12 +234,6 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                       widget.onConfirmOrder(widget.order.id);
                                     } else if (widget.order.status ==
                                         OrderStatus.processing) {
-                                      // context.read<OrderBloc>().add(
-                                      //       UpdateOrderStatusEvent(
-                                      //         widget.order.orderId,
-                                      //         OrderStatus.shipped,
-                                      //       ),
-                                      //     );
                                       Navigator.pushNamed(context,
                                           PickLocationOrderScreen.routeName,
                                           arguments: widget.order);

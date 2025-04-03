@@ -6,18 +6,22 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/category/category_event.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
+import 'package:luanvan/blocs/category/category_bloc.dart';
+import 'package:luanvan/blocs/category/category_state.dart';
+import 'package:luanvan/models/category.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_option.dart';
 import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/add_product_category_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/delivery_cost_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_variant_screen.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
@@ -62,6 +66,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     Future.microtask(() {
       final args =
           ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      context.read<CategoryBloc>().add(FetchCategoriesEvent());
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context.read<ShopBloc>().add(FetchShopEvent(authState.user.uid));
@@ -218,18 +223,32 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<ShopBloc, ShopState>(
-      builder: (context, shopState) {
-        if (shopState is ShopLoading) {
-          return _buildLoading();
-        } else if (shopState is ShopLoaded) {
-          return _buildShopContent(context, shopState.shop);
-        } else if (shopState is ShopError) {
-          return _buildError(shopState.message);
-        }
-        return _buildInitializing();
-      },
-    ));
+    return Scaffold(
+      body: BlocBuilder<ShopBloc, ShopState>(
+        builder: (context, shopState) {
+          if (shopState is ShopLoading) {
+            return _buildLoading();
+          } else if (shopState is ShopLoaded) {
+            return BlocBuilder<CategoryBloc, CategoryState>(
+              builder: (context, categoryState) {
+                if (categoryState is CategoryLoading) {
+                  return _buildLoading();
+                } else if (categoryState is CategoryLoaded) {
+                  return _buildShopContent(
+                      context, shopState.shop, categoryState.categories);
+                } else if (categoryState is CategoryError) {
+                  return _buildError(categoryState.message);
+                }
+                return _buildInitializing();
+              },
+            );
+          } else if (shopState is ShopError) {
+            return _buildError(shopState.message);
+          }
+          return _buildInitializing();
+        },
+      ),
+    );
   }
 
   Widget _buildLoading() {
@@ -244,7 +263,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
     return const Center(child: Text('Đang khởi tạo'));
   }
 
-  Widget _buildShopContent(BuildContext context, Shop shop) {
+  Widget _buildShopContent(
+      BuildContext context, Shop shop, List<Category> categories) {
     return Stack(
       children: [
         SingleChildScrollView(
@@ -499,11 +519,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   GestureDetector(
                     onTap: () async {
                       final result = await Navigator.pushNamed(
-                          context, AddCategoryScreen.routeName,
-                          arguments: {'selectedCategory': _category}) as String;
-                      if (result.isNotEmpty) {
+                              context, AddProductCategoryScreen.routeName,
+                              arguments: {'selectedCategory': _category})
+                          as Category;
+                      if (result != null) {
                         setState(() {
-                          _category = result;
+                          _category = result.id;
                         });
                       }
                     },
@@ -516,7 +537,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           Row(
                             children: [
                               const Text(
-                                "Ngành hàng ",
+                                "Danh mục",
                                 style: TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w500),
                               ),
@@ -529,10 +550,15 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           Row(
                             children: [
                               Text(
-                                _category,
+                                _category == "Chọn danh mục"
+                                    ? _category
+                                    : categories
+                                        .firstWhere((element) =>
+                                            element.id == _category)
+                                        .name,
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: _category == "Chọn ngành hàng"
+                                  color: _category == "Chọn danh mục"
                                       ? Colors.grey
                                       : Colors.black,
                                 ),

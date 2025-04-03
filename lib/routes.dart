@@ -10,6 +10,7 @@ import 'package:luanvan/ui/checkout/edit_location_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
 import 'package:luanvan/ui/checkout/pick_location_checkout_screen.dart';
+import 'package:luanvan/ui/home/all_categories_screen.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
 import 'package:luanvan/ui/home/shop_dashboard.dart';
@@ -24,15 +25,25 @@ import 'package:luanvan/ui/mainscreen.dart';
 import 'package:luanvan/ui/order/order_detail_screen.dart';
 import 'package:luanvan/ui/order/order_screen.dart';
 import 'package:luanvan/ui/order/order_success_screen.dart';
+import 'package:luanvan/ui/screen/demo_screen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
+import 'package:luanvan/ui/shop/baner/add_banner_screen.dart';
+import 'package:luanvan/ui/shop/baner/edit_banner_screen.dart';
+import 'package:luanvan/ui/shop/baner/my_banner_screen.dart';
+import 'package:luanvan/ui/shop/category/add_category_screen.dart';
+import 'package:luanvan/ui/shop/category/edit_category_screen.dart';
+import 'package:luanvan/ui/shop/category/my_category_screen.dart';
+
 import 'package:luanvan/ui/shop/chat/shop_chat_detail_screen.dart';
 import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
 import 'package:luanvan/ui/shop/comment/reply_comment_screen.dart';
 import 'package:luanvan/ui/shop/comment/shop_review_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_detail_shop_screen.dart';
+import 'package:luanvan/ui/shop/order_manager/order_prepared_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
-import 'package:luanvan/ui/shop/product_manager/add_category_screen.dart';
+import 'package:luanvan/ui/shop/order_manager/packing_slip_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/add_product_category_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/delivery_cost_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
@@ -135,4 +146,14 @@ final Map<String, WidgetBuilder> routes = {
   AddShopPhone.routeName: (context) => AddShopPhone(),
   ShopReviewScreen.routeName: (context) => ShopReviewScreen(),
   ReplyCommentScreen.routeName: (context) => ReplyCommentScreen(),
+  DemoScreen.routeName: (context) => DemoScreen(),
+  // AllCategoriesScreen.routeName: (context) => AllCategoriesScreen(),
+  OrderPreparedScreen.routeName: (context) => OrderPreparedScreen(),
+  PackingSlipScreen.routeName: (context) => PackingSlipScreen(),
+  MyCategoryScreen.routeName: (context) => MyCategoryScreen(),
+  EditCategoryScreen.routeName: (context) => EditCategoryScreen(),
+  AddProductCategoryScreen.routeName: (context) => AddProductCategoryScreen(),
+  MyBannerScreen.routeName: (context) => MyBannerScreen(),
+  AddBannerScreen.routeName: (context) => AddBannerScreen(),
+  EditBannerScreen.routeName: (context) => EditBannerScreen(),
 };

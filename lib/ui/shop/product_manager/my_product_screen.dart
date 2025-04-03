@@ -370,9 +370,9 @@ class _MyProductScreenState extends State<MyProductScreen>
                             (product.variants.isNotEmpty)
                                 ? (product.getMinOptionPrice() !=
                                         product.getMaxOptionPrice())
-                                    ? "₫${_numberFormat.format(product.getMinOptionPrice())} - ₫${_numberFormat.format(product.getMaxOptionPrice())}"
-                                    : "₫${_numberFormat.format(product.getMinOptionPrice())}"
-                                : "₫${_numberFormat.format(product.price ?? 0)}",
+                                    ? "đ${_numberFormat.format(product.getMinOptionPrice())} - đ${_numberFormat.format(product.getMaxOptionPrice())}"
+                                    : "đ${_numberFormat.format(product.getMinOptionPrice())}"
+                                : "đ${_numberFormat.format(product.price ?? 0)}",
                             style: const TextStyle(
                               fontSize: 16,
                               color: Colors.red,

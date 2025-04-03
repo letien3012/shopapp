@@ -12,6 +12,7 @@ import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/order_history.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
+import 'package:luanvan/ui/shop/order_manager/order_prepared_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/location/edit_location_shop_screen.dart';
 import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
@@ -72,7 +73,6 @@ class _PickLocationOrderScreenState extends State<PickLocationOrderScreen> {
     );
 
     try {
-      print("order: ${OrderStatus.shipped}");
       // Update order with new pickup address and status
       final updatedOrder = order.copyWith(
         pickUpAdress: selectedAddress,
@@ -113,6 +113,10 @@ class _PickLocationOrderScreenState extends State<PickLocationOrderScreen> {
           );
           // Navigate back
           Navigator.of(context).pop();
+          Navigator.of(context).pushNamed(
+            OrderPreparedScreen.routeName,
+            arguments: order.id,
+          );
           break;
         }
       }

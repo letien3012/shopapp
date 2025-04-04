@@ -24,9 +24,10 @@ import 'package:luanvan/ui/shop/comment/shop_review_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/ship_manager_screen.dart';
-import 'package:luanvan/ui/shop/shop_manager/location/revenue_screen.dart';
-import 'package:luanvan/ui/shop/shop_manager/sales_analysis_screen.dart';
+import 'package:luanvan/ui/shop/analysis/revenue_screen.dart';
+import 'package:luanvan/ui/shop/analysis/sales_analysis_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
+import 'package:luanvan/ui/shop/user/my_user_screen.dart';
 
 class MyShopScreen extends StatefulWidget {
   const MyShopScreen({super.key});
@@ -280,7 +281,11 @@ class _MyShopScreenState extends State<MyShopScreen> {
                 Material(
                   color: Colors.white,
                   child: InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).pushNamed(
+                        MyUserScreen.routeName,
+                      );
+                    },
                     splashColor: Colors.transparent.withOpacity(0.2),
                     highlightColor: Colors.transparent.withOpacity(0.1),
                     child: Container(
@@ -372,7 +377,8 @@ class _MyShopScreenState extends State<MyShopScreen> {
                   color: Colors.white,
                   child: InkWell(
                     onTap: () {
-                      Navigator.of(context).pushNamed(RevenueScreen.routeName);
+                      Navigator.of(context).pushNamed(RevenueScreen.routeName,
+                          arguments: shop.shopId);
                     },
                     splashColor: Colors.transparent.withOpacity(0.2),
                     highlightColor: Colors.transparent.withOpacity(0.1),

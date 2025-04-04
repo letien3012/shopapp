@@ -6,10 +6,13 @@ import 'package:luanvan/blocs/search/search_event.dart' as search_event;
 import 'package:luanvan/blocs/search/search_event.dart';
 import 'package:luanvan/blocs/search/search_state.dart' as search_state;
 import 'package:luanvan/blocs/search/search_state.dart';
+import 'package:luanvan/blocs/searchbyimage/search_image_bloc.dart';
+import 'package:luanvan/blocs/searchbyimage/search_image_event.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -148,6 +151,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   width: 290,
                   child: TextField(
                     controller: _searchController,
+                    maxLines: 1,
                     onChanged: _onSearchChanged,
                     decoration: InputDecoration(
                         enabledBorder: const OutlineInputBorder(
@@ -166,7 +170,69 @@ class _SearchScreenState extends State<SearchScreen> {
                         hintStyle:
                             const TextStyle(fontSize: 15, color: Colors.grey),
                         suffixIcon: IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  titlePadding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  title: Stack(
+                                    children: [
+                                      const Center(
+                                        child: Text(
+                                          'Thao tác',
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      ListTile(
+                                        title: const Text('Chụp ảnh'),
+                                        onTap: () async {
+                                          final pickedImage =
+                                              await ImagePicker().pickImage(
+                                                  source: ImageSource.camera);
+                                          if (pickedImage != null) {
+                                            context.read<SearchImageBloc>().add(
+                                                SearchProductsByImage(
+                                                    pickedImage.path));
+                                          }
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                      ListTile(
+                                        title: const Text('Thư viện hình ảnh'),
+                                        onTap: () async {
+                                          final pickedImage =
+                                              await ImagePicker().pickImage(
+                                                  source: ImageSource.gallery);
+                                          if (pickedImage != null) {
+                                            context.read<SearchImageBloc>().add(
+                                                SearchProductsByImage(
+                                                    pickedImage.path));
+                                          }
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                           icon: const Icon(Icons.camera_alt_outlined),
                         ),
                         suffixIconColor: Colors.brown),

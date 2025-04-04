@@ -8,9 +8,20 @@ class ListUserBloc extends Bloc<ListUserEvent, ListUserState> {
   final UserService _userService;
 
   ListUserBloc(this._userService) : super(ListUserInitial()) {
+    on<FetchAllUserEvent>(_onFetchAllUser);
     on<FetchListUserOrderedEventByUserId>(_onFetchListUserOrderedByUserId);
     on<FetchListUserChatEventByUserId>(_onFetchListUserChatByUserId);
     on<ResetListUserEvent>((event, emit) => emit(ListUserInitial()));
+  }
+  Future<void> _onFetchAllUser(
+      FetchAllUserEvent event, Emitter<ListUserState> emit) async {
+    emit(ListUserLoading());
+    try {
+      final List<UserInfoModel> users = await _userService.fetchAllUser();
+      emit(AllUserLoaded(users));
+    } catch (e) {
+      emit(ListUserError(e.toString()));
+    }
   }
 
   Future<void> _onFetchListUserOrderedByUserId(

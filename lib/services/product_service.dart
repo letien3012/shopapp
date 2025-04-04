@@ -6,9 +6,11 @@ import 'package:luanvan/models/option_info.dart';
 
 class ProductService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  Future<void> addProduct(Product product) async {
+  Future<String> addProduct(Product product) async {
+    String productId = '';
     final docRef =
         await firebaseFirestore.collection('products').add(product.toMap());
+    productId = docRef.id;
     await docRef.update({'id': docRef.id});
 
     // Add variants as subcollection and update their IDs
@@ -70,6 +72,7 @@ class ProductService {
     await docRef.update({
       'optionInfos': updatedOptionInfos.map((info) => info.toMap()).toList(),
     });
+    return productId;
   }
 
   Future<List<Product>> fetchProductByShopId(String shopId) async {

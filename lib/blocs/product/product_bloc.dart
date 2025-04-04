@@ -37,9 +37,9 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       AddProductEvent event, Emitter<ProductState> emit) async {
     emit(ProductLoading());
     try {
-      await _productService.addProduct(event.product);
+      final productId = await _productService.addProduct(event.product);
       _listProductBloc.add(FetchListProductEventByShopId(event.product.shopId));
-      emit(ProductInitial());
+      emit(ProductCreated(productId));
     } catch (e) {
       emit(ProductError(e.toString()));
     }

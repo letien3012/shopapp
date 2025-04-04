@@ -6,6 +6,11 @@ class ListUserInitial extends ListUserState {}
 
 class ListUserLoading extends ListUserState {}
 
+class AllUserLoaded extends ListUserState {
+  final List<UserInfoModel> users;
+  AllUserLoaded(this.users);
+}
+
 class ListUserOrderedLoaded extends ListUserState {
   final List<UserInfoModel> users;
   ListUserOrderedLoaded(this.users);

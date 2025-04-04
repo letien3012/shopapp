@@ -1,61 +1,125 @@
-// import 'dart:io';
-// import 'package:tflite_flutter/tflite_flutter.dart';
-// import 'package:image/image.dart' as img;
+import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luanvan/models/image_feature.dart';
+import 'package:luanvan/models/product.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
 
-// class ImageFeatureService {
-//   static const int inputSize = 224; // Kích thước input cho model
-//   late Interpreter _interpreter;
+import 'package:image/image.dart' as img;
 
-//   Future<void> initialize() async {
-//     // Load model từ assets
-//     _interpreter = await Interpreter.fromAsset(
-//         'assets/mobilenet_v2_feature_extractor.tflite');
-//   }
+class ImageFeatureService {
+  final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  List<List<List<List<double>>>> reshapeInput(Float32List flatInput) {
+    List<List<List<List<double>>>> reshaped = List.generate(
+        1,
+        (_) => List.generate(
+            224,
+            (y) => List.generate(
+                224,
+                (x) => List.generate(3, (c) {
+                      int index = (y * 224 + x) * 3 + c;
+                      return flatInput[index];
+                    }))));
+    return reshaped;
+  }
 
-//   Future<List<double>> extractFeatures(File imageFile) async {
-//     // Đọc và resize ảnh
-//     final image = img.decodeImage(await imageFile.readAsBytes())!;
-//     final resizedImage = img.copyResize(
-//       image,
-//       width: inputSize,
-//       height: inputSize,
-//     );
+  Float32List preprocessImage(String imagePath) {
+    final imageFile = File(imagePath);
+    final rawImage = img.decodeImage(imageFile.readAsBytesSync())!;
 
-//     // Chuyển ảnh thành tensor
-//     var input = List.generate(
-//       1,
-//       (index) => List.generate(
-//         inputSize,
-//         (y) => List.generate(
-//           inputSize,
-//           (x) {
-//             final pixel = resizedImage.getPixel(x, y);
-//             // Normalize pixel values to [-1, 1]
-//             return [
-//               (img.getRed(pixel) / 127.5) - 1,
-//               (img.getGreen(pixel) / 127.5) - 1,
-//               (img.getBlue(pixel) / 127.5) - 1,
-//             ];
-//           },
-//         ),
-//       ),
-//     );
+    // 2. Resize ảnh về kích thước 224x224 (MobileNet yêu cầu)
+    final resizedImage = img.copyResize(
+      rawImage,
+      width: 224,
+      height: 224,
+      interpolation: img.Interpolation.linear, // Chất lượng resize
+    );
 
-//     // Output tensor
-//     var outputShape = _interpreter.getOutputTensor(0).shape;
-//     var output = List.generate(
-//       outputShape[0],
-//       (index) => List<double>.filled(outputShape[1], 0),
-//     );
+    // 3. Chuyển ảnh thành mảng 3 chiều [224, 224, 3] (RGB)
+    final List<double> inputList = [];
+    for (int y = 0; y < 224; y++) {
+      for (int x = 0; x < 224; x++) {
+        final pixel = resizedImage.getPixel(x, y);
+        // Lấy giá trị RGB và normalize về [0, 1] (MobileNet chuẩn)
+        inputList.add(pixel.r / 255.0); // Red
+        inputList.add(pixel.g / 255.0); // Green
+        inputList.add(pixel.b / 255.0); // Blue
+      }
+    }
 
-//     // Run inference
-//     _interpreter.run(input, output);
+    // 4. Chuyển thành Float32List (TensorFlow Lite cần kiểu float32)
+    final Float32List inputBuffer = Float32List.fromList(inputList);
+    return inputBuffer;
+  }
 
-//     // Convert output to 1D list
-//     return output[0];
-//   }
+  Future<List<double>> extractImageFeatures(String imagePath) async {
+    final interpreter =
+        await Interpreter.fromAsset('assets/mobilenetv2.tflite');
 
-//   void dispose() {
-//     _interpreter.close();
-//   }
-// }
+    // Tiền xử lý ảnh (resize, normalize)
+    final Float32List flatInput = preprocessImage(imagePath);
+    final input = reshapeInput(flatInput);
+
+    // Tạo output tensor với kích thước đúng [16, 1280]
+    final output = List.filled(16 * 1280, 0.0).reshape([16, 1280]);
+    interpreter.run(input, output);
+
+    // Lấy vector đặc trưng đầu tiên (batch size = 1)
+    return output[0].cast<double>();
+  }
+
+  Future<void> uploadImageFeature(
+      List<String> imagePaths, String productId, List<String> imageUrl) async {
+    for (int i = 0; i < imagePaths.length; i++) {
+      final imageFeatures = await extractImageFeatures(imagePaths[i]);
+      final imageFeature = ImageFeature(
+        imageUrl: imageUrl[i],
+        productId: productId,
+        features: imageFeatures,
+      );
+      await firebaseFirestore
+          .collection('imageFeatures')
+          .add(imageFeature.toJson());
+    }
+    print('Uploaded image features');
+  }
+
+  Future<List<Product>> searchSimilarImages(String queryImagePath) async {
+    final queryFeatures = await extractImageFeatures(queryImagePath);
+    final allDocs =
+        await FirebaseFirestore.instance.collection('imageFeatures').get();
+
+    // Tính cosine similarity giữa queryFeatures và các ảnh trong DB
+    final results = allDocs.docs.map((doc) {
+      final dbFeatures = List<double>.from(doc['features']);
+      final similarity = cosineSimilarity(queryFeatures, dbFeatures);
+      print(similarity);
+      return {
+        'productId': doc['productId'],
+        'imageUrl': doc['imageUrl'],
+        'score': similarity,
+      };
+    }).toList();
+
+    // Sắp xếp theo độ tương tự
+    results.sort((a, b) => b['score'].compareTo(a['score']));
+    final productIds = results.map((result) => result['productId']).toList();
+    final products = await firebaseFirestore
+        .collection('products')
+        .where('id', whereIn: productIds)
+        .get();
+    return products.docs.map((doc) => Product.fromFirestore(doc)).toList();
+  }
+
+// Hàm tính cosine similarity
+  double cosineSimilarity(List<double> a, List<double> b) {
+    double dot = 0.0, normA = 0.0, normB = 0.0;
+    for (int i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
+    return dot / (sqrt(normA) * sqrt(normB));
+  }
+}

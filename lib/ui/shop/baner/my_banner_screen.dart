@@ -5,10 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:luanvan/blocs/banner/banner_bloc.dart';
 import 'package:luanvan/blocs/banner/banner_event.dart';
 import 'package:luanvan/blocs/banner/banner_state.dart';
-import 'package:luanvan/blocs/category/category_bloc.dart';
-import 'package:luanvan/blocs/category/category_event.dart';
-import 'package:luanvan/blocs/category/category_state.dart';
-import 'package:luanvan/models/category.dart';
+
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/baner/edit_banner_screen.dart';
 import 'package:luanvan/ui/shop/baner/add_banner_screen.dart';
@@ -215,9 +212,24 @@ class _MyBannerScreenState extends State<MyBannerScreen> {
             children: [
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(
-                      context, DetailsProductShopScreen.routeName,
-                      arguments: banner.id);
+                  showDialog(
+                    context: context,
+                    builder: (context) => Dialog(
+                      child: InteractiveViewer(
+                        minScale: 0.5,
+                        maxScale: 4.0,
+                        child: Image.network(
+                          banner.imageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Image.network(
+                            'https://via.placeholder.com/80',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
                 },
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -225,12 +237,12 @@ class _MyBannerScreenState extends State<MyBannerScreen> {
                     banner.imageUrl,
                     width: MediaQuery.of(context).size.width * 0.9,
                     height: 300,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fitWidth,
                     errorBuilder: (context, error, stackTrace) => Image.network(
                       'https://via.placeholder.com/80',
                       width: 80,
                       height: 80,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.fitWidth,
                     ),
                   ),
                 ),

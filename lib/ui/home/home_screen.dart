@@ -132,15 +132,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           banners.sort(
                               (a, b) => a.createdAt.compareTo(b.createdAt));
                           if (banners.isEmpty) return Container();
-                          final imgList = banners.map((banner) {
-                            if (banner.isHidden) {
-                              return '';
-                            }
-                            return banner.imageUrl;
-                          }).toList();
+                          final imgList = banners
+                              .where((banner) => !banner.isHidden)
+                              .map((banner) => banner.imageUrl)
+                              .toList();
 
                           return SizedBox(
-                            height: MediaQuery.of(context).size.height * .25,
+                            height: MediaQuery.of(context).size.height * .2,
                             width: MediaQuery.of(context).size.width,
                             child: Stack(
                               children: [
@@ -150,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         items: imgList
                                             .map((item) => Image.network(
                                                   item,
-                                                  fit: BoxFit.fill,
+                                                  fit: BoxFit.fitWidth,
                                                   height: MediaQuery.of(context)
                                                           .size
                                                           .height *

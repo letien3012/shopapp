@@ -1,5 +1,7 @@
 abstract class ListUserEvent {}
 
+class FetchAllUserEvent extends ListUserEvent {}
+
 class FetchListUserChatEventByUserId extends ListUserEvent {
   final List<String> userIds;
   FetchListUserChatEventByUserId(this.userIds);

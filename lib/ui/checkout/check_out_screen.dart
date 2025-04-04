@@ -10,6 +10,9 @@ import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
@@ -19,6 +22,7 @@ import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/cart_shop.dart';
+import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/order_item.dart';
 import 'package:luanvan/models/product.dart';
@@ -711,19 +715,26 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
             ),
             const SizedBox(width: 10),
             GestureDetector(
-              onTap: () {
+              onTap: () async {
                 final authState = context.read<AuthBloc>().state;
                 if (authState is AuthAuthenticated) {
                   final userState = context.read<UserBloc>().state;
                   if (userState is UserLoaded) {
                     // Kiểm tra xem đã chọn địa chỉ chưa
                     if (receiverAddress.addressLine.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Vui lòng chọn địa chỉ nhận hàng'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      if (await _showAddAddressDialog()) {
+                        Navigator.pushNamed(
+                            context, AddLocationScreen.routeName,
+                            arguments: userState.user);
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   const SnackBar(
+                      //     content: Text('Vui lòng chọn địa chỉ nhận hàng'),
+                      //     backgroundColor: Colors.red,
+                      //   ),
+                      // );
                       return;
                     }
                     Cart cart = Cart(shops: [], id: '', userId: '');
@@ -785,7 +796,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         final productState =
                             context.read<ProductCartBloc>().state;
                         if (productState is ProductCartListLoaded) {
-                          final product = productState.products.firstWhere(
+                          var product = productState.products.firstWhere(
                             (p) => p.id == cartItem.productId,
                           );
 
@@ -793,6 +804,11 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                           double productPrice = 0;
                           if (product.variants.isEmpty) {
                             productPrice = product.price ?? 0;
+                            product = product.copyWith(
+                              quantity: product.quantity! - cartItem.quantity,
+                              quantitySold:
+                                  product.quantitySold + cartItem.quantity,
+                            );
                           } else if (product.variants.length > 1) {
                             int i = product.variants[0].options.indexWhere(
                                 (opt) => opt.id == cartItem.optionId1);
@@ -806,53 +822,70 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                               productPrice =
                                   product.optionInfos[optionInfoIndex].price;
                             }
+                            OptionInfo optionInfo =
+                                product.optionInfos[optionInfoIndex].copyWith(
+                              stock:
+                                  product.optionInfos[optionInfoIndex].stock -
+                                      cartItem.quantity,
+                            );
+                            product = product.copyWith(
+                                optionInfos: [...product.optionInfos]
+                                  ..[optionInfoIndex] = optionInfo,
+                                quantitySold:
+                                    product.quantitySold + cartItem.quantity);
                           }
 
                           // Tạo OrderItem mới
-                          orderItems.add(OrderItem(
-                            productId: cartItem.productId,
-                            quantity: cartItem.quantity,
-                            price: productPrice,
-                            productName: product.name,
-                            productImage: (product.hasVariantImages &&
-                                    product.variants.isNotEmpty)
-                                ? (product
-                                        .variants[0]
-                                        .options[product.variants[0].options
-                                            .indexWhere((option) =>
-                                                option.id ==
-                                                cartItem.optionId1)]
-                                        .imageUrl ??
-                                    product.imageUrl[0])
-                                : product.imageUrl[0],
-                            createdAt: now,
-                            productVariation: cartItem.optionId1 != null &&
-                                    cartItem.optionId2 != null
-                                ? '${product.variants.firstWhere((variant) => variant.id == cartItem.variantId1).options.firstWhere((option) => option.id == cartItem.optionId1).name}, ${product.variants.firstWhere((variant) => variant.id == cartItem.variantId2).options.firstWhere((option) => option.id == cartItem.optionId2).name}'
-                                : cartItem.optionId1 != null
-                                    ? product.variants
-                                        .firstWhere((variant) =>
-                                            variant.id == cartItem.variantId1)
-                                        .options
-                                        .firstWhere((option) =>
-                                            option.id == cartItem.optionId1)
-                                        .name
-                                    : cartItem.optionId2 != null
-                                        ? product.variants
-                                            .firstWhere((variant) =>
-                                                variant.id ==
-                                                cartItem.variantId2)
-                                            .options
-                                            .firstWhere((option) =>
-                                                option.id == cartItem.optionId2)
-                                            .name
-                                        : null,
-                            productCategory: product.category,
-                            productSubCategory:
-                                '', // Không có trường này trong model Product
-                            productBrand:
-                                '', // Không có trường này trong model Product
-                          ));
+                          orderItems.add(
+                            OrderItem(
+                              productId: cartItem.productId,
+                              quantity: cartItem.quantity,
+                              price: productPrice,
+                              productName: product.name,
+                              productImage: (product.hasVariantImages &&
+                                      product.variants.isNotEmpty)
+                                  ? (product
+                                          .variants[0]
+                                          .options[product.variants[0].options
+                                              .indexWhere((option) =>
+                                                  option.id ==
+                                                  cartItem.optionId1)]
+                                          .imageUrl ??
+                                      product.imageUrl[0])
+                                  : product.imageUrl[0],
+                              createdAt: now,
+                              productVariation: cartItem.optionId1 != null &&
+                                      cartItem.optionId2 != null
+                                  ? '${product.variants.firstWhere((variant) => variant.id == cartItem.variantId1).options.firstWhere((option) => option.id == cartItem.optionId1).name}, ${product.variants.firstWhere((variant) => variant.id == cartItem.variantId2).options.firstWhere((option) => option.id == cartItem.optionId2).name}'
+                                  : cartItem.optionId1 != null
+                                      ? product.variants
+                                          .firstWhere((variant) =>
+                                              variant.id == cartItem.variantId1)
+                                          .options
+                                          .firstWhere((option) =>
+                                              option.id == cartItem.optionId1)
+                                          .name
+                                      : cartItem.optionId2 != null
+                                          ? product.variants
+                                              .firstWhere((variant) =>
+                                                  variant.id ==
+                                                  cartItem.variantId2)
+                                              .options
+                                              .firstWhere((option) =>
+                                                  option.id ==
+                                                  cartItem.optionId2)
+                                              .name
+                                          : null,
+                              productCategory: product.category,
+                            ),
+                          );
+                          context
+                              .read<ProductBloc>()
+                              .add(UpdateProductEvent(product));
+                          await context
+                              .read<ProductBloc>()
+                              .stream
+                              .firstWhere((state) => state is ProductLoaded);
                         }
                       }
 

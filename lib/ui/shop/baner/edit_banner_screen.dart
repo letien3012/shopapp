@@ -105,7 +105,7 @@ class _EditBannerScreenState extends State<EditBannerScreen> {
       if (_categoryImage != null) {
         final StorageService storageService = StorageService();
         imageUrl = await storageService.uploadFile(
-            File(_categoryImage!.path), 'banner_images', '', '');
+            File(_categoryImage!.path), 'image', '', '');
         if (imageUrl == null) {
           context.read<BannerBloc>().add(UpdateBannerEvent(
               banner: currentBanner!.copyWith(imageUrl: imageUrl)));
@@ -132,7 +132,7 @@ class _EditBannerScreenState extends State<EditBannerScreen> {
               File(_categoryImage!.path),
               width: MediaQuery.of(context).size.width * 0.9,
               height: 300,
-              fit: BoxFit.cover,
+              fit: BoxFit.fitWidth,
             ),
           ),
           _buildRemoveImageButton(),
@@ -147,7 +147,7 @@ class _EditBannerScreenState extends State<EditBannerScreen> {
               _currentImageUrl!,
               width: MediaQuery.of(context).size.width * 0.9,
               height: 300,
-              fit: BoxFit.cover,
+              fit: BoxFit.fitWidth,
               errorBuilder: (context, error, stackTrace) => Icon(
                 Icons.error_outline,
                 size: 30,
@@ -294,7 +294,7 @@ class _EditBannerScreenState extends State<EditBannerScreen> {
                   const SizedBox(
                     height: 40,
                     child: Text(
-                      "Chỉnh sửa danh mục",
+                      "Chỉnh sửa banner",
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                     ),

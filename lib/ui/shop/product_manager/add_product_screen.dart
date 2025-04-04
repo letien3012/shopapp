@@ -11,6 +11,7 @@ import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
@@ -19,6 +20,7 @@ import 'package:luanvan/models/category.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/models/shop.dart';
+import 'package:luanvan/services/image_feature_service.dart';
 import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_product_category_screen.dart';
@@ -202,6 +204,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
       product.imageUrl = _listImageUrl;
       product.shopId = shopId;
       context.read<ProductBloc>().add(AddProductEvent(product));
+      await context
+          .read<ProductBloc>()
+          .stream
+          .firstWhere((state) => state is ProductCreated);
+      final productId =
+          (context.read<ProductBloc>().state as ProductCreated).productId;
+      await ImageFeatureService().uploadImageFeature(
+          _imageFiles.map((e) => e.path).toList(), productId, _listImageUrl);
       _showAddSuccessDialog();
 
       context

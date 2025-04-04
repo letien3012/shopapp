@@ -4,6 +4,15 @@ import 'package:luanvan/models/user_info_model.dart';
 
 class UserService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  Future<List<UserInfoModel>> fetchAllUser() async {
+    final QuerySnapshot querySnapshot =
+        await firebaseFirestore.collection('users').get();
+    return querySnapshot.docs
+        .map((doc) =>
+            UserInfoModel.fromFirestore(doc.data() as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<UserInfoModel> fetchUserInfo(String userId) async {
     final QuerySnapshot querySnapshot = await firebaseFirestore
         .collection('users')

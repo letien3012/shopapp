@@ -21,6 +21,7 @@ import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/productcomment/product_comment_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/search/search_bloc.dart';
+import 'package:luanvan/blocs/searchbyimage/search_image_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_bloc.dart';
@@ -33,6 +34,7 @@ import 'package:luanvan/services/cart_service.dart';
 import 'package:luanvan/services/category_service.dart';
 import 'package:luanvan/services/chat_service.dart';
 import 'package:luanvan/services/comment_service.dart';
+import 'package:luanvan/services/image_feature_service.dart';
 import 'package:luanvan/services/order_service.dart';
 import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/search_service.dart';
@@ -145,8 +147,7 @@ class ShopApp extends StatelessWidget {
           create: (context) => ListUserCommentBloc(UserService()),
         ),
         BlocProvider<SearchBloc>(
-          create: (context) => SearchBloc(SearchService(
-              ApiService(baseUrl: 'https://your-api-base-url.com'))),
+          create: (context) => SearchBloc(SearchService()),
         ),
         BlocProvider<CheckBloc>(
           create: (context) => CheckBloc(AuthService()),
@@ -171,6 +172,9 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<BannerBloc>(
           create: (context) => BannerBloc(BannerService()),
+        ),
+        BlocProvider<SearchImageBloc>(
+          create: (context) => SearchImageBloc(ImageFeatureService()),
         ),
       ],
       child: MaterialApp(

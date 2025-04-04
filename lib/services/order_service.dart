@@ -111,6 +111,7 @@ class OrderService {
         final orderData = updatedOrder.toMap();
         orderData['id'] = orderRef.id;
         await orderRef.update({'id': orderRef.id});
+
         createdOrders.add(Order.fromMap(orderData));
       }
 

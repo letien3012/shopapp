@@ -1,12 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/product.dart';
-import 'package:luanvan/services/api_service.dart';
 
 class SearchService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final ApiService _apiService;
 
-  SearchService(this._apiService);
   Future<List<String>> searchNameProducts(String keyword) async {
     try {
       final response = await _firestore.collection('products').get();
@@ -24,16 +21,16 @@ class SearchService {
   // Tìm kiếm sản phẩm theo tên
   Future<List<Product>> searchProducts(String query) async {
     try {
-      final response = await _firestore
-          .collection('products')
-          .where('name', isGreaterThanOrEqualTo: query)
-          .where('name', isLessThanOrEqualTo: query + '\uf8ff')
-          .get();
-      print(response.docs.length);
-      return response.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return Product.fromMap(data);
-      }).toList();
+      // Lấy tất cả sản phẩm
+      final response = await _firestore.collection('products').get();
+
+      // Lọc sản phẩm có tên chứa query (không phân biệt hoa thường)
+      final lowercaseQuery = query.toLowerCase();
+      return response.docs
+          .map((doc) => Product.fromFirestore(doc))
+          .where(
+              (product) => product.name.toLowerCase().contains(lowercaseQuery))
+          .toList();
     } catch (e) {
       throw Exception('Failed to search products: $e');
     }

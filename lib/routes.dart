@@ -55,9 +55,9 @@ import 'package:luanvan/ui/shop/shop_manager/location/add_location_shop_screen.d
 import 'package:luanvan/ui/shop/shop_manager/location/edit_location_shop_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/location/location_shop_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/location/pick_location_order_screen.dart';
-import 'package:luanvan/ui/shop/shop_manager/location/revenue_screen.dart';
+import 'package:luanvan/ui/shop/analysis/revenue_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
-import 'package:luanvan/ui/shop/shop_manager/sales_analysis_screen.dart';
+import 'package:luanvan/ui/shop/analysis/sales_analysis_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
 import 'package:luanvan/ui/shop/sign_shop/add_location_sign_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
@@ -67,6 +67,8 @@ import 'package:luanvan/ui/shop/sign_shop/add_shop_phone.dart';
 import 'package:luanvan/ui/shop/sign_shop/ship_setting_screen.dart';
 import 'package:luanvan/ui/shop/sign_shop/sign_shop.dart';
 import 'package:luanvan/ui/shop/sign_shop/start_shop.dart';
+import 'package:luanvan/ui/shop/user/my_user_screen.dart';
+import 'package:luanvan/ui/shop/user/user_detail_screen.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
@@ -156,4 +158,6 @@ final Map<String, WidgetBuilder> routes = {
   MyBannerScreen.routeName: (context) => MyBannerScreen(),
   AddBannerScreen.routeName: (context) => AddBannerScreen(),
   EditBannerScreen.routeName: (context) => EditBannerScreen(),
+  MyUserScreen.routeName: (context) => MyUserScreen(),
+  UserDetailScreen.routeName: (context) => UserDetailScreen(),
 };

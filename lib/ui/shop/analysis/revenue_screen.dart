@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
+import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
-import 'package:luanvan/blocs/shop/shop_bloc.dart';
-import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/order.dart';
 
 class RevenueScreen extends StatefulWidget {
@@ -16,6 +15,11 @@ class RevenueScreen extends StatefulWidget {
 }
 
 class _RevenueScreenState extends State<RevenueScreen> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   final formatter = NumberFormat.currency(
     locale: 'vi_VN',
     symbol: 'đ',
@@ -35,6 +39,8 @@ class _RevenueScreenState extends State<RevenueScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final shopId = ModalRoute.of(context)?.settings.arguments as String;
+    context.read<OrderBloc>().add(FetchOrdersByShopId(shopId));
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,

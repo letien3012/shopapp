@@ -178,7 +178,7 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
                                                     .width *
                                                 0.9,
                                             height: 300,
-                                            fit: BoxFit.cover,
+                                            fit: BoxFit.fitWidth,
                                           ),
                                         ),
                                         Positioned(

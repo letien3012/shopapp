@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:luanvan/models/address.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum Gender { male, female, other, unknown }
 
@@ -13,7 +14,9 @@ class UserInfoModel {
   String? date;
   String? userName;
   int role;
+  bool isLock;
   List<Address> addresses;
+  Timestamp createdAt;
 
   UserInfoModel({
     required this.id,
@@ -25,8 +28,11 @@ class UserInfoModel {
     this.date,
     this.userName,
     required this.role,
+    this.isLock = false,
     List<Address>? addresses,
-  }) : addresses = addresses ?? [];
+    Timestamp? createdAt,
+  })  : addresses = addresses ?? [],
+        createdAt = createdAt ?? Timestamp.now();
 
   UserInfoModel copyWith({
     String? id,
@@ -38,7 +44,9 @@ class UserInfoModel {
     String? date,
     String? userName,
     int? role,
+    bool? isLock,
     List<Address>? addresses,
+    Timestamp? createdAt,
   }) {
     return UserInfoModel(
       id: id ?? this.id,
@@ -50,7 +58,9 @@ class UserInfoModel {
       date: date ?? this.date,
       userName: userName ?? this.userName,
       role: role ?? this.role,
+      isLock: isLock ?? this.isLock,
       addresses: addresses ?? this.addresses,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -65,7 +75,9 @@ class UserInfoModel {
       'date': date,
       'userName': userName,
       'role': role,
+      'isLock': isLock,
       'addresses': addresses.map((address) => address.toMap()).toList(),
+      'createdAt': createdAt,
     };
   }
 
@@ -85,10 +97,12 @@ class UserInfoModel {
       date: map['date'],
       userName: map['userName'],
       role: map['role'] as int? ?? 0,
+      isLock: map['isLock'] as bool? ?? false,
       addresses: map['addresses'] != null
           ? List<Address>.from(
               (map['addresses'] as List).map((x) => Address.fromMap(x)))
           : [],
+      createdAt: map['createdAt'] as Timestamp? ?? Timestamp.now(),
     );
   }
 
@@ -108,10 +122,12 @@ class UserInfoModel {
       date: data['date'] ?? '',
       userName: data['userName'] ?? '',
       role: data['role'] ?? 0,
+      isLock: data['isLock'] ?? false,
       addresses: data['addresses'] != null
           ? List<Address>.from(
               (data['addresses'] as List).map((x) => Address.fromMap(x)))
           : [],
+      createdAt: data['createdAt'] as Timestamp? ?? Timestamp.now(),
     );
   }
 
@@ -122,6 +138,6 @@ class UserInfoModel {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role, addresses: $addresses)';
+    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role, isLock: $isLock, addresses: $addresses, createdAt: $createdAt)';
   }
 }

@@ -4,11 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_event.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_event.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_state.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
-import 'package:luanvan/ui/login/create_password_screen.dart';
 import 'package:luanvan/ui/login/verify_screen.dart';
 import 'package:luanvan/ui/mainscreen.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 
 class SingupScreen extends StatefulWidget {
   const SingupScreen({super.key});
@@ -30,29 +33,23 @@ class _SingupScreenState extends State<SingupScreen> {
     super.dispose();
   }
 
+  Future<void> _showDialog(String message) async {
+    showAlertDialog(
+      context,
+      message: 'Kiểm tra email để khôi phục mật khẩu',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocConsumer<AuthBloc, AuthState>(
+      body: BlocConsumer<CheckBloc, CheckState>(
         listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            Navigator.of(context).pushNamed(MainScreen.routeName);
-          }
-          if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
+          if (state is EmailExists) {}
           if (state is EmailExists) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Email này đã được đăng ký'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            if (mounted) {
+              _showDialog('Email này đã được đăng ký');
+            }
             setState(() {
               _isCheckingEmail = false;
             });
@@ -73,6 +70,9 @@ class _SingupScreenState extends State<SingupScreen> {
           }
           return SingleChildScrollView(
             child: Container(
+              color: Colors.white,
+              constraints:
+                  BoxConstraints(minHeight: MediaQuery.of(context).size.height),
               padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,7 +190,7 @@ class _SingupScreenState extends State<SingupScreen> {
                             setState(() {
                               _isCheckingEmail = true;
                             });
-                            context.read<AuthBloc>().add(
+                            context.read<CheckBloc>().add(
                                   CheckEmailEvent(_emailController.text),
                                 );
                           }
@@ -276,8 +276,11 @@ class _SingupScreenState extends State<SingupScreen> {
                               decoration: TextDecoration.underline),
                         ),
                         onTap: () {
-                          Navigator.of(context)
-                              .pushNamed(SigninScreen.routeName);
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => SigninScreen(),
+                            ),
+                          );
                         },
                       )
                     ],

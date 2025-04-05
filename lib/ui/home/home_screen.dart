@@ -220,6 +220,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: double.infinity,
                       color: Colors.grey[300],
                     ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text('Sản phẩm bán chạy 🔥',
+                            textAlign: TextAlign.start,
+                            style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.brown)),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
                     GridView.builder(
                         padding: EdgeInsets.symmetric(horizontal: 7),
                         physics: const NeverScrollableScrollPhysics(),
@@ -349,9 +369,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Icons.camera_alt_outlined))
+                            // IconButton(
+                            //     onPressed: () {
+                            //       Navigator.of(context)
+                            //           .pushNamed(SearchScreen.routeName);
+                            //     },
+                            //     icon: const Icon(Icons.camera_alt_outlined))
                           ],
                         ),
                       ),
@@ -425,13 +448,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  SvgPicture.asset(
-                    IconHelper.chatIcon,
-                    color: Colors.white,
-                    height: 30,
-                    width: 30,
                   ),
                 ],
               ),

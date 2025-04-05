@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:luanvan/models/shop.dart';
 import '../models/user_info_model.dart';
 import '../models/cart.dart';
 
@@ -18,6 +19,31 @@ class AuthService {
     return 'user_' +
         List.generate(8, (_) => characters[random.nextInt(characters.length)])
             .join();
+  }
+
+  Future<User> changeEmail(String email) async {
+    await _firebaseAuth.currentUser?.verifyBeforeUpdateEmail(email);
+    await _firebaseAuth.currentUser?.reload();
+    await _firestore
+        .collection('users')
+        .doc(_firebaseAuth.currentUser!.uid)
+        .update({
+      'email': email,
+    });
+    return _firebaseAuth.currentUser!;
+  }
+
+  Future<Shop?> checkAdmin(String email) async {
+    QuerySnapshot query = await _firestore
+        .collection('shops')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+    if (query.docs.isNotEmpty) {
+      return Shop.fromFirestore(
+          query.docs.first as DocumentSnapshot<Map<String, dynamic>>);
+    }
+    return null;
   }
 
   Future<bool> checkUSerNameExits(String userName) async {
@@ -371,6 +397,14 @@ class AuthService {
       if (!_firebaseAuth.currentUser!.emailVerified) {
         throw Exception('Email chưa được xác thực');
       }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> sendEmailVerificationBeforeUpdateEmail(String email) async {
+    try {
+      await _firebaseAuth.currentUser?.verifyBeforeUpdateEmail(email);
     } catch (e) {
       rethrow;
     }

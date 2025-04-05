@@ -20,6 +20,7 @@ import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/productcomment/product_comment_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
+import 'package:luanvan/blocs/productsearchimage/product_search_image_bloc.dart';
 import 'package:luanvan/blocs/search/search_bloc.dart';
 import 'package:luanvan/blocs/searchbyimage/search_image_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
@@ -94,9 +95,6 @@ class ShopApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        // BlocProvider(create: (_) => ProductBloc()..add(FetchProductsEvent())),
-        // BlocProvider(create: (_) => CartBloc()),
-        // BlocProvider(create: (_) => MessageBloc()),
         BlocProvider(
           create: (context) => UserBloc(UserService()),
         ),
@@ -176,6 +174,9 @@ class ShopApp extends StatelessWidget {
         BlocProvider<SearchImageBloc>(
           create: (context) => SearchImageBloc(ImageFeatureService()),
         ),
+        BlocProvider<ProductSearchImageBloc>(
+          create: (context) => ProductSearchImageBloc(ProductService()),
+        ),
       ],
       child: MaterialApp(
         locale: const Locale('vi'), // Đặt ngôn ngữ chính là tiếng Việt
@@ -211,27 +212,7 @@ class ShopApp extends StatelessWidget {
             )),
         debugShowCheckedModeBanner: false,
         routes: routes,
-        home: MultiBlocProvider(
-          providers: [
-            BlocProvider(create: (context) => AuthBloc(AuthService())),
-            BlocProvider(create: (context) => UserBloc(UserService())),
-            BlocProvider(create: (context) => ShopBloc(ShopService())),
-            BlocProvider(create: (context) => ListShopBloc(ShopService())),
-            BlocProvider(
-                create: (context) => ProductCartBloc(ProductService())),
-            BlocProvider(create: (context) => OrderBloc(OrderService())),
-            BlocProvider(
-                create: (context) => ProductOrderBloc(ProductService())),
-            BlocProvider(create: (context) => HomeBloc(HomeService())),
-          ],
-          child: const SplashScreen(),
-        ),
-        // initialRoute: '/home',
-        // routes: {
-        //   '/home': (_) => const HomeScreen(),
-        //   '/product_detail': (_) => const ProductDetailScreen(),
-        //   '/profile': (_) => const ProfileScreen(),
-        // },
+        home: const SplashScreen(),
       ),
     );
   }

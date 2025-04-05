@@ -650,17 +650,20 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   }
 
   Widget _buildFilterDrawer() {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFilterHeader(),
-          _buildPlaceSellingFilter(),
-          _buildPriceRangeFilter(),
-          const Divider(),
-          _buildRatingFilter(),
-          _buildApplyButton(),
-        ],
+    return Container(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildFilterHeader(),
+            // _buildPlaceSellingFilter(),
+            _buildPriceRangeFilter(),
+            const Divider(),
+            _buildRatingFilter(),
+            _buildApplyButton(),
+          ],
+        ),
       ),
     );
   }

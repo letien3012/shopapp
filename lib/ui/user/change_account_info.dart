@@ -5,6 +5,7 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
+import 'package:luanvan/ui/user/change_info/change_password.dart';
 import 'package:luanvan/ui/user/change_info/change_phone.dart';
 import 'package:luanvan/ui/user/change_info/change_username.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
@@ -185,13 +186,21 @@ class _ChangeAccountInfoState extends State<ChangeAccountInfo> {
               "Email",
               trailingText: _maskEmail(userState.user.email ?? ""),
               showArrow: true,
+              onTap: () {
+                // Navigator.of(context).pushNamed(
+                //   ChangeEmail.routeName,
+                //   arguments: userState.user.email,
+                // );
+              },
+            ),
+            _buildAccountItem(
+              "Đổi mật khẩu",
+              showArrow: true,
               onTap: () => Navigator.of(context).pushNamed(
-                ChangeEmail.routeName,
-                arguments: userState.user.email,
+                ChangePassword.routeName,
               ),
             ),
-            _buildAccountItem("Đổi mật khẩu", showArrow: true),
-            _buildAccountItem("Xác thực bằng vân tay", showArrow: true),
+            // _buildAccountItem("Xác thực bằng vân tay", showArrow: true),
           ],
         ),
       ),

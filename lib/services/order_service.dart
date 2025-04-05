@@ -29,7 +29,6 @@ class OrderService {
       final querySnapshot = await _firestore
           .collection('orders')
           .where('shopId', isEqualTo: shopId)
-          // .orderBy('createdAt', descending: true)
           .get();
       return querySnapshot.docs.map((doc) {
         return Order.fromMap(doc.data());

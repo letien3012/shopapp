@@ -7,6 +7,7 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/models/product.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 
 class AddToCartBottomSheet extends StatefulWidget {
   final Product product;
@@ -30,6 +31,12 @@ class _AddToCartBottomSheetState extends State<AddToCartBottomSheet> {
   int selectedIndexVariant1 = -1;
   int selectedIndexVariant2 = -1;
   late TextEditingController _quantityController;
+  Future<void> _showAddToCartDialog() async {
+    showAlertDialog(
+      context,
+      message: 'Thêm vào giỏ hàng thành công',
+    );
+  }
 
   @override
   void initState() {
@@ -375,6 +382,7 @@ class _AddToCartBottomSheetState extends State<AddToCartBottomSheet> {
                                   : null,
                             ));
                       }
+                      _showAddToCartDialog();
                       Navigator.pop(context);
                     }
                   : null,

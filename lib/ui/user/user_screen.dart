@@ -226,54 +226,55 @@ class _UserScreenState extends State<UserScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        isAuthen
-            ? ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                ),
-                child: Material(
-                  color: Colors.white,
-                  child: InkWell(
-                    onTap: () {
-                      user.role == 1
-                          ? Navigator.of(context).pushNamed(
-                              MyShopScreen.routeName,
-                              arguments: user)
-                          : Navigator.of(context)
-                              .pushNamed(StartShop.routeName);
-                    },
-                    splashColor: Colors.transparent.withOpacity(0.2),
-                    highlightColor: Colors.transparent.withOpacity(0.1),
-                    child: SizedBox(
-                      height: 30,
-                      width: 140,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset(
-                            IconHelper.store,
-                            height: 25,
-                            width: 25,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            user!.role == 1 ? "Shop của tôi" : "Bắt đầu bán",
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w500),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(width: 5),
-                          const Icon(Icons.arrow_forward_ios, size: 15),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              )
-            : SizedBox(),
+        // isAuthen
+        //     ? ClipRRect(
+        //         borderRadius: const BorderRadius.only(
+        //           topRight: Radius.circular(20),
+        //           bottomRight: Radius.circular(20),
+        //         ),
+        //         child: Material(
+        //           color: Colors.white,
+        //           child: InkWell(
+        //             onTap: () {
+        //               user.role == 1
+        //                   ? Navigator.of(context).pushNamed(
+        //                       MyShopScreen.routeName,
+        //                       arguments: user)
+        //                   : Navigator.of(context)
+        //                       .pushNamed(StartShop.routeName);
+        //             },
+        //             splashColor: Colors.transparent.withOpacity(0.2),
+        //             highlightColor: Colors.transparent.withOpacity(0.1),
+        //             child: SizedBox(
+        //               height: 30,
+        //               width: 140,
+        //               child: Row(
+        //                 crossAxisAlignment: CrossAxisAlignment.center,
+        //                 mainAxisAlignment: MainAxisAlignment.center,
+        //                 children: [
+        //                   SvgPicture.asset(
+        //                     IconHelper.store,
+        //                     height: 25,
+        //                     width: 25,
+        //                   ),
+        //                   const SizedBox(width: 5),
+        //                   Text(
+        //                     user!.role == 1 ? "Shop của tôi" : "Bắt đầu bán",
+        //                     style: TextStyle(
+        //                         fontSize: 14, fontWeight: FontWeight.w500),
+        //                     maxLines: 1,
+        //                     overflow: TextOverflow.ellipsis,
+        //                   ),
+        //                   const SizedBox(width: 5),
+        //                   const Icon(Icons.arrow_forward_ios, size: 15),
+        //                 ],
+        //               ),
+        //             ),
+        //           ),
+        //         ),
+        //       )
+        //     : SizedBox(),
+        const Spacer(),
         Row(
           children: [
             InkWell(
@@ -346,22 +347,6 @@ class _UserScreenState extends State<UserScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            InkWell(
-              onTap: () {
-                final authState = context.read<AuthBloc>().state;
-                if (authState is AuthAuthenticated) {
-                  // Navigator.of(context).pushNamed(AddReviewScreen.routeName);
-                } else {
-                  Navigator.of(context).pushNamed(SigninScreen.routeName);
-                }
-              },
-              child: SvgPicture.asset(
-                IconHelper.chatIcon,
-                color: Colors.white,
-                height: 30,
-                width: 30,
-              ),
-            ),
             const SizedBox(width: 10),
           ],
         ),

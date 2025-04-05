@@ -10,7 +10,9 @@ import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/services/storage_service.dart';
+import 'package:luanvan/ui/user/change_info/change_email.dart';
 import 'package:luanvan/ui/user/change_info/change_name.dart';
+import 'package:luanvan/ui/user/change_info/change_phone.dart';
 
 class ChangeInfomationUser extends StatefulWidget {
   const ChangeInfomationUser({super.key});
@@ -151,9 +153,22 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
             _buildSpacer(10),
             _buildDateItem(context, "Ngày sinh", userState.user),
             _buildPhoneItem(
-                "Số điện thoại", _maskPhoneNumber(userState.user.phone ?? "")),
+                "Số điện thoại",
+                _maskPhoneNumber(userState.user.phone ?? ""),
+                () => Navigator.of(context).pushNamed(
+                      ChangePhone.routeName,
+                      arguments: userState.user.phone,
+                    )),
             _buildSpacer(10),
-            _buildEmailItem("Email", _maskEmail(userState.user.email ?? "")),
+            _buildEmailItem(
+              "Email",
+              _maskEmail(userState.user.email ?? ""),
+              () {},
+              // () => Navigator.of(context).pushNamed(
+              //   ChangeEmail.routeName,
+              //   arguments: userState.user.email,
+              // ),
+            ),
           ],
         ),
       ),
@@ -466,15 +481,13 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
     );
   }
 
-  Widget _buildPhoneItem(String title, String value) {
+  Widget _buildPhoneItem(String title, String value, VoidCallback? onTap) {
     return Material(
       color: Colors.white,
       child: InkWell(
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: () {
-          Navigator.of(context).pushNamed(ChangeName.routeName);
-        },
+        onTap: onTap,
         child: Container(
           height: 50,
           padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -511,15 +524,13 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
     );
   }
 
-  Widget _buildEmailItem(String title, String value) {
+  Widget _buildEmailItem(String title, String value, VoidCallback? onTap) {
     return Material(
       color: Colors.white,
       child: InkWell(
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
-        onTap: () {
-          Navigator.of(context).pushNamed(ChangeName.routeName);
-        },
+        onTap: onTap,
         child: Container(
           height: 50,
           padding: const EdgeInsets.symmetric(horizontal: 10),

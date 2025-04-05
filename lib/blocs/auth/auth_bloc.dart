@@ -8,13 +8,15 @@ import 'package:luanvan/services/auth_service.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthService _authService;
-  String? _pendingEmail;
 
   AuthBloc(this._authService) : super(AuthInitial()) {
     on<SignUpWithEmailAndPasswordEvent>(_onSignUpWithEmailAndPassword);
     on<LoginWithEmailAndPasswordEvent>(_onLoginWithEmailAndPassword);
     on<ForgotPasswordEvent>(_onForgotPassword);
+    on<ChangeEmailEvent>(_onChangeEmail);
     on<VerifyEmailEvent>(_onVerifyEmail);
+    on<SendEmailVerificationBeforeUpdateEmailEvent>(
+        _onSendEmailVerificationBeforeUpdateEmail);
     // on<CheckPhoneNumberEvent>(_onCheckPhoneNumber);
     on<SignUpWithPhoneEvent>(_onSignUpWithPhone);
     on<VerifyPhoneCodeEvent>(_onVerifyPhoneCode);
@@ -23,7 +25,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginEvent>(_onLogin);
     on<SignOutEvent>(_onSignOut);
     on<SendEmailVerificationEvent>(_onSendEmailVerification);
-    on<CheckEmailEvent>(_onCheckEmail);
+    // on<CheckEmailEvent>(_onCheckEmail);
+    on<ChangePasswordEvent>(_onChangePassword);
+    on<VerifyPasswordEvent>(_onVerifyPassword);
   }
 
   Future<void> _onSignUpWithEmailAndPassword(
@@ -57,6 +61,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  Future<void> _onChangeEmail(
+    ChangeEmailEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final user = await _authService.changeEmail(event.email);
+      emit(AuthAuthenticated(user));
+    } catch (e) {
+      emit(AuthError('Lỗi thay đổi email: ${e.toString()}'));
+    }
+  }
+
   Future<void> _onLoginWithEmailAndPassword(
     LoginWithEmailAndPasswordEvent event,
     Emitter<AuthState> emit,
@@ -69,26 +86,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.password,
       );
 
-      if (userCredential.user != null) {
-        final bool isVerified = await _authService.isEmailVerified();
-        if (!isVerified) {
-          emit(AuthEmailNotVerified());
-        } else {
-          emit(AuthAuthenticated(userCredential.user!));
-        }
+      final shop = await _authService.checkAdmin(event.email);
+      if (shop != null) {
+        emit(AdminAuthenticated(shop));
+      } else {
+        emit(AuthAuthenticated(userCredential.user!));
       }
     } on FirebaseAuthException catch (e) {
       String message = 'Đã xảy ra lỗi';
       if (e.code == 'user-not-found') {
-        message = 'Không tìm thấy tài khoản với email này';
+        message = 'Tài khoản không tồn tại';
       } else if (e.code == 'wrong-password') {
         message = 'Mật khẩu không chính xác';
       } else if (e.code == 'invalid-email') {
         message = 'Email không hợp lệ';
+      } else if (e.code == 'user-disabled') {
+        message = 'Tài khoản đã bị vô hiệu hóa';
+      } else if (e.code == 'too-many-requests') {
+        message = 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau';
       }
       emit(AuthError(message));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError('Đã xảy ra lỗi: ${e.toString()}'));
     }
   }
 
@@ -143,6 +162,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await _authService.sendEmailVerification(event.email);
+      emit(AuthEmailVerificationSent());
+    } catch (e) {
+      emit(AuthError('Gửi email xác thực thất bại: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onSendEmailVerificationBeforeUpdateEmail(
+    SendEmailVerificationBeforeUpdateEmailEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authService.sendEmailVerificationBeforeUpdateEmail(event.email);
       emit(AuthEmailVerificationSent());
     } catch (e) {
       emit(AuthError('Gửi email xác thực thất bại: ${e.toString()}'));
@@ -263,20 +295,102 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   //   }
   // }
 
-  Future<void> _onCheckEmail(
-    CheckEmailEvent event,
+  // Future<void> _onCheckEmail(
+  //   CheckEmailEvent event,
+  //   Emitter<AuthState> emit,
+  // ) async {
+  //   emit(AuthLoading());
+  //   try {
+  //     final bool exists = await _authService.checkEmailExists(event.email);
+
+  //     if (exists) {
+  //       emit(EmailExists());
+  //     } else {
+  //       emit(EmailAvailable());
+  //     }
+  //   } catch (e) {
+  //     emit(AuthError('Lỗi kiểm tra email: ${e.toString()}'));
+  //   }
+  // }
+
+  Future<void> _onChangePassword(
+    ChangePasswordEvent event,
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
     try {
-      final bool exists = await _authService.checkEmailExists(event.email);
-      if (exists) {
-        emit(EmailExists());
-      } else {
-        emit(EmailAvailable());
+      final user = await _authService.getCurrentUser();
+      if (user == null) {
+        emit(AuthError('Không tìm thấy người dùng'));
+        return;
       }
+
+      // Kiểm tra nếu là đăng nhập bằng Google
+      bool isGoogleSignIn = false;
+      for (var info in user.providerData) {
+        if (info.providerId == 'google.com') {
+          isGoogleSignIn = true;
+          break;
+        }
+      }
+
+      if (!isGoogleSignIn) {
+        // Xác thực lại với mật khẩu cũ nếu không phải đăng nhập Google
+        final credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: event.oldPassword,
+        );
+        await user.reauthenticateWithCredential(credential);
+      }
+
+      // Đổi mật khẩu mới
+      await user.updatePassword(event.newPassword);
+      emit(AuthPasswordChanged());
+    } on FirebaseAuthException catch (e) {
+      String message = 'Đã xảy ra lỗi';
+      if (e.code == 'wrong-password') {
+        message = 'Mật khẩu hiện tại không chính xác';
+      } else if (e.code == 'weak-password') {
+        message = 'Mật khẩu mới quá yếu';
+      } else if (e.code == 'requires-recent-login') {
+        message = 'Vui lòng đăng nhập lại để thực hiện thao tác này';
+      }
+      emit(AuthError(message));
     } catch (e) {
-      emit(AuthError('Lỗi kiểm tra email: ${e.toString()}'));
+      emit(AuthError('Đổi mật khẩu thất bại: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onVerifyPassword(
+    VerifyPasswordEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user == null) {
+        emit(AuthError('Không tìm thấy người dùng'));
+        return;
+      }
+
+      // Xác thực lại với mật khẩu cũ
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: event.password,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      emit(PasswordVerified());
+    } on FirebaseAuthException catch (e) {
+      String message = 'Đã xảy ra lỗi';
+      if (e.code == 'wrong-password') {
+        message = 'Mật khẩu không chính xác';
+      } else if (e.code == 'requires-recent-login') {
+        message = 'Vui lòng đăng nhập lại để thực hiện thao tác này';
+      }
+      emit(AuthError(message));
+    } catch (e) {
+      emit(AuthError('Xác thực mật khẩu thất bại: ${e.toString()}'));
     }
   }
 }

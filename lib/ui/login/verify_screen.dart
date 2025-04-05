@@ -24,7 +24,9 @@ class _VerifyScreenState extends State<VerifyScreen> {
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscureText = true;
+  bool _obscureConfirmText = true;
 
   @override
   void dispose() {
@@ -75,15 +77,12 @@ class _VerifyScreenState extends State<VerifyScreen> {
             child: BlocConsumer<AuthBloc, AuthState>(
               listener: (context, state) {
                 if (state is AuthEmailVerified) {}
-                if (state is AuthError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
+                if (state is AuthAuthenticated) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => MainScreen(),
                     ),
                   );
-                }
-                if (state is AuthAuthenticated) {
-                  Navigator.of(context).pushNamed(MainScreen.routeName);
                 }
               },
               builder: (context, state) {
@@ -104,57 +103,105 @@ class _VerifyScreenState extends State<VerifyScreen> {
                       const SizedBox(height: 10),
                       Form(
                         key: _formKey,
-                        child: TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscureText,
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Colors.black),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: Colors.black),
-                              ),
-                              hintText: 'Nhập mật khẩu mới',
-                              hintStyle:
-                                  const TextStyle(fontWeight: FontWeight.w300),
-                              contentPadding: const EdgeInsets.only(left: 20),
-                              errorStyle: const TextStyle(color: Colors.red),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscureText
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: _obscureText,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide:
+                                      const BorderSide(color: Colors.black),
                                 ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscureText = !_obscureText;
-                                  });
-                                },
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide:
+                                      const BorderSide(color: Colors.black),
+                                ),
+                                hintText: 'Nhập mật khẩu mới',
+                                hintStyle: const TextStyle(
+                                    fontWeight: FontWeight.w300),
+                                contentPadding: const EdgeInsets.only(left: 20),
+                                errorStyle: const TextStyle(color: Colors.red),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureText
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureText = !_obscureText;
+                                    });
+                                  },
+                                ),
                               ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Vui lòng nhập mật khẩu';
+                                }
+                                if (value.length < 8) {
+                                  return 'Mật khẩu phải có ít nhất 8 ký tự';
+                                }
+                                if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                                  return 'Mật khẩu phải chứa ít nhất một chữ hoa (A-Z)';
+                                }
+                                if (!RegExp(r'[a-z]').hasMatch(value)) {
+                                  return 'Mật khẩu phải chứa ít nhất một chữ thường (a-z)';
+                                }
+                                if (!RegExp(r'[0-9]').hasMatch(value)) {
+                                  return 'Mật khẩu phải chứa ít nhất một số (0-9)';
+                                }
+                                return null;
+                              },
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Vui lòng nhập mật khẩu';
-                              }
-                              if (value.length < 8) {
-                                return 'Mật khẩu phải có ít nhất 8 ký tự';
-                              }
-                              if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                                return 'Mật khẩu phải chứa ít nhất một chữ hoa (A-Z)';
-                              }
-                              if (!RegExp(r'[a-z]').hasMatch(value)) {
-                                return 'Mật khẩu phải chứa ít nhất một chữ thường (a-z)';
-                              }
-                              if (!RegExp(r'[0-9]').hasMatch(value)) {
-                                return 'Mật khẩu phải chứa ít nhất một số (0-9)';
-                              }
-
-                              return null;
-                            }),
+                            const SizedBox(height: 20),
+                            TextFormField(
+                              controller: _confirmPasswordController,
+                              obscureText: _obscureConfirmText,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide:
+                                      const BorderSide(color: Colors.black),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide:
+                                      const BorderSide(color: Colors.black),
+                                ),
+                                hintText: 'Nhập lại mật khẩu mới',
+                                hintStyle: const TextStyle(
+                                    fontWeight: FontWeight.w300),
+                                contentPadding: const EdgeInsets.only(left: 20),
+                                errorStyle: const TextStyle(color: Colors.red),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirmText
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmText =
+                                          !_obscureConfirmText;
+                                    });
+                                  },
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Vui lòng nhập lại mật khẩu';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'Mật khẩu không khớp';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 40),
                       SizedBox(
@@ -227,16 +274,22 @@ class _VerifyScreenState extends State<VerifyScreen> {
                                                     'Nếu chưa nhận được vui lòng chờ trong',
                                                     style: TextStyle(
                                                       color: Colors.black,
+                                                      fontSize: 13,
                                                     ),
                                                   ),
                                                   Text(
                                                     ' ${seconds}s ',
                                                     style: TextStyle(
                                                       color: Colors.brown,
+                                                      fontSize: 13,
                                                     ),
                                                   ),
                                                   Text(
                                                     'để gửi lại',
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                      fontSize: 13,
+                                                    ),
                                                   ),
                                                 ],
                                               )

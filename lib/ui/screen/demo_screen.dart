@@ -13,7 +13,7 @@ import 'package:luanvan/blocs/home/home_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/home/all_categories_screen.dart';
+import 'package:luanvan/ui/category/all_categories_screen.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 

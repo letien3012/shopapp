@@ -270,7 +270,11 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                                   : widget.order.status ==
                                                           OrderStatus.delivered
                                                       ? 'Liên hệ người mua'
-                                                      : '',
+                                                      : widget.order.status ==
+                                                              OrderStatus
+                                                                  .reviewed
+                                                          ? 'Đã đánh giá'
+                                                          : '',
                                       style: TextStyle(
                                         color: Colors.white,
                                       ),

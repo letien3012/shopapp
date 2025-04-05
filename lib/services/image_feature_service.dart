@@ -3,7 +3,6 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/image_feature.dart';
-import 'package:luanvan/models/product.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 import 'package:image/image.dart' as img;
@@ -82,34 +81,53 @@ class ImageFeatureService {
           .collection('imageFeatures')
           .add(imageFeature.toJson());
     }
-    print('Uploaded image features');
   }
 
-  Future<List<Product>> searchSimilarImages(String queryImagePath) async {
+  Future<List<ImageFeature>> searchSimilarImages(String queryImagePath) async {
     final queryFeatures = await extractImageFeatures(queryImagePath);
     final allDocs =
         await FirebaseFirestore.instance.collection('imageFeatures').get();
-
     // Tính cosine similarity giữa queryFeatures và các ảnh trong DB
-    final results = allDocs.docs.map((doc) {
-      final dbFeatures = List<double>.from(doc['features']);
-      final similarity = cosineSimilarity(queryFeatures, dbFeatures);
-      print(similarity);
-      return {
-        'productId': doc['productId'],
-        'imageUrl': doc['imageUrl'],
-        'score': similarity,
-      };
-    }).toList();
+    final results = allDocs.docs
+        .map((doc) {
+          final dbFeatures = List<double>.from(doc['features']);
+          final similarity = cosineSimilarity(queryFeatures, dbFeatures);
 
-    // Sắp xếp theo độ tương tự
-    results.sort((a, b) => b['score'].compareTo(a['score']));
-    final productIds = results.map((result) => result['productId']).toList();
-    final products = await firebaseFirestore
-        .collection('products')
-        .where('id', whereIn: productIds)
-        .get();
-    return products.docs.map((doc) => Product.fromFirestore(doc)).toList();
+          if (similarity > 0.7) {
+            return {
+              'productId': doc['productId'],
+              'imageUrl': doc['imageUrl'],
+              'score': similarity,
+              'features': dbFeatures,
+            };
+          }
+        })
+        .where((element) => element != null)
+        .toList();
+
+    if (results.isNotEmpty) {
+      // Sắp xếp kết quả theo score giảm dần
+      results.sort((a, b) => b!['score'].compareTo(a!['score']));
+      // Lọc các productId trùng nhau, giữ lại score cao nhất
+      final Map<String, Map<String, dynamic>> uniqueProducts = {};
+      for (var result in results) {
+        final productId = result!['productId'] as String;
+        final score = result['score'] as double;
+        if (!uniqueProducts.containsKey(productId) ||
+            score > (uniqueProducts[productId]!['score'] as double)) {
+          uniqueProducts[productId] = result;
+        }
+      }
+      final listImageFeature = uniqueProducts.values
+          .map((result) => ImageFeature(
+                productId: result['productId'] as String,
+                imageUrl: result['imageUrl'] as String,
+                features: List<double>.from(result['features']),
+              ))
+          .toList();
+      return listImageFeature;
+    }
+    return [];
   }
 
 // Hàm tính cosine similarity

@@ -1,4 +1,4 @@
-import 'package:luanvan/models/product.dart';
+import 'package:luanvan/models/image_feature.dart';
 
 abstract class SearchImageState {}
 
@@ -7,9 +7,9 @@ class SearchImageInitial extends SearchImageState {}
 class SearchImageLoading extends SearchImageState {}
 
 class SearchImageLoaded extends SearchImageState {
-  final List<Product> products;
+  final List<ImageFeature> imageFeature;
   final bool hasMore;
-  SearchImageLoaded(this.products, {this.hasMore = true});
+  SearchImageLoaded(this.imageFeature, {this.hasMore = true});
 }
 
 class SearchImageError extends SearchImageState {

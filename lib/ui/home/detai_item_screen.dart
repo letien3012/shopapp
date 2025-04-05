@@ -38,6 +38,7 @@ import 'package:luanvan/ui/item/review_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/ui/widgets/add_to_cart.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'package:luanvan/ui/widgets/image_viewer.dart';
 import 'package:video_player/video_player.dart';
 
@@ -66,6 +67,12 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   final TextEditingController _quantityController = TextEditingController();
   int selectedIndexVariant1 = -1;
   String productId = '';
+  Future<void> _showAddToCartDialog() async {
+    showAlertDialog(
+      context,
+      message: 'Thêm vào giỏ hàng thành công',
+    );
+  }
 
   @override
   void initState() {
@@ -1297,6 +1304,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                                 null,
                                 null,
                                 null));
+                            _showAddToCartDialog();
                           } else {
                             showAddToCart(context, product);
                           }

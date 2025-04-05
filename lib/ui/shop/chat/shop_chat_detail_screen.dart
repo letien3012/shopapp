@@ -36,8 +36,8 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _chatRoomId = ModalRoute.of(context)!.settings.arguments as String;
-      context.read<ChatBloc>().add(LoadMessagesEvent(_chatRoomId));
       _userId = _chatRoomId.split('-')[0];
+      context.read<ChatBloc>().add(LoadMessagesEvent(_chatRoomId));
       context.read<UserChatBloc>().add(FetchUserChatEvent(_userId));
     });
 
@@ -86,7 +86,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
             if (authState is AuthLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (authState is AuthAuthenticated) {
+            if (authState is AdminAuthenticated) {
               return SingleChildScrollView(
                 padding: EdgeInsets.only(
                     bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -96,9 +96,9 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                     children: [
                       _buildAppBar(context),
                       Expanded(
-                        child: _buildMessagesArea(context, authState.user.uid),
+                        child: _buildMessagesArea(context, _userId),
                       ),
-                      _buildInputArea(context, authState.user.uid),
+                      _buildInputArea(context, _userId),
                     ],
                   ),
                 ),
@@ -207,6 +207,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
           }
           if (state is MessagesLoaded && state.chatRoomId == _chatRoomId) {
             final messages = state.messages;
+
             if (messages.isEmpty) {
               _shouldReverse = false;
               _hasMeasured = false;

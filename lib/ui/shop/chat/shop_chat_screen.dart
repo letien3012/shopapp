@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
@@ -50,8 +52,8 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
     });
     // Lấy userId từ AuthBloc và gửi sự kiện LoadChatRoomsEvent
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<ShopBloc>().state;
-      if (authState is ShopLoaded) {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AdminAuthenticated) {
         shopId = authState.shop.shopId!;
         context.read<ChatRoomBloc>().add(LoadChatRoomsShopEvent(shopId));
       }
@@ -296,7 +298,7 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
                 (user) => user.id == room.buyerId,
                 orElse: () => listUserState.users.first,
               );
-              final userName = user.name?.toLowerCase() ?? '';
+              final userName = user.userName?.toLowerCase() ?? '';
               return userName.contains(_searchQuery.toLowerCase());
             }).toList();
           }
@@ -369,7 +371,7 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    user.name ?? '',
+                                    user.userName ?? '',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
@@ -392,9 +394,11 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
                               BlocSelector<ChatBloc, ChatState, String>(
                                 selector: (state) {
                                   if (state is MessagesLoaded) {
-                                    return state.messages.last.content;
+                                    return state.messages.isNotEmpty
+                                        ? state.messages.last.content
+                                        : "Chưa có tin nhắn";
                                   }
-                                  return "";
+                                  return "Đang tải...";
                                 },
                                 builder:
                                     (BuildContext context, String lastMessage) {
@@ -451,21 +455,6 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
             const EdgeInsets.only(top: 30, left: 10, right: 10, bottom: 10),
         child: Row(
           children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-              child: Container(
-                height: 40,
-                width: 40,
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.brown,
-                  size: 30,
-                ),
-              ),
-            ),
             const SizedBox(width: 10),
             const SizedBox(
               height: 40,

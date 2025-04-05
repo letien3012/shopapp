@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_event.dart';
 import 'package:luanvan/blocs/list_user/list_user_state.dart';
@@ -76,7 +78,12 @@ class _OrderShopScreenState extends State<OrderShopScreen>
     // Set initial tab after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)!.settings.arguments;
-      initialTab = args as int;
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AdminAuthenticated) {
+        context
+            .read<OrderBloc>()
+            .add(FetchOrdersByShopId(authState.shop.shopId!));
+      }
       if (initialTab != null) {
         _tabController.animateTo(initialTab);
       }
@@ -362,7 +369,8 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                       matchesStatus = order.status == OrderStatus.shipped;
                       break;
                     case 'Đã giao':
-                      matchesStatus = order.status == OrderStatus.delivered;
+                      matchesStatus = order.status == OrderStatus.delivered ||
+                          order.status == OrderStatus.reviewed;
                       break;
                     case 'Trả hàng':
                       matchesStatus = order.status == OrderStatus.returned;
@@ -376,7 +384,7 @@ class _OrderShopScreenState extends State<OrderShopScreen>
 
                   final selectedMethod = _getSelectedShipMethodForTab(status);
                   bool matchesShipMethod = selectedMethod == null ||
-                      order.shipMethod?.name == selectedMethod;
+                      order.shipMethod.name == selectedMethod;
 
                   return matchesStatus && matchesShipMethod;
                 }).toList();
@@ -545,7 +553,8 @@ class _OrderShopScreenState extends State<OrderShopScreen>
               case 'Chờ giao hàng':
                 return order.status == OrderStatus.shipped;
               case 'Đã giao':
-                return order.status == OrderStatus.delivered;
+                return order.status == OrderStatus.delivered ||
+                    order.status == OrderStatus.reviewed;
               case 'Trả hàng':
                 return order.status == OrderStatus.returned;
               case 'Đã hủy':

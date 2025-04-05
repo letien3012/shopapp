@@ -10,6 +10,7 @@ import 'package:luanvan/blocs/searchbyimage/search_image_bloc.dart';
 import 'package:luanvan/blocs/searchbyimage/search_image_event.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
+import 'package:luanvan/ui/search/search_image_result.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
@@ -173,7 +174,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           onPressed: () {
                             showDialog(
                               context: context,
-                              builder: (BuildContext context) {
+                              builder: (BuildContext dialogContext) {
                                 return AlertDialog(
                                   titlePadding:
                                       const EdgeInsets.symmetric(vertical: 10),
@@ -202,26 +203,48 @@ class _SearchScreenState extends State<SearchScreen> {
                                           final pickedImage =
                                               await ImagePicker().pickImage(
                                                   source: ImageSource.camera);
+                                          Navigator.of(dialogContext).pop();
                                           if (pickedImage != null) {
-                                            context.read<SearchImageBloc>().add(
-                                                SearchProductsByImage(
-                                                    pickedImage.path));
+                                            Future.delayed(Duration.zero, () {
+                                              context
+                                                  .read<SearchImageBloc>()
+                                                  .add(SearchProductsByImage(
+                                                      pickedImage.path));
+
+                                              Navigator.of(context,
+                                                      rootNavigator: true)
+                                                  .pushNamed(
+                                                      SearchImageResultScreen
+                                                          .routeName);
+                                            });
                                           }
-                                          Navigator.pop(context);
                                         },
                                       ),
                                       ListTile(
                                         title: const Text('Thư viện hình ảnh'),
                                         onTap: () async {
-                                          final pickedImage =
-                                              await ImagePicker().pickImage(
-                                                  source: ImageSource.gallery);
-                                          if (pickedImage != null) {
-                                            context.read<SearchImageBloc>().add(
-                                                SearchProductsByImage(
-                                                    pickedImage.path));
-                                          }
-                                          Navigator.pop(context);
+                                          Navigator.of(dialogContext).pop();
+
+                                          Future.delayed(Duration.zero,
+                                              () async {
+                                            final pickedImage =
+                                                await ImagePicker().pickImage(
+                                                    source:
+                                                        ImageSource.gallery);
+
+                                            if (pickedImage != null) {
+                                              context
+                                                  .read<SearchImageBloc>()
+                                                  .add(SearchProductsByImage(
+                                                      pickedImage.path));
+
+                                              Navigator.of(context,
+                                                      rootNavigator: true)
+                                                  .pushNamed(
+                                                      SearchImageResultScreen
+                                                          .routeName);
+                                            }
+                                          });
                                         },
                                       ),
                                     ],
@@ -272,6 +295,8 @@ class _SearchScreenState extends State<SearchScreen> {
       body: SingleChildScrollView(
         child: Container(
           color: Colors.white,
+          constraints:
+              BoxConstraints(minHeight: MediaQuery.of(context).size.height),
           child: Column(
             children: [
               // Kết quả tìm kiếm gợi ý
@@ -403,74 +428,74 @@ class _SearchScreenState extends State<SearchScreen> {
                   color: Colors.grey[200],
                 ),
                 // Gợi ý tìm kiếm
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  width: double.infinity,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      const Text(
-                        "Gợi ý tìm kiếm",
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(
-                        height: 15,
-                      ),
-                      GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 10,
-                                  crossAxisSpacing: 10,
-                                  mainAxisExtent: 230),
-                          itemCount: 10,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.of(context)
-                                    .pushNamed(DetaiItemScreen.routeName);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                        color: Colors.grey, width: 0.5)),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Image.network(
-                                        width: double.infinity,
-                                        height: 170,
-                                        fit: BoxFit.contain,
-                                        'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
-                                    Container(
-                                      padding: const EdgeInsets.all(6),
-                                      child: const Column(
-                                        children: [
-                                          Text(
-                                            'Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          })
-                    ],
-                  ),
-                )
+                // Container(
+                //   padding: const EdgeInsets.symmetric(horizontal: 15),
+                //   width: double.infinity,
+                //   child: Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       const SizedBox(
+                //         height: 10,
+                //       ),
+                //       const Text(
+                //         "Gợi ý tìm kiếm",
+                //         style: TextStyle(fontWeight: FontWeight.w700),
+                //       ),
+                //       const SizedBox(
+                //         height: 15,
+                //       ),
+                //       GridView.builder(
+                //           physics: const NeverScrollableScrollPhysics(),
+                //           shrinkWrap: true,
+                //           gridDelegate:
+                //               const SliverGridDelegateWithFixedCrossAxisCount(
+                //                   crossAxisCount: 2,
+                //                   mainAxisSpacing: 10,
+                //                   crossAxisSpacing: 10,
+                //                   mainAxisExtent: 230),
+                //           itemCount: 10,
+                //           itemBuilder: (context, index) {
+                //             return GestureDetector(
+                //               onTap: () {
+                //                 Navigator.of(context)
+                //                     .pushNamed(DetaiItemScreen.routeName);
+                //               },
+                //               child: Container(
+                //                 decoration: BoxDecoration(
+                //                     borderRadius: BorderRadius.circular(10),
+                //                     border: Border.all(
+                //                         color: Colors.grey, width: 0.5)),
+                //                 child: Column(
+                //                   crossAxisAlignment: CrossAxisAlignment.start,
+                //                   children: [
+                //                     Image.network(
+                //                         width: double.infinity,
+                //                         height: 170,
+                //                         fit: BoxFit.contain,
+                //                         'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg'),
+                //                     Container(
+                //                       padding: const EdgeInsets.all(6),
+                //                       child: const Column(
+                //                         children: [
+                //                           Text(
+                //                             'Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003',
+                //                             style: TextStyle(
+                //                               fontSize: 14,
+                //                             ),
+                //                             maxLines: 2,
+                //                             overflow: TextOverflow.ellipsis,
+                //                           ),
+                //                         ],
+                //                       ),
+                //                     ),
+                //                   ],
+                //                 ),
+                //               ),
+                //             );
+                //           })
+                //     ],
+                //   ),
+                // )
               ],
             ],
           ),

@@ -5,7 +5,7 @@ import 'package:luanvan/models/shipping_method.dart';
 
 class Shop {
   final String? shopId;
-  final String userId;
+  final String? userId;
   final String name;
   final List<Address> addresses;
   final String phoneNumber;
@@ -20,7 +20,7 @@ class Shop {
 
   Shop({
     this.shopId,
-    required this.userId,
+    this.userId,
     required this.name,
     required this.addresses,
     required this.phoneNumber,
@@ -94,7 +94,7 @@ class Shop {
     final data = doc.data()!;
     return Shop(
       shopId: doc.id,
-      userId: data['userId'] as String,
+      userId: data['userId'] as String?,
       name: data['name'] as String,
       addresses: (data['addresses'] as List<dynamic>)
           .map((e) => Address.fromMap(e as Map<String, dynamic>))

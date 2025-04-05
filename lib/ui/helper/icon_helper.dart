@@ -39,4 +39,6 @@ class IconHelper {
   static const String userlist = "${imagePath}user_list.svg";
   static const String warehouse = "${imagePath}warehouse.svg";
   static const String banner = "${imagePath}banner.svg";
+  static const String category_outline = "${imagePath}category_outline.svg";
+  static const String category_filled = "${imagePath}category_filled.svg";
 }

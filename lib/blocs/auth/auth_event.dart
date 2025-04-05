@@ -17,6 +17,27 @@ class SendEmailVerificationEvent extends AuthEvent {
   SendEmailVerificationEvent(this.email);
 }
 
+class SendEmailVerificationBeforeUpdateEmailEvent extends AuthEvent {
+  final String email;
+  SendEmailVerificationBeforeUpdateEmailEvent(this.email);
+}
+
+class ChangeEmailEvent extends AuthEvent {
+  final String email;
+  ChangeEmailEvent(this.email);
+}
+
+class VerifyPasswordEvent extends AuthEvent {
+  final String password;
+  VerifyPasswordEvent({required this.password});
+}
+
+class ChangePasswordEvent extends AuthEvent {
+  final String oldPassword;
+  final String newPassword;
+  ChangePasswordEvent({required this.oldPassword, required this.newPassword});
+}
+
 class ForgotPasswordEvent extends AuthEvent {
   final String email;
   ForgotPasswordEvent({required this.email});
@@ -55,7 +76,7 @@ class LoginEvent extends AuthEvent {
 
 class SignOutEvent extends AuthEvent {}
 
-class CheckEmailEvent extends AuthEvent {
-  final String email;
-  CheckEmailEvent(this.email);
-}
+// class CheckEmailEvent extends AuthEvent {
+//   final String email;
+//   CheckEmailEvent(this.email);
+// }

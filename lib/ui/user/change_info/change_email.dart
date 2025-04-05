@@ -1,15 +1,20 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
-import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/auth/auth_event.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_event.dart';
+import 'package:luanvan/blocs/checkPhoneAndEmail/check_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
-import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
-import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class ChangeEmail extends StatefulWidget {
   const ChangeEmail({super.key});
@@ -20,23 +25,23 @@ class ChangeEmail extends StatefulWidget {
 }
 
 class _ChangeEmailState extends State<ChangeEmail> {
-  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
   bool _isChange = false;
   String email = '';
   final _formKey = GlobalKey<FormState>();
   String? _emailEror;
+  bool _isCheckingEmail = false;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         email = ModalRoute.of(context)!.settings.arguments as String;
-        _usernameController.text = email;
       });
     });
-    _usernameController.addListener(() {
+    _emailController.addListener(() {
       setState(() {
-        _isChange = _usernameController.text != email;
+        _isChange = _emailController.text != email;
       });
     });
   }
@@ -47,19 +52,72 @@ class _ChangeEmailState extends State<ChangeEmail> {
     super.dispose();
   }
 
+  Future<void> _showEmailError(String message) async {
+    showAlertDialog(context, message: message, iconPath: IconHelper.warning);
+  }
+
+  Future<bool> _showConfirmDialog() async {
+    return await ConfirmDialog(
+      title: 'Bạn có chắc chắn muốn thay đổi email không?',
+      confirmText: 'Xác nhận',
+      cancelText: 'Hủy',
+    ).show(context);
+  }
+
+  void startEmailVerificationCheck() {
+    Timer.periodic(Duration(seconds: 5), (timer) async {
+      User? user = FirebaseAuth.instance.currentUser;
+      await user?.reload();
+      user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.emailVerified) {
+        print("✅ Email đã xác minh!");
+        context.read<AuthBloc>().add(VerifyEmailEvent());
+        context.read<AuthBloc>().add(ChangeEmailEvent(_emailController.text));
+        Navigator.of(context).pop();
+        Navigator.of(context).pop();
+        timer.cancel(); // Dừng kiểm tra
+      } else {
+        print("⏳ Chờ người dùng xác minh email...");
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: BlocBuilder<UserBloc, UserState>(
-      builder: (context, userState) {
-        if (userState is UserLoading) {
-          return _buildLoading();
-        } else if (userState is UserLoaded) {
-          return _buildContent(context, userState);
-        } else if (userState is UserError) {
-          return _buildError(userState.message);
+    return Scaffold(
+        body: BlocListener<CheckBloc, CheckState>(
+      listener: (context, checkState) async {
+        if (checkState is EmailExists) {
+          setState(() {
+            _isCheckingEmail = false;
+          });
+          _showEmailError('Email này đã được đăng ký');
         }
-        return _buildInitializing();
+        if (checkState is EmailAvailable) {
+          setState(() {
+            _isCheckingEmail = false;
+          });
+          if (await _showConfirmDialog()) {
+            context.read<AuthBloc>().add(
+                SendEmailVerificationBeforeUpdateEmailEvent(
+                    _emailController.text));
+
+            _showEmailError('Kiểm tra email để xác thực thay đổi');
+          }
+        }
       },
+      child: BlocBuilder<UserBloc, UserState>(
+        builder: (context, userState) {
+          if (userState is UserLoading || _isCheckingEmail) {
+            return _buildLoading();
+          } else if (userState is UserLoaded) {
+            return _buildContent(context, userState);
+          } else if (userState is UserError) {
+            return _buildError(userState.message);
+          }
+          return _buildInitializing();
+        },
+      ),
     ));
   }
 
@@ -118,7 +176,7 @@ class _ChangeEmailState extends State<ChangeEmail> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextFormField(
-                      controller: _usernameController,
+                      controller: _emailController,
                       textAlignVertical: TextAlignVertical.center,
                       autofocus: true,
                       maxLength: 100,
@@ -156,6 +214,7 @@ class _ChangeEmailState extends State<ChangeEmail> {
                         fontSize: 13,
                       ),
                       decoration: InputDecoration(
+                        hintText: 'Vui lòng nhập email',
                         counterText: '',
                         errorStyle: TextStyle(
                           height: 0,
@@ -195,9 +254,9 @@ class _ChangeEmailState extends State<ChangeEmail> {
                         ),
                         suffixIcon: GestureDetector(
                           onTap: () {
-                            _usernameController.clear();
+                            _emailController.clear();
                           },
-                          child: _usernameController.text.isNotEmpty
+                          child: _emailController.text.isNotEmpty
                               ? Icon(
                                   Icons.cancel,
                                   size: 20,
@@ -227,13 +286,26 @@ class _ChangeEmailState extends State<ChangeEmail> {
               height: 45,
               margin: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
               child: Material(
-                color: Colors.brown,
+                color: _isChange ? Colors.brown : Colors.grey[300],
                 child: InkWell(
                   splashColor: Colors.transparent.withOpacity(0.2),
                   highlightColor: Colors.transparent.withOpacity(0.1),
                   onTap: () {
-                    if (_isChange && _formKey.currentState!.validate()) {
-                      Navigator.of(context).pop(_usernameController.text);
+                    if (_emailController.text == email) {
+                      _showEmailError(
+                          'Email giống với hiện tại. Vui lòng sử dụng email khác thay thế');
+                      setState(() {
+                        _isCheckingEmail = false;
+                      });
+                    } else {
+                      if (_isChange && _formKey.currentState!.validate()) {
+                        setState(() {
+                          _isCheckingEmail = true;
+                        });
+                        context.read<CheckBloc>().add(
+                              CheckEmailEvent(_emailController.text),
+                            );
+                      }
                     }
                   },
                   child: Center(
@@ -241,9 +313,9 @@ class _ChangeEmailState extends State<ChangeEmail> {
                       "Tiếp theo",
                       style: TextStyle(
                         fontSize: 18,
-                        color: Colors.white,
+                        color: _isChange ? Colors.white : Colors.black,
                         fontWeight:
-                            _isChange ? FontWeight.bold : FontWeight.normal,
+                            _isChange ? FontWeight.w500 : FontWeight.normal,
                       ),
                     ),
                   ),

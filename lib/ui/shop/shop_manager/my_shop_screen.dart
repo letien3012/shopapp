@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_event.dart';
 import 'package:luanvan/blocs/comment/comment_bloc.dart';
 import 'package:luanvan/blocs/comment/comment_event.dart';
 import 'package:luanvan/blocs/comment/comment_state.dart';
@@ -17,6 +19,7 @@ import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/shop_dashboard.dart';
+import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/shop/baner/my_banner_screen.dart';
 import 'package:luanvan/ui/shop/category/my_category_screen.dart';
 import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
@@ -51,6 +54,76 @@ class _MyShopScreenState extends State<MyShopScreen> {
       return '${result.toStringAsFixed(1)}k';
     }
     return number.toString();
+  }
+
+  Future<bool> _showLogoutConfirmationDialog() async {
+    return await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              actionsPadding: EdgeInsets.zero,
+              titlePadding: EdgeInsets.symmetric(horizontal: 10, vertical: 25),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(0),
+              ),
+              title: const Text("Bạn có chắc muốn đăng xuất"),
+              titleTextStyle: TextStyle(fontSize: 14, color: Colors.black),
+              actions: [
+                Row(
+                  children: [
+                    Expanded(
+                        child: Container(
+                      alignment: Alignment.center,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        border: Border(
+                            top: BorderSide(width: 0.3, color: Colors.grey),
+                            right: BorderSide(width: 0.3, color: Colors.grey)),
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop(false);
+                        },
+                        child: Text(
+                          "Hủy",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    )),
+                    Expanded(
+                        child: Container(
+                      alignment: Alignment.center,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(width: 0.3, color: Colors.grey),
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pop(true);
+                        },
+                        child: Text(
+                          "Đăng xuất",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.brown,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    )),
+                  ],
+                )
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   bool isFastEnabled = false;
@@ -106,18 +179,57 @@ class _MyShopScreenState extends State<MyShopScreen> {
     return const Center(child: Text('Đang khởi tạo'));
   }
 
+  Widget _buildLogoutSection() {
+    return Column(
+      children: [
+        Container(
+          height: 70,
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          alignment: Alignment.centerLeft,
+          color: Colors.white,
+          child: Material(
+            color: Colors.brown,
+            child: InkWell(
+              splashColor: Colors.transparent.withOpacity(0.2),
+              highlightColor: Colors.transparent.withOpacity(0.1),
+              onTap: () async {
+                if (await _showLogoutConfirmationDialog()) {
+                  context.read<AuthBloc>().add(SignOutEvent());
+                  Navigator.of(context).pushNamed(SigninScreen.routeName);
+                }
+              },
+              child: Container(
+                height: 50,
+                width: double.infinity,
+                alignment: Alignment.center,
+                child: const Text(
+                  "Đăng xuất",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildShopContent(
       BuildContext context, Shop shop, UserInfoModel user) {
     return Stack(
       children: [
         SingleChildScrollView(
-          physics: NeverScrollableScrollPhysics(),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
             ),
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height + 90,
+              maxHeight: MediaQuery.of(context).size.height + 60,
               minHeight: MediaQuery.of(context).size.height,
               minWidth: MediaQuery.of(context).size.width,
             ),
@@ -667,6 +779,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
                     ),
                   ),
                 ),
+                _buildLogoutSection(),
                 Expanded(
                     child: Container(
                   color: Colors.grey[200],
@@ -691,26 +804,6 @@ class _MyShopScreenState extends State<MyShopScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    //Icon trở về
-                    GestureDetector(
-                      onTap: () async {
-                        Navigator.of(context).pop();
-                      },
-                      child: Container(
-                        height: 40,
-                        width: 40,
-                        alignment: Alignment.center,
-                        margin: EdgeInsets.only(bottom: 5),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.brown,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
                     SizedBox(
                       height: 40,
                       child: Text(

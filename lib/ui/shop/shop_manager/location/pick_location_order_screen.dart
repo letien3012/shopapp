@@ -140,7 +140,7 @@ class _PickLocationOrderScreenState extends State<PickLocationOrderScreen> {
       builder: (BuildContext context, state) {
         if (state is AuthLoading) {
           return _buildLoading();
-        } else if (state is AuthAuthenticated) {
+        } else if (state is AdminAuthenticated) {
           return BlocBuilder<ShopBloc, ShopState>(
             builder: (context, shopState) {
               if (shopState is ShopLoading) {

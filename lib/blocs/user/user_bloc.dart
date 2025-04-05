@@ -14,7 +14,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<UpdateBasicInfoUserEvent>(_onUpdateBasicInfoUser);
     on<UpdateUserNameEvent>(_onUpdateUserName);
     on<UpdateUserEvent>(_onUpdateUser);
-    on<RegistrationSellerEvent>(_onSellerRegistration);
+    // on<RegistrationSellerEvent>(_onSellerRegistration);
   }
   Future<void> _onFetchUser(
       FetchUserEvent event, Emitter<UserState> emit) async {
@@ -63,16 +63,16 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-  Future<void> _onSellerRegistration(
-      RegistrationSellerEvent event, Emitter<UserState> emit) async {
-    emit(UserLoading());
-    try {
-      await _userService.registrationSeller(event.shop);
-      final UserInfoModel user =
-          await _userService.fetchUserInfo(event.shop.userId);
-      emit(UserLoaded(user));
-    } catch (e) {
-      emit(UserError(e.toString()));
-    }
-  }
+  // Future<void> _onSellerRegistration(
+  //     RegistrationSellerEvent event, Emitter<UserState> emit) async {
+  //   emit(UserLoading());
+  //   try {
+  //     await _userService.registrationSeller(event.shop);
+  //     final UserInfoModel user =
+  //         await _userService.fetchUserInfo(event.shop.userId ?? '');
+  //     emit(UserLoaded(user));
+  //   } catch (e) {
+  //     emit(UserError(e.toString()));
+  //   }
+  // }
 }

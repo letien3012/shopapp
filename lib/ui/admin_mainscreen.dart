@@ -1,33 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:icons_plus/icons_plus.dart';
-import 'package:luanvan/models/user_info_model.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/ui/category/all_categories_screen.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
-import 'package:luanvan/ui/screen/demo_screen.dart';
-import 'package:luanvan/ui/user/user_screen.dart';
+import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
+import 'package:luanvan/ui/shop/dashboard/admin_home_screen.dart';
+import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-  static String routeName = 'main_screen';
+class AdminMainScreen extends StatefulWidget {
+  const AdminMainScreen({super.key});
+  static String routeName = 'admin_main_screen';
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<AdminMainScreen> createState() => _AdminMainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _AdminMainScreenState extends State<AdminMainScreen> {
   var _currentIndex = 0;
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AdminAuthenticated) {
+        print(authState.shop.shopId);
+        _currentIndex = 1;
+        context
+            .read<ShopBloc>()
+            .add(FetchShopEventByShopId(authState.shop.shopId!));
+      }
+    });
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
         body: IndexedStack(
           index: _currentIndex,
           children: [
-            const HomeScreen(),
-            AllCategoriesScreen(),
-            const ChatScreen(),
-            UserScreen(),
+            const AdminHomeScreen(),
+            const ShopChatScreen(),
+            MyShopScreen(),
           ],
         ),
         bottomNavigationBar: Container(
@@ -39,11 +56,9 @@ class _MainScreenState extends State<MainScreen> {
             children: [
               _buildNavItem(IconHelper.homeOutlineIcon, "Trang chủ", 0,
                   IconHelper.homeFilledIcon),
-              _buildNavItem(IconHelper.category_outline, "Danh mục", 1,
-                  IconHelper.category_filled),
-              _buildNavItem(IconHelper.chat_round_dots, "Tin nhắn", 2,
+              _buildNavItem(IconHelper.chat_round_dots, "Tin nhắn", 1,
                   IconHelper.chat_round_dots_filled),
-              _buildNavItem(IconHelper.userOutlineIcon, "Tôi", 3,
+              _buildNavItem(IconHelper.userOutlineIcon, "Shop của tôi", 2,
                   IconHelper.userFilledIcon)
             ],
           ),

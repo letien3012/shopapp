@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:luanvan/ui/admin_mainscreen.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
@@ -10,7 +11,7 @@ import 'package:luanvan/ui/checkout/edit_location_screen.dart';
 import 'package:luanvan/ui/checkout/location_screen.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
 import 'package:luanvan/ui/checkout/pick_location_checkout_screen.dart';
-import 'package:luanvan/ui/home/all_categories_screen.dart';
+import 'package:luanvan/ui/category/all_categories_screen.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
 import 'package:luanvan/ui/home/shop_dashboard.dart';
@@ -26,6 +27,7 @@ import 'package:luanvan/ui/order/order_detail_screen.dart';
 import 'package:luanvan/ui/order/order_screen.dart';
 import 'package:luanvan/ui/order/order_success_screen.dart';
 import 'package:luanvan/ui/screen/demo_screen.dart';
+import 'package:luanvan/ui/search/search_image_result.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:luanvan/ui/shop/baner/add_banner_screen.dart';
@@ -39,6 +41,7 @@ import 'package:luanvan/ui/shop/chat/shop_chat_detail_screen.dart';
 import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
 import 'package:luanvan/ui/shop/comment/reply_comment_screen.dart';
 import 'package:luanvan/ui/shop/comment/shop_review_screen.dart';
+import 'package:luanvan/ui/shop/dashboard/admin_home_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_detail_shop_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_prepared_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
@@ -73,6 +76,7 @@ import 'package:luanvan/ui/splashscreen.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
 import 'package:luanvan/ui/user/change_info/change_name.dart';
+import 'package:luanvan/ui/user/change_info/change_password.dart';
 import 'package:luanvan/ui/user/change_info/change_phone.dart';
 import 'package:luanvan/ui/user/change_info/change_username.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
@@ -149,7 +153,7 @@ final Map<String, WidgetBuilder> routes = {
   ShopReviewScreen.routeName: (context) => ShopReviewScreen(),
   ReplyCommentScreen.routeName: (context) => ReplyCommentScreen(),
   DemoScreen.routeName: (context) => DemoScreen(),
-  // AllCategoriesScreen.routeName: (context) => AllCategoriesScreen(),
+  AllCategoriesScreen.routeName: (context) => AllCategoriesScreen(),
   OrderPreparedScreen.routeName: (context) => OrderPreparedScreen(),
   PackingSlipScreen.routeName: (context) => PackingSlipScreen(),
   MyCategoryScreen.routeName: (context) => MyCategoryScreen(),
@@ -160,4 +164,8 @@ final Map<String, WidgetBuilder> routes = {
   EditBannerScreen.routeName: (context) => EditBannerScreen(),
   MyUserScreen.routeName: (context) => MyUserScreen(),
   UserDetailScreen.routeName: (context) => UserDetailScreen(),
+  SearchImageResultScreen.routeName: (context) => SearchImageResultScreen(),
+  AdminMainScreen.routeName: (context) => AdminMainScreen(),
+  AdminHomeScreen.routeName: (context) => AdminHomeScreen(),
+  ChangePassword.routeName: (context) => ChangePassword(),
 };

@@ -22,10 +22,9 @@ class SearchImageBloc extends Bloc<SearchImageEvent, SearchImageState> {
   ) async {
     try {
       emit(SearchImageLoading());
-      final listProducts =
+      final listImageFeature =
           await _imageFeatureService.searchSimilarImages(event.imageUrl);
-      print(listProducts);
-      emit(SearchImageLoaded(listProducts));
+      emit(SearchImageLoaded(listImageFeature));
     } catch (e) {
       emit(SearchImageError(e.toString()));
     }

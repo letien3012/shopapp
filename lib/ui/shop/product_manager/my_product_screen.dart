@@ -28,10 +28,11 @@ class _MyProductScreenState extends State<MyProductScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late Shop shop;
-  final ScrollController _scrollController = ScrollController();
-  final NumberFormat _numberFormat =
-      NumberFormat("#,###", "vi_VN"); // Định dạng số với dấu chấm
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   String shopId = '';
+  final NumberFormat _numberFormat = NumberFormat("#,###", "vi_VN");
+
   @override
   void initState() {
     super.initState();
@@ -42,23 +43,12 @@ class _MyProductScreenState extends State<MyProductScreen>
           .add(FetchListProductEventByShopId(shopId));
     });
 
-    _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
-        _scrollToSelectedTab();
-      }
+    _tabController = TabController(length: 3, vsync: this);
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
     });
-  }
-
-  void _scrollToSelectedTab() {
-    double tabWidth = 120;
-    double position = _tabController.index * tabWidth;
-
-    _scrollController.animateTo(
-      position,
-      duration: Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
   }
 
   void _hideProduct(Product product) {
@@ -74,14 +64,16 @@ class _MyProductScreenState extends State<MyProductScreen>
     );
   }
 
-  void _deleteProduct(String productId, String shopId) {
-    context.read<ProductBloc>().add(DeleteProductByIdEvent(productId, shopId));
+  void _deleteProduct(Product product) {
+    context
+        .read<ProductBloc>()
+        .add(UpdateProductEvent(product.copyWith(isDeleted: true)));
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -126,23 +118,29 @@ class _MyProductScreenState extends State<MyProductScreen>
   }
 
   Widget _buildShopContent(BuildContext context, List<Product> listProduct) {
-    final inStockProducts = listProduct
+    // Filter products based on search query first
+    final filteredProducts = _searchQuery.isEmpty
+        ? listProduct
+        : listProduct
+            .where(
+                (product) => product.name.toLowerCase().contains(_searchQuery))
+            .toList();
+
+    final inStockProducts = filteredProducts
         .where((product) =>
             !product.isViolated &&
             !product.isHidden &&
             product.getMaxOptionStock() > 0)
         .toList();
-    final outOfStockProducts = listProduct
+    final outOfStockProducts = filteredProducts
         .where((product) =>
             !product.isViolated &&
             !product.isHidden &&
             product.getMaxOptionStock() == 0)
         .toList();
-    final hiddenProducts = listProduct
+    final hiddenProducts = filteredProducts
         .where((product) => !product.isViolated && product.isHidden)
         .toList();
-    final violatedProducts =
-        listProduct.where((product) => product.isViolated).toList();
 
     return Stack(
       children: [
@@ -166,25 +164,18 @@ class _MyProductScreenState extends State<MyProductScreen>
                   constraints: BoxConstraints(
                       minWidth: MediaQuery.of(context).size.width),
                   alignment: Alignment.center,
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    scrollDirection: Axis.horizontal,
-                    child: TabBar(
-                      isScrollable: true,
-                      padding: EdgeInsets.zero,
-                      controller: _tabController,
-                      tabAlignment: TabAlignment.start,
-                      labelColor: Colors.black,
-                      unselectedLabelColor: Colors.grey,
-                      indicatorColor: Colors.brown,
-                      labelPadding: EdgeInsets.symmetric(horizontal: 16),
-                      tabs: [
-                        Tab(text: 'Còn hàng (${inStockProducts.length})'),
-                        Tab(text: 'Hết hàng (${outOfStockProducts.length})'),
-                        Tab(text: 'Đã ẩn (${hiddenProducts.length})'),
-                        Tab(text: 'Vi phạm (${violatedProducts.length})'),
-                      ],
-                    ),
+                  child: TabBar(
+                    padding: EdgeInsets.zero,
+                    controller: _tabController,
+                    labelColor: Colors.black,
+                    unselectedLabelColor: Colors.grey,
+                    indicatorColor: Colors.brown,
+                    labelStyle: TextStyle(fontSize: 13),
+                    tabs: [
+                      Tab(text: 'Còn hàng (${inStockProducts.length})'),
+                      Tab(text: 'Hết hàng (${outOfStockProducts.length})'),
+                      Tab(text: 'Đã ẩn (${hiddenProducts.length})'),
+                    ],
                   ),
                 ),
                 Expanded(
@@ -198,9 +189,6 @@ class _MyProductScreenState extends State<MyProductScreen>
                       hiddenProducts.isEmpty
                           ? _buildEmptyTab("Không có sản phẩm đã ẩn")
                           : _buildProductList(hiddenProducts),
-                      violatedProducts.isEmpty
-                          ? _buildEmptyTab("Không có sản phẩm vi phạm")
-                          : _buildProductList(violatedProducts),
                     ],
                   ),
                 ),
@@ -246,21 +234,47 @@ class _MyProductScreenState extends State<MyProductScreen>
                             fontSize: 18, fontWeight: FontWeight.w500),
                       ),
                     ),
+                    const SizedBox(
+                      width: 10,
+                    ),
                     Expanded(
-                      child: SizedBox(
-                        height: 50,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Icon(Icons.search, color: Colors.brown, size: 30),
-                            const SizedBox(width: 10),
-                            SvgPicture.asset(
-                              IconHelper.chatIcon,
-                              color: Colors.brown,
-                              height: 30,
-                              width: 30,
+                      child: Container(
+                        width: 160,
+                        height: 36,
+                        margin: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Center(
+                          child: TextField(
+                            controller: _searchController,
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'Tìm kiếm...',
+                              hintStyle: const TextStyle(fontSize: 13),
+                              prefixIcon: const Icon(Icons.search,
+                                  color: Colors.grey, size: 20),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      icon: const Icon(Icons.clear,
+                                          color: Colors.grey, size: 20),
+                                      onPressed: () {
+                                        setState(() {
+                                          _searchController.clear();
+                                        });
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 0),
                             ),
-                          ],
+                            style: const TextStyle(fontSize: 13),
+                          ),
                         ),
                       ),
                     ),
@@ -417,7 +431,7 @@ class _MyProductScreenState extends State<MyProductScreen>
                 children: [
                   Expanded(
                     child: Text(
-                      "Lượt xem: 0",
+                      "Lượt xem: ${product.viewCount}",
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -428,7 +442,7 @@ class _MyProductScreenState extends State<MyProductScreen>
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        "Thích: 0",
+                        "Thích: ${product.favoriteCount}",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade600,
@@ -455,7 +469,7 @@ class _MyProductScreenState extends State<MyProductScreen>
                       () => _editProduct(product)),
                   const SizedBox(width: 10),
                   _buildActionButton("Xóa", Colors.red[800]!, Colors.white,
-                      () => _deleteProduct(product.id, product.shopId)),
+                      () => _deleteProduct(product)),
                 ],
               ),
             ],

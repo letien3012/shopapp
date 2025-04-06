@@ -26,7 +26,7 @@ class ProductCommentBloc
       emit(ProductCommentLoading());
 
       final List<Product> products =
-          await _productService.fetchProductsByListProductId(event.productIds);
+          await _productService.fetchAllProduct(event.productIds);
 
       emit(ProductCommentListLoaded(products));
     } catch (e) {

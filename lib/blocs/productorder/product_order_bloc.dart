@@ -23,7 +23,7 @@ class ProductOrderBloc extends Bloc<ProductOrderEvent, ProductOrderState> {
       emit(ProductOrderLoading());
 
       final List<Product> products =
-          await _productService.fetchProductsByListProductId(event.productIds);
+          await _productService.fetchAllProduct(event.productIds);
 
       emit(ProductOrderListLoaded(products));
     } catch (e) {

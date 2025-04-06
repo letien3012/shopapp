@@ -130,10 +130,18 @@ class _OrderShopScreenState extends State<OrderShopScreen>
     return confirmed;
   }
 
+  Future<bool> _showConfirmShipSuccesOrderDialog() async {
+    final confirmed = await ConfirmDialog(
+      title: "Bạn có chắc đơn hàng đã giao hàng thành công?",
+      cancelText: "Hủy",
+      confirmText: "Xác nhận",
+    ).show(context);
+    return confirmed;
+  }
+
   void handleOrderConfirmation(String orderId) async {
     final confirmed = await _showConfirmAgreeProductDialog();
     if (confirmed) {
-      // Show loading indicator
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -165,6 +173,77 @@ class _OrderShopScreenState extends State<OrderShopScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Đơn hàng đã được xác nhận thành công'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+            break;
+          } else if (state is OrderError) {
+            // Show error message
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Lỗi xác nhận đơn hàng: ${state.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            break;
+          }
+        }
+      } catch (e) {
+        // Show error message
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi xác nhận đơn hàng: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        // Hide loading indicator
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+      }
+    }
+  }
+
+  void handleShipSuccessConfirmation(String orderId) async {
+    final confirmed = await _showConfirmShipSuccesOrderDialog();
+    if (confirmed) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      try {
+        // Update order status to processing
+        context.read<OrderBloc>().add(
+              UpdateOrderStatus(
+                orderId,
+                OrderStatus.delivered,
+                note: "Đơn hàng đã được giao thành công",
+              ),
+            );
+
+        // Wait for the status update to complete
+        await for (final state in context.read<OrderBloc>().stream) {
+          if (state is OrderDetailLoaded) {
+            // Reload orders after successful update
+            _loadOrders();
+
+            // Show success message
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Đơn hàng đã được giao thành công'),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -265,18 +344,6 @@ class _OrderShopScreenState extends State<OrderShopScreen>
             ),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            icon: SvgPicture.asset(
-              IconHelper.chatIcon,
-              color: Colors.brown,
-              height: 24,
-              width: 24,
-            ),
-            onPressed: () {
-              // Handle chat button press
-            },
-          ),
-          const SizedBox(width: 4),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -456,6 +523,8 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                                   return UserOrderItem(
                                     order: filteredOrders[index],
                                     onConfirmOrder: handleOrderConfirmation,
+                                    onConfirmShipSuccess:
+                                        handleShipSuccessConfirmation,
                                   );
                                 },
                               );
@@ -521,6 +590,8 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                                   return UserOrderItem(
                                     order: filteredOrders[index],
                                     onConfirmOrder: handleOrderConfirmation,
+                                    onConfirmShipSuccess:
+                                        handleShipSuccessConfirmation,
                                   );
                                 });
                           }

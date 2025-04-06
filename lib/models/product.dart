@@ -25,6 +25,8 @@ class Product {
   bool hasWeightVariant;
   double? weight;
   double? price;
+  int viewCount;
+  int favoriteCount;
   List<ShippingMethod> shippingMethods;
   List<OptionInfo> optionInfos;
   DateTime createdAt;
@@ -49,6 +51,8 @@ class Product {
     this.hasWeightVariant = false,
     this.weight,
     this.price,
+    this.viewCount = 0,
+    this.favoriteCount = 0,
     required this.shippingMethods,
     this.optionInfos = const [],
     DateTime? createdAt,
@@ -74,6 +78,8 @@ class Product {
     bool? hasWeightVariant,
     double? weight,
     double? price,
+    int? viewCount,
+    int? favoriteCount,
     List<ShippingMethod>? shippingMethods,
     List<OptionInfo>? optionInfos,
     DateTime? createdAt,
@@ -98,6 +104,8 @@ class Product {
       hasWeightVariant: hasWeightVariant ?? this.hasWeightVariant,
       weight: weight ?? this.weight,
       price: price ?? this.price,
+      viewCount: viewCount ?? this.viewCount,
+      favoriteCount: favoriteCount ?? this.favoriteCount,
       shippingMethods: shippingMethods ?? this.shippingMethods,
       optionInfos: optionInfos ?? this.optionInfos,
       createdAt: createdAt ?? this.createdAt,
@@ -124,6 +132,8 @@ class Product {
       'hasWeightVariant': hasWeightVariant,
       'weight': weight,
       'price': price,
+      'viewCount': viewCount,
+      'favoriteCount': favoriteCount,
       'shippingMethods': shippingMethods.map((x) => x.toMap()).toList(),
       'optionInfos': optionInfos.map((x) => x.toMap()).toList(),
       'createdAt': Timestamp.fromDate(createdAt),
@@ -155,6 +165,8 @@ class Product {
       hasWeightVariant: map['hasWeightVariant'] as bool? ?? false,
       weight: map['weight'] as double?,
       price: map['price'] as double?,
+      viewCount: map['viewCount'] as int? ?? 0,
+      favoriteCount: map['favoriteCount'] as int? ?? 0,
       shippingMethods: List<ShippingMethod>.from(
         (map['shippingMethods'] as List<dynamic>? ?? []).map<ShippingMethod>(
           (x) => ShippingMethod.fromMap(x as Map<String, dynamic>),
@@ -200,6 +212,8 @@ class Product {
       hasWeightVariant: data['hasWeightVariant'] as bool? ?? false,
       weight: data['weight'] as double?,
       price: data['price'] as double?,
+      viewCount: data['viewCount'] as int? ?? 0,
+      favoriteCount: data['favoriteCount'] as int? ?? 0,
       shippingMethods: data['shippingMethods'] != null
           ? List<ShippingMethod>.from(
               (data['shippingMethods'] as List<dynamic>).map<ShippingMethod>(
@@ -227,7 +241,7 @@ class Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isViolated: $isViolated, violationReason: $violationReason, isHidden: $isHidden, isDeleted: $isDeleted, hasVariantImages: $hasVariantImages, hasWeightVariant: $hasWeightVariant, weight: $weight, price: $price, shippingMethods: $shippingMethods, optionInfos: $optionInfos)';
+    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isViolated: $isViolated, violationReason: $violationReason, isHidden: $isHidden, isDeleted: $isDeleted, hasVariantImages: $hasVariantImages, hasWeightVariant: $hasWeightVariant, weight: $weight, price: $price, viewCount: $viewCount, favoriteCount: $favoriteCount, shippingMethods: $shippingMethods, optionInfos: $optionInfos)';
   }
 
   double getMaxOptionPrice() {
@@ -237,9 +251,11 @@ class Product {
   }
 
   double getMinOptionPrice() {
-    if (variants.isEmpty || optionInfos.isEmpty) return price ?? 0.0;
-    List<double> allPrices = optionInfos.map((info) => info.price).toList();
-    return allPrices.reduce((a, b) => a < b ? a : b);
+    if (variants.isNotEmpty && optionInfos.isNotEmpty) {
+      List<double> allPrices = optionInfos.map((info) => info.price).toList();
+      return allPrices.reduce((a, b) => a < b ? a : b);
+    }
+    return price ?? 0.0;
   }
 
   int getMaxOptionStock() {

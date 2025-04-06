@@ -107,7 +107,7 @@ class _SearchImageResultScreenState extends State<SearchImageResultScreen> {
                                 },
                                 imageUrl: imageFeature.imageUrl,
                                 name: product.name,
-                                price: product.price ?? 0,
+                                price: product.getMinOptionPrice(),
                                 rating: product.averageRating,
                                 quantitySold: product.quantitySold,
                               );

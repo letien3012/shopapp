@@ -12,6 +12,22 @@ class UpdateProductEvent extends ProductEvent {
   UpdateProductEvent(this.product);
 }
 
+class UpdateProductViewCountEvent extends ProductEvent {
+  final Product product;
+  UpdateProductViewCountEvent(this.product);
+}
+
+class IncrementProductFavoriteCountEvent extends ProductEvent {
+  final String productId;
+
+  IncrementProductFavoriteCountEvent(this.productId);
+}
+
+class DecrementProductFavoriteCountEvent extends ProductEvent {
+  final String productId;
+  DecrementProductFavoriteCountEvent(this.productId);
+}
+
 class DeleteProductByIdEvent extends ProductEvent {
   String productId;
   String shopId;

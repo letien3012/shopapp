@@ -5,11 +5,9 @@ import 'package:flutter_svg/svg.dart';
 import 'package:luanvan/blocs/banner/banner_bloc.dart';
 import 'package:luanvan/blocs/banner/banner_event.dart';
 import 'package:luanvan/blocs/banner/banner_state.dart';
-
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/baner/edit_banner_screen.dart';
 import 'package:luanvan/ui/shop/baner/add_banner_screen.dart';
-import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
 import 'package:luanvan/models/banner.dart' as model;
 
 class MyBannerScreen extends StatefulWidget {
@@ -125,24 +123,6 @@ class _MyBannerScreenState extends State<MyBannerScreen> {
                         "Quản lý banner",
                         style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    Expanded(
-                      child: SizedBox(
-                        height: 50,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Icon(Icons.search, color: Colors.brown, size: 30),
-                            const SizedBox(width: 10),
-                            SvgPicture.asset(
-                              IconHelper.chatIcon,
-                              color: Colors.brown,
-                              height: 30,
-                              width: 30,
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],

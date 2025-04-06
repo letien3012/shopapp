@@ -6,6 +6,7 @@ import 'package:luanvan/models/option_info.dart';
 
 class ProductService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+
   Future<String> addProduct(Product product) async {
     String productId = '';
     final docRef =
@@ -82,6 +83,7 @@ class ProductService {
         .collection('products')
         .where('shopId', isEqualTo: shopId)
         .get();
+
     if (querySnapshot.docs.isNotEmpty) {
       for (var doc in querySnapshot.docs) {
         listProduct.add(await _fetchProductWithSubcollections(doc));
@@ -89,8 +91,7 @@ class ProductService {
     } else {
       print("Product not found!");
     }
-    print(listProduct.first.variants);
-    return listProduct;
+    return listProduct.where((product) => !product.isDeleted).toList();
   }
 
   Future<Product> fetchProductByProductId(String productId) async {
@@ -106,8 +107,35 @@ class ProductService {
         .where('id', whereIn: productIds)
         .get();
 
-    return Future.wait(
+    final listProduct = await Future.wait(
         response.docs.map((doc) => _fetchProductWithSubcollections(doc)));
+    return listProduct
+        .where((product) =>
+            !product.isDeleted &&
+            !product.isHidden &&
+            product.getMaxOptionStock() > 0)
+        .toList();
+  }
+
+  Future<List<Product>> fetchAllProduct(List<String> productIds) async {
+    final response = await firebaseFirestore
+        .collection('products')
+        .where('id', whereIn: productIds)
+        .get();
+    return await Future.wait(
+        response.docs.map((doc) => _fetchProductWithSubcollections(doc)));
+  }
+
+  Future<List<Product>> fetchProductByCategoryId(String categoryId) async {
+    final response = await firebaseFirestore
+        .collection('products')
+        .where('category', isEqualTo: categoryId)
+        .get();
+    final listProduct = await Future.wait(
+        response.docs.map((doc) => _fetchProductWithSubcollections(doc)));
+    return listProduct
+        .where((product) => !product.isDeleted && !product.isHidden)
+        .toList();
   }
 
   Future<void> deleteProduct(String productId) async {
@@ -292,4 +320,19 @@ class ProductService {
   }
 
   Future<void> fetchProductById(String productId) async {}
+
+  Future<void> updateProductViewCount(Product product) async {
+    final docRef = firebaseFirestore.collection('products').doc(product.id);
+    await docRef.set(product.toMap(), SetOptions(merge: true));
+  }
+
+  Future<void> incrementProductFavoriteCount(String productId) async {
+    final docRef = firebaseFirestore.collection('products').doc(productId);
+    await docRef.update({'favoriteCount': FieldValue.increment(1)});
+  }
+
+  Future<void> decrementProductFavoriteCount(String productId) async {
+    final docRef = firebaseFirestore.collection('products').doc(productId);
+    await docRef.update({'favoriteCount': FieldValue.increment(-1)});
+  }
 }

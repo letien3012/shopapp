@@ -4,9 +4,9 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/category/all_categories_screen.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
+import 'package:luanvan/ui/chatbot/chat_bot_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
-import 'package:luanvan/ui/screen/demo_screen.dart';
 import 'package:luanvan/ui/user/user_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -25,7 +25,7 @@ class _MainScreenState extends State<MainScreen> {
           index: _currentIndex,
           children: [
             const HomeScreen(),
-            AllCategoriesScreen(),
+            ChatbotScreen(),
             const ChatScreen(),
             UserScreen(),
           ],

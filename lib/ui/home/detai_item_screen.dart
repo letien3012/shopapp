@@ -13,6 +13,9 @@ import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/comment/comment_bloc.dart';
 import 'package:luanvan/blocs/comment/comment_event.dart';
 import 'package:luanvan/blocs/comment/comment_state.dart';
+import 'package:luanvan/blocs/favoriteproduct/product_favorite_bloc.dart';
+import 'package:luanvan/blocs/favoriteproduct/product_favorite_event.dart';
+import 'package:luanvan/blocs/favoriteproduct/product_favorite_state.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
@@ -67,6 +70,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   final TextEditingController _quantityController = TextEditingController();
   int selectedIndexVariant1 = -1;
   String productId = '';
+  bool isFavorited = false;
   Future<void> _showAddToCartDialog() async {
     showAlertDialog(
       context,
@@ -79,10 +83,12 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       productId = ModalRoute.of(context)!.settings.arguments as String;
-      print('productId: $productId');
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
+        context
+            .read<ProductFavoriteBloc>()
+            .add(FetchFavoriteProductEvent(authState.user.uid));
         context
             .read<ProductBloc>()
             .add(FetchProductEventByProductId(productId));
@@ -1331,15 +1337,51 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
               ),
             ),
             Expanded(
-              child: GestureDetector(
-                onTap: () {},
-                child: Container(
-                  alignment: Alignment.center,
-                  child: const Text(
-                    "Mua ngay ",
-                    style: TextStyle(fontSize: 14, color: Colors.white),
-                  ),
-                ),
+              child: BlocConsumer<ProductFavoriteBloc, ProductFavoriteState>(
+                listener: (context, state) {
+                  if (state is ProductFavoriteAdded ||
+                      state is ProductFavoriteRemoved) {
+                    context
+                        .read<ProductFavoriteBloc>()
+                        .add(FetchFavoriteProductEvent(userId));
+                  }
+                },
+                builder: (context, state) {
+                  if (state is ProductFavoriteLoaded) {
+                    isFavorited = state.listProduct
+                        .any((element) => element.id == product.id);
+                  }
+                  return GestureDetector(
+                    onTap: () {
+                      if (isFavorited) {
+                        context.read<ProductFavoriteBloc>().add(
+                              RemoveFavoriteProductEvent(product.id, userId),
+                            );
+                        context.read<ProductBloc>().add(
+                              DecrementProductFavoriteCountEvent(product.id),
+                            );
+                      } else {
+                        context.read<ProductFavoriteBloc>().add(
+                              AddFavoriteProductEvent(product.id, userId),
+                            );
+                        context.read<ProductBloc>().add(
+                              IncrementProductFavoriteCountEvent(product.id),
+                            );
+                      }
+                    },
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: SvgPicture.asset(
+                        isFavorited
+                            ? IconHelper.heart_filled
+                            : IconHelper.heart,
+                        color: Colors.white,
+                        height: 30,
+                        width: 30,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -1482,6 +1524,9 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                     if (state is ProductLoading) {
                       return _buildSkeletonImageSlider(); // Skeleton loading
                     } else if (state is ProductLoaded) {
+                      context.read<ProductBloc>().add(
+                          UpdateProductViewCountEvent(state.product.copyWith(
+                              viewCount: state.product.viewCount + 1)));
                       return _buildImageSlider(state.product);
                     }
                     return _buildSkeletonImageSlider(); // Mặc định hiển thị skeleton

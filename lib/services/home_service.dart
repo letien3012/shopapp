@@ -12,20 +12,10 @@ class HomeService {
   Future<List<Product>> getAllProducts() async {
     try {
       final List<Product> listProduct = [];
-      // Lấy tất cả shop đang mở
-      final QuerySnapshot shopSnapshot = await _firestore
-          .collection('shops')
-          .where('isClose', isEqualTo: false)
-          .get();
-
-      final List<String> activeShopIds =
-          shopSnapshot.docs.map((doc) => doc.id).toList();
-
-      // Lấy tất cả sản phẩm từ các shop đang mở và chưa bị xóa
       final productSnapshot = await _firestore
           .collection('products')
-          .where('shopId', whereIn: activeShopIds)
           .where('isDeleted', isEqualTo: false)
+          .where('isHidden', isEqualTo: false)
           .get();
 
       if (productSnapshot.docs.isNotEmpty) {
@@ -35,7 +25,13 @@ class HomeService {
       } else {
         print("Product not found!");
       }
-      return listProduct;
+      listProduct.sort((a, b) => b.quantitySold.compareTo(a.quantitySold));
+      return listProduct
+          .where((product) =>
+              !product.isDeleted &&
+              !product.isHidden &&
+              product.getMaxOptionStock() > 0)
+          .toList();
     } catch (e) {
       throw Exception('Failed to fetch products: $e');
     }

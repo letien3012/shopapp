@@ -3,11 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_event.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
+import 'package:luanvan/blocs/user/user_bloc.dart';
+import 'package:luanvan/blocs/user/user_event.dart';
+import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/ui/admin_mainscreen.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/login/forgotpw_screen.dart';
 import 'package:luanvan/ui/login/singup_screen.dart';
 import 'package:luanvan/ui/mainscreen.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -71,17 +75,34 @@ class _SigninScreenState extends State<SigninScreen> {
     }
   }
 
+  Future<void> _showDialog(String message) async {
+    showAlertDialog(
+      context,
+      message: message,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (BuildContext context, Object? state) {
+        listener: (BuildContext context, Object? state) async {
           if (state is AuthAuthenticated) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => MainScreen(),
-              ),
-            );
+            context.read<UserBloc>().add(FetchUserEvent(state.user.uid));
+            await context
+                .read<UserBloc>()
+                .stream
+                .firstWhere((element) => element is UserLoaded);
+            final user = (context.read<UserBloc>().state as UserLoaded).user;
+            if (user.isLock) {
+              _showDialog("Tài khoản của bạn đã bị khóa ");
+            } else {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => MainScreen(),
+                ),
+              );
+            }
           }
           if (state is AdminAuthenticated) {
             Navigator.of(context).pushReplacement(

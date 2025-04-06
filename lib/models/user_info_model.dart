@@ -17,6 +17,7 @@ class UserInfoModel {
   bool isLock;
   List<Address> addresses;
   Timestamp createdAt;
+  List<String> favoriteProducts;
 
   UserInfoModel({
     required this.id,
@@ -31,8 +32,10 @@ class UserInfoModel {
     this.isLock = false,
     List<Address>? addresses,
     Timestamp? createdAt,
+    List<String>? favoriteProducts,
   })  : addresses = addresses ?? [],
-        createdAt = createdAt ?? Timestamp.now();
+        createdAt = createdAt ?? Timestamp.now(),
+        favoriteProducts = favoriteProducts ?? [];
 
   UserInfoModel copyWith({
     String? id,
@@ -47,6 +50,7 @@ class UserInfoModel {
     bool? isLock,
     List<Address>? addresses,
     Timestamp? createdAt,
+    List<String>? favoriteProducts,
   }) {
     return UserInfoModel(
       id: id ?? this.id,
@@ -61,6 +65,7 @@ class UserInfoModel {
       isLock: isLock ?? this.isLock,
       addresses: addresses ?? this.addresses,
       createdAt: createdAt ?? this.createdAt,
+      favoriteProducts: favoriteProducts ?? this.favoriteProducts,
     );
   }
 
@@ -78,6 +83,7 @@ class UserInfoModel {
       'isLock': isLock,
       'addresses': addresses.map((address) => address.toMap()).toList(),
       'createdAt': createdAt,
+      'favoriteProducts': favoriteProducts,
     };
   }
 
@@ -103,6 +109,9 @@ class UserInfoModel {
               (map['addresses'] as List).map((x) => Address.fromMap(x)))
           : [],
       createdAt: map['createdAt'] as Timestamp? ?? Timestamp.now(),
+      favoriteProducts: map['favoriteProducts'] != null
+          ? List<String>.from(map['favoriteProducts'])
+          : [],
     );
   }
 
@@ -128,6 +137,9 @@ class UserInfoModel {
               (data['addresses'] as List).map((x) => Address.fromMap(x)))
           : [],
       createdAt: data['createdAt'] as Timestamp? ?? Timestamp.now(),
+      favoriteProducts: data['favoriteProducts'] != null
+          ? List<String>.from(data['favoriteProducts'])
+          : [],
     );
   }
 
@@ -138,6 +150,6 @@ class UserInfoModel {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role, isLock: $isLock, addresses: $addresses, createdAt: $createdAt)';
+    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role, isLock: $isLock, addresses: $addresses, createdAt: $createdAt, favoriteProducts: $favoriteProducts)';
   }
 }

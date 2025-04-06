@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:luanvan/ui/admin_mainscreen.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
+import 'package:luanvan/ui/category/search_in_category_screen.dart';
 import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
+import 'package:luanvan/ui/chatbot/chat_bot_screen.dart';
 import 'package:luanvan/ui/checkout/add_addressline_screen.dart.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/check_out_screen.dart';
@@ -80,7 +82,10 @@ import 'package:luanvan/ui/user/change_info/change_password.dart';
 import 'package:luanvan/ui/user/change_info/change_phone.dart';
 import 'package:luanvan/ui/user/change_info/change_username.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
+import 'package:luanvan/ui/user/favorite_product_screen.dart';
 import 'package:luanvan/ui/user/user_screen.dart';
+
+import 'ui/category/product_in_category_screen.dart';
 
 final Map<String, WidgetBuilder> routes = {
   SplashScreen.routeName: (context) => const SplashScreen(),
@@ -168,4 +173,8 @@ final Map<String, WidgetBuilder> routes = {
   AdminMainScreen.routeName: (context) => AdminMainScreen(),
   AdminHomeScreen.routeName: (context) => AdminHomeScreen(),
   ChangePassword.routeName: (context) => ChangePassword(),
+  ProductInCategoryScreen.routeName: (context) => ProductInCategoryScreen(),
+  SearchInCategoryScreen.routeName: (context) => SearchInCategoryScreen(),
+  ChatbotScreen.routeName: (context) => ChatbotScreen(),
+  FavoriteProductScreen.routeName: (context) => FavoriteProductScreen(),
 };

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:luanvan/blocs/alluser/all_user_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/banner/banner_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
@@ -10,10 +11,12 @@ import 'package:luanvan/blocs/category/category_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
 import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
+import 'package:luanvan/blocs/favoriteproduct/product_favorite_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/list_shop_search/list_shop_search_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/listproductbycategory/listproductbycategory_bloc.dart';
 import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_bloc.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
@@ -41,7 +44,6 @@ import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/search_service.dart';
 import 'package:luanvan/services/shop_service.dart';
 import 'package:luanvan/services/user_service.dart';
-import 'package:luanvan/services/api_service.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,7 +51,7 @@ import 'dart:ui' as ui;
 import 'blocs/comment/comment_bloc.dart';
 import 'package:luanvan/blocs/home/home_bloc.dart';
 import 'package:luanvan/services/home_service.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,6 +87,7 @@ void main() async {
   ));
 
   await SharedPreferences.getInstance();
+  await dotenv.load();
   runApp(const ShopApp());
 }
 
@@ -176,6 +179,16 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<ProductSearchImageBloc>(
           create: (context) => ProductSearchImageBloc(ProductService()),
+        ),
+        BlocProvider<AllUserBloc>(
+          create: (context) => AllUserBloc(UserService()),
+        ),
+        BlocProvider<ListProductByCategoryBloc>(
+          create: (context) => ListProductByCategoryBloc(ProductService()),
+        ),
+        BlocProvider<ProductFavoriteBloc>(
+          create: (context) =>
+              ProductFavoriteBloc(UserService(), ProductService()),
         ),
       ],
       child: MaterialApp(

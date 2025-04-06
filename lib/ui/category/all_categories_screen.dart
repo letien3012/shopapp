@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/category/category_bloc.dart';
 import 'package:luanvan/blocs/category/category_event.dart';
 import 'package:luanvan/blocs/category/category_state.dart';
+import 'package:luanvan/ui/category/product_in_category_screen.dart';
 
 class AllCategoriesScreen extends StatelessWidget {
   static const routeName = 'all-categories';
@@ -48,6 +49,7 @@ class AllCategoriesScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 itemBuilder: (context, index) {
                   return CategoryItem(
+                    id: allcategory[index].id,
                     imageUrl: allcategory[index].imageUrl ?? '',
                     label: allcategory[index].name,
                   );
@@ -65,45 +67,55 @@ class AllCategoriesScreen extends StatelessWidget {
 class CategoryItem extends StatelessWidget {
   final String imageUrl;
   final String label;
+  final String id;
 
   const CategoryItem({
     super.key,
     required this.imageUrl,
     required this.label,
+    required this.id,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(30),
+    return GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(context, ProductInCategoryScreen.routeName,
+              arguments: {
+                'id': id,
+                'label': label,
+              });
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Image.network(
+                  imageUrl,
+                  height: 30,
+                  width: 30,
+                )),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 42,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            child: Image.network(
-              imageUrl,
-              height: 30,
-              width: 30,
-            )),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 42,
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
+          ],
+        ));
   }
 }

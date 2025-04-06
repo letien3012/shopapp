@@ -28,6 +28,7 @@ import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
 import 'package:luanvan/ui/shop/sign_shop/start_shop.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_infomation_user.dart';
+import 'package:luanvan/ui/user/favorite_product_screen.dart';
 
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
@@ -713,9 +714,10 @@ class _UserScreenState extends State<UserScreen> {
           LocationScreen.routeName,
           context,
         ),
-        _buildSettingItem("Tiêu chuẩn cộng đồng", null, context),
-        _buildSettingItem("Sản phẩm đã thích", null, context),
-        _buildSettingItem("Yêu cầu xóa tài khoản", null, context),
+        // _buildSettingItem("Tiêu chuẩn cộng đồng", null, context),
+        _buildSettingItem(
+            "Sản phẩm đã thích", FavoriteProductScreen.routeName, context),
+        // _buildSettingItem("Yêu cầu xóa tài khoản", null, context),
       ],
     );
   }

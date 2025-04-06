@@ -5,7 +5,6 @@ import 'package:luanvan/blocs/comment/comment_state.dart';
 import 'package:luanvan/blocs/productcomment/product_comment_bloc.dart';
 import 'package:luanvan/blocs/productcomment/product_comment_event.dart';
 import 'package:luanvan/blocs/productcomment/product_comment_state.dart';
-import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/blocs/usercomment/list_user_comment_bloc.dart';
 import 'package:luanvan/blocs/usercomment/list_user_comment_event.dart';
 import 'package:luanvan/blocs/usercomment/list_user_comment_state.dart';

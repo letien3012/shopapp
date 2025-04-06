@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 
@@ -91,5 +92,33 @@ class UserService {
         .catchError((error) {
       print("Lỗi khi cập nhật: $error");
     });
+  }
+
+  Future<void> addFavoriteProduct(String productId, String userId) async {
+    await firebaseFirestore.collection('users').doc(userId).update({
+      'favoriteProducts': FieldValue.arrayUnion([productId])
+    });
+  }
+
+  Future<void> removeFavoriteProduct(String productId, String userId) async {
+    await firebaseFirestore.collection('users').doc(userId).update({
+      'favoriteProducts': FieldValue.arrayRemove([productId])
+    });
+  }
+
+  Future<List<String>> fetchFavoriteProduct(String userId) async {
+    final querySnapshot =
+        await firebaseFirestore.collection('users').doc(userId).get();
+    if (!querySnapshot.exists) {
+      return []; // Trả về danh sách rỗng nếu user không tồn tại
+    }
+
+    final data = querySnapshot.data();
+    if (data == null || data['favoriteProducts'] == null) {
+      return [];
+    }
+
+    final List<dynamic> favorites = data['favoriteProducts'];
+    return favorites.map((item) => item.toString()).toList();
   }
 }

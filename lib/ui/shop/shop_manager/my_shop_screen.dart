@@ -106,6 +106,9 @@ class _MyShopScreenState extends State<MyShopScreen> {
                       child: GestureDetector(
                         onTap: () {
                           Navigator.of(context).pop(true);
+                          Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (context) => const SigninScreen()));
                         },
                         child: Text(
                           "Đăng xuất",
@@ -830,23 +833,6 @@ class _MyShopScreenState extends State<MyShopScreen> {
                                 HeroIcons.cog_8_tooth,
                                 color: Colors.brown,
                                 size: 30,
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 10,
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  ShopChatScreen.routeName,
-                                );
-                              },
-                              child: SvgPicture.asset(
-                                IconHelper.chatIcon,
-                                color: Colors.brown,
-                                height: 30,
-                                width: 30,
                               ),
                             ),
                           ],

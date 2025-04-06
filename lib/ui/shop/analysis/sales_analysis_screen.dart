@@ -208,18 +208,20 @@ class _SalesAnalysisScreenState extends State<SalesAnalysisScreen> {
                 .add(FetchMultipleProductsOrderEvent(listProductId));
             return BlocBuilder<ProductOrderBloc, ProductOrderState>(
               builder: (context, productState) {
-                print(productState);
                 if (productState is ProductOrderListLoaded) {
-                  return SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildFilters(),
-                        _buildTimeInfo(),
-                        _buildImportantMetrics(),
-                        _buildOrderChart(),
-                        _buildProductRanking(),
-                      ],
+                  return Container(
+                    color: Colors.white,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildFilters(),
+                          _buildTimeInfo(),
+                          _buildImportantMetrics(),
+                          _buildOrderChart(),
+                          _buildProductRanking(),
+                        ],
+                      ),
                     ),
                   );
                 }

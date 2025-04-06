@@ -5,8 +5,13 @@ import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_state.dart';
+import 'package:luanvan/blocs/order/order_bloc.dart';
+import 'package:luanvan/blocs/order/order_event.dart';
+import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
+import 'package:luanvan/blocs/shop/shop_bloc.dart';
+import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:luanvan/ui/order/product_order_widget.dart';
 import 'package:luanvan/ui/shop/chat/shop_chat_detail_screen.dart';
@@ -16,9 +21,11 @@ import 'package:luanvan/ui/shop/shop_manager/location/pick_location_order_screen
 class UserOrderItem extends StatefulWidget {
   Order order;
   final Function(String) onConfirmOrder;
+  final Function(String) onConfirmShipSuccess;
   UserOrderItem({
     required this.order,
     required this.onConfirmOrder,
+    required this.onConfirmShipSuccess,
   });
 
   @override
@@ -228,7 +235,7 @@ class _UserOrderItemState extends State<UserOrderItem> {
                               child: Material(
                                 color: Colors.brown,
                                 child: InkWell(
-                                  onTap: () {
+                                  onTap: () async {
                                     if (widget.order.status ==
                                         OrderStatus.pending) {
                                       widget.onConfirmOrder(widget.order.id);
@@ -252,6 +259,10 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                         ShopChatDetailScreen.routeName,
                                         arguments: tempChatRoomId,
                                       );
+                                    } else if (widget.order.status ==
+                                        OrderStatus.shipped) {
+                                      widget.onConfirmShipSuccess(
+                                          widget.order.id);
                                     }
                                   },
                                   child: Container(
@@ -275,6 +286,7 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                                                   .reviewed
                                                           ? 'Đã đánh giá'
                                                           : '',
+                                      textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: Colors.white,
                                       ),

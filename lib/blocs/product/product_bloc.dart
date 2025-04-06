@@ -13,6 +13,9 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<FetchProductEventByProductId>(_onFetchProductByProductId);
     on<AddProductEvent>(_onAddProduct);
     on<DeleteProductByIdEvent>(_onDeleteProduct);
+    on<UpdateProductViewCountEvent>(_onUpdateProductViewCount);
+    on<IncrementProductFavoriteCountEvent>(_onIncrementProductFavoriteCount);
+    on<DecrementProductFavoriteCountEvent>(_onDecrementProductFavoriteCount);
     on<UpdateProductEvent>(_onUpdateProduct);
     on<ResetProductEvent>(_onResetProduct);
   }
@@ -69,6 +72,35 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       _listProductBloc.add(FetchListProductEventByShopId(event.product.shopId));
       await Future.delayed(Duration(milliseconds: 100));
       emit(ProductLoaded(event.product));
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  void _onUpdateProductViewCount(
+      UpdateProductViewCountEvent event, Emitter<ProductState> emit) async {
+    try {
+      await _productService.updateProductViewCount(event.product);
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  void _onIncrementProductFavoriteCount(
+      IncrementProductFavoriteCountEvent event,
+      Emitter<ProductState> emit) async {
+    try {
+      await _productService.incrementProductFavoriteCount(event.productId);
+    } catch (e) {
+      emit(ProductError(e.toString()));
+    }
+  }
+
+  void _onDecrementProductFavoriteCount(
+      DecrementProductFavoriteCountEvent event,
+      Emitter<ProductState> emit) async {
+    try {
+      await _productService.decrementProductFavoriteCount(event.productId);
     } catch (e) {
       emit(ProductError(e.toString()));
     }

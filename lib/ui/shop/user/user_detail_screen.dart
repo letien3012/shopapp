@@ -17,18 +17,17 @@ class UserDetailScreen extends StatefulWidget {
 }
 
 class _UserDetailScreenState extends State<UserDetailScreen> {
-  Gender _selectedGender = Gender.unknown;
-  String _selectedDate = '';
   bool _showPhone = false; // Thêm biến để kiểm soát hiển thị số điện thoại
   bool _showEmail = false; // Thêm biến để kiểm soát hiển thị email
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _genderController = TextEditingController();
-  TextEditingController _dateController = TextEditingController();
-  TextEditingController _avatarUrlController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -41,23 +40,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           if (userState is UserLoading) {
             return _buildLoading();
           } else if (userState is UserLoaded) {
-            userState.user.gender != Gender.unknown
-                ? _selectedGender = userState.user.gender!
-                : null;
-
-            userState.user.date != null
-                ? _selectedDate = userState.user.date!
-                : null;
-            _avatarUrlController.text.isEmpty
-                ? _avatarUrlController.text = userState.user.avataUrl!
-                : null;
-
-            (_nameController.text.isEmpty && userState.user.name!.isNotEmpty)
-                ? _nameController.text = userState.user.name!
-                : null;
-
-            _dateController.text = _selectedDate;
-            _genderController.text = _selectedGender.name;
             return _buildContent(context, userState);
           } else if (userState is UserError) {
             return _buildError(userState.message);
@@ -106,7 +88,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           children: [
             _buildAvatarSection(userState),
             _buildSpacer(2),
-            _buildName("Tên", _nameController.text, userState.user),
+            _buildName("Tên", userState.user.name ?? "", userState.user),
             _buildGenderItem(context, "Giới tính", userState.user),
             _buildSpacer(10),
             _buildDateItem(context, "Ngày sinh", userState.user),
@@ -131,12 +113,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       alignment: Alignment.center,
       color: Colors.brown[500],
       child: ClipOval(
-        child: _avatarUrlController.text.startsWith('http')
+        child: userState.user.avataUrl!.startsWith('http')
             ? Image.network(
                 width: 70,
                 height: 70,
                 fit: BoxFit.cover,
-                _avatarUrlController.text,
+                userState.user.avataUrl!,
                 errorBuilder: (context, error, stackTrace) =>
                     const Icon(Icons.person, size: 70),
               )
@@ -144,7 +126,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 width: 70,
                 height: 70,
                 fit: BoxFit.cover,
-                File(_avatarUrlController.text),
+                File(userState.user.avataUrl!),
                 errorBuilder: (context, error, stackTrace) =>
                     const Icon(Icons.person, size: 70),
               ),
@@ -214,16 +196,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             Row(
               children: [
                 Text(
-                  _selectedGender != Gender.unknown
-                      ? _selectedGender == Gender.male
+                  user.gender != Gender.unknown
+                      ? user.gender == Gender.male
                           ? "Nam"
-                          : _selectedGender == Gender.female
+                          : user.gender == Gender.female
                               ? "Nữ"
                               : "Khác"
                       : "Chưa cập nhật",
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    color: _selectedGender != Gender.unknown
+                    color: user.gender != Gender.unknown
                         ? Colors.black
                         : Colors.grey,
                   ),
@@ -257,11 +239,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             ),
             Row(
               children: [
-                Text(_selectedDate != '' ? _selectedDate : "Chưa cập nhật",
+                Text(user.date != null ? user.date! : "Chưa cập nhật",
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
-                      color:
-                          _selectedDate.isNotEmpty ? Colors.black : Colors.grey,
+                      color: user.date != null ? Colors.black : Colors.grey,
                     )),
                 const SizedBox(width: 5),
               ],

@@ -2,26 +2,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:luanvan/blocs/alluser/all_user_bloc.dart';
+import 'package:luanvan/blocs/alluser/all_user_event.dart';
+import 'package:luanvan/blocs/alluser/all_user_state.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_event.dart';
 import 'package:luanvan/blocs/list_user/list_user_state.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
-import 'package:luanvan/blocs/product/product_bloc.dart';
-import 'package:luanvan/blocs/product/product_event.dart';
-import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_event.dart';
-import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
-import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/ui/shop/user/user_detail_screen.dart';
+import 'dart:async';
 
 class MyUserScreen extends StatefulWidget {
   const MyUserScreen({super.key});
@@ -36,21 +32,27 @@ class _MyUserScreenState extends State<MyUserScreen>
   late TabController _tabController;
   late Shop shop;
   final ScrollController _scrollController = ScrollController();
-  final NumberFormat _numberFormat =
-      NumberFormat("#,###", "vi_VN"); // Định dạng số với dấu chấm
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   String shopId = '';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ListUserBloc>().add(FetchAllUserEvent());
+      context.read<AllUserBloc>().add(FetchAllUserEvent());
     });
-
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         _scrollToSelectedTab();
       }
+    });
+
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
     });
   }
 
@@ -67,7 +69,7 @@ class _MyUserScreenState extends State<MyUserScreen>
 
   void _hideUser(UserInfoModel user) {
     context.read<UserBloc>().add(UpdateUserEvent(user));
-    context.read<ListUserBloc>().add(FetchAllUserEvent());
+    context.read<AllUserBloc>().add(FetchAllUserEvent());
   }
 
   void _editUser(UserInfoModel user) {
@@ -83,19 +85,20 @@ class _MyUserScreenState extends State<MyUserScreen>
   void dispose() {
     _scrollController.dispose();
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<ListUserBloc, ListUserState>(
+      body: BlocBuilder<AllUserBloc, AllUserState>(
         builder: (context, userState) {
-          if (userState is ListUserLoading) {
+          if (userState is AllUserLoading) {
             return _buildLoading();
           } else if (userState is AllUserLoaded) {
             return _buildUserContent(context, userState.users);
-          } else if (userState is ListUserError) {
+          } else if (userState is AllUserError) {
             return _buildError(userState.message);
           }
           return _buildInitializing();
@@ -117,8 +120,15 @@ class _MyUserScreenState extends State<MyUserScreen>
   }
 
   Widget _buildUserContent(BuildContext context, List<UserInfoModel> listUser) {
-    final lockedUsers = listUser.where((user) => user.isLock).toList();
-    final activeUsers = listUser.where((user) => !user.isLock).toList();
+    // Filter users based on search query
+    final filteredUsers = listUser
+        .where((user) =>
+            (user.userName?.toLowerCase() ?? '').contains(_searchQuery) ||
+            (user.name?.toLowerCase() ?? '').contains(_searchQuery))
+        .toList();
+
+    final lockedUsers = filteredUsers.where((user) => user.isLock).toList();
+    final activeUsers = filteredUsers.where((user) => !user.isLock).toList();
 
     return Stack(
       children: [
@@ -212,26 +222,52 @@ class _MyUserScreenState extends State<MyUserScreen>
                     SizedBox(
                       height: 40,
                       child: Text(
-                        "Sản phẩm của tôi",
+                        "Tất cả người dùng",
                         style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.w500),
                       ),
                     ),
+                    const SizedBox(
+                      width: 10,
+                    ),
                     Expanded(
-                      child: SizedBox(
-                        height: 50,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Icon(Icons.search, color: Colors.brown, size: 30),
-                            const SizedBox(width: 10),
-                            SvgPicture.asset(
-                              IconHelper.chatIcon,
-                              color: Colors.brown,
-                              height: 30,
-                              width: 30,
+                      child: Container(
+                        width: 160,
+                        height: 36,
+                        margin: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Center(
+                          child: TextField(
+                            controller: _searchController,
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'Tìm kiếm...',
+                              hintStyle: const TextStyle(fontSize: 13),
+                              prefixIcon: const Icon(Icons.search,
+                                  color: Colors.grey, size: 20),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      icon: const Icon(Icons.clear,
+                                          color: Colors.grey, size: 20),
+                                      onPressed: () {
+                                        setState(() {
+                                          _searchController.clear();
+                                        });
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 0),
                             ),
-                          ],
+                            style: const TextStyle(fontSize: 13),
+                          ),
                         ),
                       ),
                     ),

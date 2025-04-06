@@ -28,11 +28,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // final List<String> imgList = [
-  //   'https://media.licdn.com/dms/image/v2/C4E12AQGlzsYoKqxHkA/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1634130038864?e=2147483647&v=beta&t=O4Vi4cpdXFDp_Uh8Bcsq1x9tQ9TKGtwrToUFLh9_nyI',
-  //   'https://images.vexels.com/content/194698/preview/shop-online-slider-template-4f2c60.png',
-  //   'https://images.vexels.com/content/194700/preview/buy-online-slider-template-4261dd.png'
-  // ];
   int bannerCurrentPage = 0;
   final CarouselSliderController _bannercontroller = CarouselSliderController();
   @override

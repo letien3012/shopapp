@@ -2,15 +2,14 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/blocs/alluser/all_user_bloc.dart';
+import 'package:luanvan/blocs/alluser/all_user_event.dart';
+import 'package:luanvan/blocs/alluser/all_user_state.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
-import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
-import 'package:luanvan/blocs/list_user/list_user_event.dart';
-import 'package:luanvan/blocs/list_user/list_user_state.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
-import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/order.dart';
 
 class AdminHomeScreen extends StatefulWidget {
@@ -50,7 +49,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AdminAuthenticated) {
-        context.read<ListUserBloc>().add(FetchAllUserEvent());
+        context.read<AllUserBloc>().add(FetchAllUserEvent());
         context
             .read<OrderBloc>()
             .add(FetchOrdersByShopId(authState.shop.shopId!));
@@ -189,7 +188,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         builder: (BuildContext context, AuthState authState) {
           if (authState is AuthLoading) return _buildLoading();
           if (authState is AdminAuthenticated) {
-            return BlocBuilder<ListUserBloc, ListUserState>(
+            return BlocBuilder<AllUserBloc, AllUserState>(
               builder: (context, userState) {
                 if (userState is AllUserLoaded) {
                   return BlocBuilder<OrderBloc, OrderState>(
@@ -198,14 +197,20 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     },
                   );
                 }
-                if (userState is ListUserError) {
+                if (userState is AllUserError) {
                   return _buildError(userState.message);
+                }
+                if (userState is AllUserLoading) {
+                  return _buildLoading();
                 }
                 return _buildInitializing();
               },
             );
           } else if (authState is AuthError) {
             return _buildError(authState.message);
+          }
+          if (authState is AuthLoading) {
+            return _buildLoading();
           }
           return _buildInitializing();
         },
@@ -229,7 +234,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   Widget _buildHomeScreen(
-      BuildContext context, ListUserState userState, OrderState orderState) {
+      BuildContext context, AllUserState userState, OrderState orderState) {
     return Scaffold(
       body: Stack(
         children: [
@@ -237,7 +242,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             onRefresh: () async {
               final authState = context.read<AuthBloc>().state;
               if (authState is AdminAuthenticated) {
-                context.read<ListUserBloc>().add(FetchAllUserEvent());
+                context.read<AllUserBloc>().add(FetchAllUserEvent());
                 context
                     .read<OrderBloc>()
                     .add(FetchOrdersByShopId(authState.shop.shopId!));
@@ -305,7 +310,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
-  Widget _buildStatisticsTable(ListUserState userState, OrderState orderState) {
+  Widget _buildStatisticsTable(AllUserState userState, OrderState orderState) {
     int totalUsers = 0;
     int totalOrders = 0;
     double totalRevenue = 0;
@@ -377,7 +382,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildUserPieChart(ListUserState userState) {
+  Widget _buildUserPieChart(AllUserState userState) {
     if (userState is AllUserLoaded) {
       final newUsers = userState.users.where((user) {
         final now = DateTime.now();

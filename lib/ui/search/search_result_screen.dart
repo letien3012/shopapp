@@ -40,7 +40,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   bool _isNewest = false;
   bool _isBestSelling = false;
   bool _isPlaceSellingExpand = false;
-  int _isPrice = 0;
+  int _isPrice = 0; // 0: không sắp xếp, 1: tăng dần, 2: giảm dần
   int _selectedRating = -1;
   int _selectedPrice = -1;
   Set<int> _selectedFiltersPlace = {};
@@ -246,7 +246,6 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       _isBestSelling = type == 'bestselling';
       if (type != 'price') _isPrice = 0;
 
-      // Kích hoạt lọc khi thay đổi sắp xếp
       _shouldApplyFilter = true;
     });
   }
@@ -256,24 +255,21 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       _isRelate = false;
       _isNewest = false;
       _isBestSelling = false;
-      _isPrice =
-          (_isPrice + 1) % 3; // 0: không sắp xếp, 1: tăng dần, 2: giảm dần
+      _isPrice = (_isPrice + 1) % 3;
+      if (_isPrice == 0) _isPrice = 1; // Bỏ qua trạng thái không sắp xếp
 
-      // Kích hoạt lọc khi thay đổi sắp xếp giá
       _shouldApplyFilter = true;
     });
   }
 
   // Sửa lại phương thức _applyFilters để xử lý sắp xếp
   List<Product> _applyFilters(List<Product> products) {
-    // Luôn lọc bỏ sản phẩm từ shop đang đóng cửa, bất kể có áp dụng filter khác hay không
     var filteredProducts = products.where((product) {
       final shop = _getShopForProduct(product);
       if (shop == null) return false;
       return !shop.isClose;
     }).toList();
 
-    // Nếu không có filter nào được áp dụng, trả về danh sách đã lọc shop đóng cửa
     if (!_shouldApplyFilter) return filteredProducts;
 
     // Apply place filter
@@ -494,22 +490,10 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
 
   Widget _buildPriceSortIcon() {
     if (_isPrice == 0) {
-      return SizedBox(
-        height: 20,
-        width: 20,
-        child: Stack(
-          fit: StackFit.passthrough,
-          children: const [
-            Positioned(
-              top: 0,
-              child: Icon(Icons.keyboard_arrow_up_outlined, size: 15),
-            ),
-            Positioned(
-              bottom: 0,
-              child: Icon(Icons.keyboard_arrow_down_outlined, size: 15),
-            ),
-          ],
-        ),
+      return const Icon(
+        Icons.arrow_upward_outlined,
+        size: 15,
+        color: Colors.grey,
       );
     }
     return Icon(
@@ -626,6 +610,17 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber, size: 14),
+              Text(
+                ' ${product.averageRating.toStringAsFixed(1)}',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(width: 10),
               Text(
                 'Đã bán ${product.quantitySold}',
                 style: TextStyle(fontSize: 12),
@@ -634,16 +629,6 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 5),
-          Row(
-            children: [
-              Icon(Icons.location_on_outlined, size: 15),
-              Text(
-                shop.addresses[0].city,
-                style: TextStyle(fontSize: 10),
-              )
-            ],
-          )
         ],
       ),
     );
@@ -1037,14 +1022,33 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
   void _handlePriceFilter(int index) {
     setState(() {
       _tempPrice = _tempPrice == index ? -1 : index;
+
       // Clear custom price inputs when selecting preset
       if (_tempPrice != -1) {
         _minPriceController.clear();
         _maxPriceController.clear();
-        _tempMinPrice = 0;
-        _tempMaxPrice = 0;
         _minPriceError = null;
         _maxPriceError = null;
+
+        // Set min and max prices based on preset
+        switch (index) {
+          case 0: // 0-100k
+            _tempMinPrice = 0;
+            _tempMaxPrice = 100000;
+            break;
+          case 1: // 100k-200k
+            _tempMinPrice = 100000;
+            _tempMaxPrice = 200000;
+            break;
+          case 2: // 200k-300k
+            _tempMinPrice = 200000;
+            _tempMaxPrice = 300000;
+            break;
+        }
+      } else {
+        // Reset prices when deselecting preset
+        _tempMinPrice = 0;
+        _tempMaxPrice = 0;
       }
     });
   }

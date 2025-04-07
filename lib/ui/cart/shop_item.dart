@@ -261,7 +261,8 @@ class _ShopItemWidgetState extends State<ShopItemWidget> {
                                 final controller =
                                     widget.quantityControllers[controllerKey] ??
                                         TextEditingController(
-                                            text: item.quantity.toString());
+                                          text: item.quantity.toString(),
+                                        );
 
                                 return ProductItemWidget(
                                   shopId: widget.shopId,
@@ -277,9 +278,8 @@ class _ShopItemWidgetState extends State<ShopItemWidget> {
                                             (p) => p.id == item.productId);
                                     bool isOutOfStock =
                                         _isProductOutOfStock(product, item);
-
                                     // Nếu sản phẩm hết hàng, không cho phép chọn
-                                    if (isOutOfStock) {
+                                    if (isOutOfStock || product.isDeleted) {
                                       newValue = false;
                                     }
 

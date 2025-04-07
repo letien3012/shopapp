@@ -23,7 +23,7 @@ class ProductCartBloc extends Bloc<ProductCartEvent, ProductCartState> {
       emit(ProductCartLoading());
 
       final List<Product> products =
-          await _productService.fetchProductsByListProductId(event.productIds);
+          await _productService.fetchAllProduct(event.productIds);
 
       emit(ProductCartListLoaded(products));
     } catch (e) {

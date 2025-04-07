@@ -1,11 +1,53 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/models/product_option.dart';
 import 'package:luanvan/models/option_info.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'package:luanvan/rag/product_chunk.dart';
 
 class ProductService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  // Future<List<String>> generateChunks(Product product) async {
+  //   return await generateProductChunks(product);
+  // }
+
+  // Future<void> createEmbedding(Product product) async {
+  //   print('createEmbedding ${product.id}');
+  //   final chunks = await generateChunks(product);
+  //   final embeddings = await Future.wait(chunks.map(generateEmbedding));
+  //   embeddings.forEach((embedding) async {
+  //     await firebaseFirestore.collection('product_embedding').add({
+  //       'productId': product.id,
+  //       'embeddings': embedding,
+  //       'isHidden': product.isHidden,
+  //       'isDeleted': product.isDeleted,
+  //     });
+  //   });
+  // }
+
+  Future<List<double>> generateEmbedding(String text) async {
+    final apiKey = dotenv.env['API_KEY'];
+    const url =
+        'https://router.huggingface.co/hf-inference/pipeline/feature-extraction/intfloat/multilingual-e5-large-instruct';
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $apiKey',
+      },
+      body: json.encode({'inputs': text}),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<double>.from(data);
+    } else {
+      throw Exception('Failed to generate embedding');
+    }
+  }
 
   Future<String> addProduct(Product product) async {
     String productId = '';
@@ -73,6 +115,7 @@ class ProductService {
     await docRef.update({
       'optionInfos': updatedOptionInfos.map((info) => info.toMap()).toList(),
     });
+    // createEmbedding(product.copyWith(id: productId));
     return productId;
   }
 

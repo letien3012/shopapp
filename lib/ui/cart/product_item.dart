@@ -152,7 +152,7 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
               children: [
                 Row(
                   children: [
-                    _isOutOfStock(product)
+                    _isOutOfStock(product) || product.isDeleted
                         ? const SizedBox()
                         : Checkbox(
                             fillColor: WidgetStateProperty.resolveWith<Color>(
@@ -175,7 +175,9 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                                 borderRadius: BorderRadius.circular(4)),
                           ),
                     Opacity(
-                      opacity: _isOutOfStock(product) ? 0.5 : 1.0,
+                      opacity: _isOutOfStock(product) || product.isDeleted
+                          ? 0.5
+                          : 1.0,
                       child: Container(
                         decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
@@ -323,7 +325,7 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                               color: Color.fromARGB(255, 151, 14, 4),
                             ),
                           ),
-                          if (!_isOutOfStock(product))
+                          if (!_isOutOfStock(product) || !product.isDeleted)
                             Container(
                               height: 20,
                               decoration: BoxDecoration(
@@ -467,7 +469,7 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
   }
 
   Widget _buildStockStatus(Product product) {
-    if (_isOutOfStock(product)) {
+    if (_isOutOfStock(product) || product.isDeleted) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -579,7 +579,7 @@ class _UserScreenState extends State<UserScreen> {
                           case OrderStatus.shipped:
                             shippedCount++;
                             break;
-                          case OrderStatus.delivered:
+                          case OrderStatus.reviewed:
                             deliveredCount++;
                             break;
                           default:

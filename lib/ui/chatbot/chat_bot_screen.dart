@@ -258,6 +258,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> messages = [];
+  List<Map<String, String>> chatHistory = [];
 
   void _sendMessage() async {
     final query = _controller.text.trim();
@@ -275,8 +276,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollToBottom();
 
     // Gọi API không stream
-    final answer = await ChatbotService().generateAnswer(query);
-
+    final answer = await ChatbotService().generateAnswer(query, chatHistory);
+    chatHistory.add({"role": "user", "content": query});
+    chatHistory.add({"role": "assistant", "content": answer});
     _handleTextWithImages(answer);
     _scrollToBottom();
   }

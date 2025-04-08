@@ -31,6 +31,7 @@ import 'package:luanvan/ui/shop/analysis/revenue_screen.dart';
 import 'package:luanvan/ui/shop/analysis/sales_analysis_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
 import 'package:luanvan/ui/shop/user/my_user_screen.dart';
+import 'package:luanvan/ui/shop/warehouse/my_watehouse_screen.dart';
 
 class MyShopScreen extends StatefulWidget {
   const MyShopScreen({super.key});
@@ -690,7 +691,8 @@ class _MyShopScreenState extends State<MyShopScreen> {
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        SalesAnalysisScreen.routeName,
+                        MyWarehouseScreen.routeName,
+                        arguments: shop.shopId,
                       );
                     },
                     splashColor: Colors.transparent.withOpacity(0.2),
@@ -719,7 +721,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
                                 width: 10,
                               ),
                               Text(
-                                "Quản lý nhập hàng",
+                                "Quản lý kho hàng",
                                 style: TextStyle(fontSize: 16),
                               )
                             ],

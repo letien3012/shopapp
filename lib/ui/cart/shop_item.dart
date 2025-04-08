@@ -207,9 +207,10 @@ class _ShopItemWidgetState extends State<ShopItemWidget> {
                                           (p) => p.id == item.productId);
                                   bool isOutOfStock =
                                       _isProductOutOfStock(product, item);
-                                  productChecks.add(isOutOfStock
-                                      ? false
-                                      : (newValue ?? false));
+                                  productChecks.add(
+                                      isOutOfStock || product.isDeleted
+                                          ? false
+                                          : (newValue ?? false));
                                 });
 
                                 newCheckedProduct[widget.shopId] =

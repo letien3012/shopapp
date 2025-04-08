@@ -74,6 +74,7 @@ import 'package:luanvan/ui/shop/sign_shop/sign_shop.dart';
 import 'package:luanvan/ui/shop/sign_shop/start_shop.dart';
 import 'package:luanvan/ui/shop/user/my_user_screen.dart';
 import 'package:luanvan/ui/shop/user/user_detail_screen.dart';
+import 'package:luanvan/ui/shop/warehouse/my_watehouse_screen.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
@@ -177,4 +178,5 @@ final Map<String, WidgetBuilder> routes = {
   SearchInCategoryScreen.routeName: (context) => SearchInCategoryScreen(),
   ChatbotScreen.routeName: (context) => ChatbotScreen(),
   FavoriteProductScreen.routeName: (context) => FavoriteProductScreen(),
+  MyWarehouseScreen.routeName: (context) => MyWarehouseScreen(),
 };

@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:luanvan/models/product.dart';
+import 'package:luanvan/models/product_option.dart';
+import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/rag/product_chunk.dart';
 
 class ChatbotService {
@@ -89,22 +91,79 @@ class ChatbotService {
     return dotProduct / (sqrt(magnitude1) * sqrt(magnitude2));
   }
 
+  Future<Product> _fetchProductWithSubcollections(DocumentSnapshot doc) async {
+    final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final List<ProductVariant> variants = [];
+
+    // Fetch variants
+    final variantsSnapshot = await doc.reference.collection('variants').get();
+
+    // Chuyển đổi thành list và sắp xếp theo variantIndex
+    final variantsList = variantsSnapshot.docs.toList();
+    variantsList.sort((a, b) {
+      final aIndex = (a.data()['variantIndex'] as num?)?.toInt() ?? 0;
+      final bIndex = (b.data()['variantIndex'] as num?)?.toInt() ?? 0;
+      return aIndex.compareTo(bIndex);
+    });
+
+    for (var variantDoc in variantsList) {
+      final variantData = variantDoc.data() as Map<String, dynamic>;
+      final List<ProductOption> options = [];
+
+      // Fetch options for each variant
+      final optionsSnapshot =
+          await variantDoc.reference.collection('options').get();
+
+      // Chuyển đổi options thành list và sắp xếp theo optionIndex
+      final optionsList = optionsSnapshot.docs.toList();
+      optionsList.sort((a, b) {
+        final aIndex = (a.data()['optionIndex'] as num?)?.toInt() ?? 0;
+        final bIndex = (b.data()['optionIndex'] as num?)?.toInt() ?? 0;
+        return aIndex.compareTo(bIndex);
+      });
+
+      for (var optionDoc in optionsList) {
+        final optionData = optionDoc.data() as Map<String, dynamic>;
+        options.add(ProductOption.fromMap({
+          ...optionData,
+          'id': optionDoc.id,
+        }));
+      }
+
+      variants.add(ProductVariant(
+        id: variantDoc.id,
+        label: variantData['label'] as String,
+        options: options,
+        variantIndex: variantData['variantIndex'] as int? ?? 0,
+      ));
+    }
+
+    return Product.fromMap({
+      ...data,
+      'id': doc.id,
+      'variants': variants.map((v) => v.toMap()).toList(),
+    });
+  }
+
   Future<String> generateAnswer(
     String query,
+    List<Map<String, String>> chatHistory,
   ) async {
     final apiKey = dotenv.env['API_KEY'];
     const url =
         'https://router.huggingface.co/novita/v3/openai/chat/completions';
-    final allProducts = await FirebaseFirestore.instance
+    // String url =
+    //     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey";
+    final products = await FirebaseFirestore.instance
         .collection('products')
         .where('isDeleted', isEqualTo: false)
         .where('isHidden', isEqualTo: false)
         .get();
-    final context = await Future.wait(allProducts.docs.map((e) async {
-      return await generateProductChunks(Product.fromFirestore(e));
+    final context = await Future.wait(products.docs.map((e) async {
+      return await generateProductChunk(
+          await _fetchProductWithSubcollections(e));
     }));
-    print(context);
-    // Xây dựng prompt chi tiết bằng tiếng Việt với câu hỏi và ngữ cảnh
+
     final prompt = '''
     Bạn là một trợ lý bán hàng chuyên nghiệp.
     Đây là danh sách sản phẩm có trong cửa hàng
@@ -122,10 +181,19 @@ class ChatbotService {
         'Authorization': 'Bearer $apiKey',
       },
       body: json.encode({
+        // "contents": [
+        //   ...chatHistory,
+        //   {
+        //     "parts": [
+        //       {"text": prompt}
+        //     ]
+        //   }
+        // ]
         'messages': [
+          ...chatHistory,
           {'role': 'user', 'content': prompt}
         ],
-        'max_tokens': 1024,
+        'max_tokens': 2048,
         "model": "deepseek/deepseek-v3-0324",
         'stream': false,
         // 'inputs': prompt,
@@ -142,6 +210,12 @@ class ChatbotService {
       } else {
         throw Exception('Không tìm thấy câu trả lời trong phản hồi');
       }
+      // if (data['candidates'] != null && data['candidates'].isNotEmpty) {
+      //   return data['candidates'][0]['content']['parts'][0]['text'] ??
+      //       'Không tìm thấy câu trả lời.';
+      // } else {
+      //   throw Exception('Không tìm thấy câu trả lời trong phản hồi');
+      // }
     } else {
       // Xử lý lỗi nếu API trả về status code khác 200
       throw Exception('Không thể tạo câu trả lời: ${response.statusCode}');

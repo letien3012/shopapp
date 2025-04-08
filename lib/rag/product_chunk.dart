@@ -32,23 +32,60 @@ List<String> generateOptionInfoChunks(
   return optionInfos.map((info) => info.toReadableString(idToNameMap)).toList();
 }
 
-Future<List<String>> generateProductChunks(Product product) async {
+// Future<List<String>> generateProductChunks(Product product) async {
+//   if (product.isDeleted ||
+//       product.isHidden ||
+//       product.getMaxOptionStock() == 0) {
+//     return [];
+//   }
+//   final idToNameMap = buildOptionIdToNameMap(product.variants);
+//   final categories = await getCategories();
+//   return [
+//     "Tên sản phẩm: ${product.name}.",
+//     "Mô tả: ${product.description}.",
+//     "Danh mục: ${categories.firstWhere((element) => element.id == product.category).name}.",
+//     if (product.optionInfos.isNotEmpty)
+//       ...generateOptionInfoChunks(product.optionInfos, idToNameMap),
+//     if (product.variants.isNotEmpty) ...generateVariantChunks(product.variants),
+//     if (product.price != null)
+//       "Giá chung: ${product.price!.toStringAsFixed(0)} VNĐ.",
+//     "Link ảnh: ${product.imageUrl.join(', ')}",
+//   ];
+// }
+
+Future<String> generateProductChunk(Product product) async {
   if (product.isDeleted ||
       product.isHidden ||
       product.getMaxOptionStock() == 0) {
-    return [];
+    return '';
   }
+
   final idToNameMap = buildOptionIdToNameMap(product.variants);
   final categories = await getCategories();
-  return [
-    "Tên sản phẩm: ${product.name}.",
-    "Mô tả: ${product.description}.",
-    "Danh mục: ${categories.firstWhere((element) => element.id == product.category).name}.",
-    if (product.optionInfos.isNotEmpty)
-      ...generateOptionInfoChunks(product.optionInfos, idToNameMap),
-    if (product.variants.isNotEmpty) ...generateVariantChunks(product.variants),
-    if (product.price != null)
-      "Giá chung: ${product.price!.toStringAsFixed(0)} VNĐ.",
-    "Link ảnh: ${product.imageUrl.join(', ')}",
-  ];
+
+  final buffer = StringBuffer();
+
+  buffer.write("Sản phẩm '${product.name}'  có id là ${product.id}");
+  buffer.write(
+      "thuộc danh mục '${categories.firstWhere((c) => c.id == product.category).name}', ");
+  buffer.write("được mô tả: ${product.description}. ");
+
+  if (product.optionInfos.isNotEmpty) {
+    buffer.write(
+        generateOptionInfoChunks(product.optionInfos, idToNameMap).join(' '));
+  }
+
+  if (product.variants.isNotEmpty) {
+    buffer.write(generateVariantChunks(product.variants).join(' '));
+  }
+
+  if (product.price != null) {
+    buffer.write("Giá trung bình: ${product.price!.toStringAsFixed(0)} VNĐ. ");
+  }
+
+  if (product.imageUrl.isNotEmpty) {
+    buffer.write("Hình ảnh: ${product.imageUrl.join(', ')}.");
+  }
+
+  return buffer.toString();
 }

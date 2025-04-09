@@ -1,0 +1,469 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
+import 'package:luanvan/models/product.dart';
+import 'package:luanvan/models/shop.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
+import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
+import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
+
+import 'package:luanvan/ui/shop/warehouse/add%20_import_receipt.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
+
+class MyWarehouseScreen extends StatefulWidget {
+  const MyWarehouseScreen({super.key});
+  static String routeName = "my_warehouse";
+
+  @override
+  State<MyWarehouseScreen> createState() => _MyWarehouseScreenState();
+}
+
+class _MyWarehouseScreenState extends State<MyWarehouseScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late Shop shop;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String shopId = '';
+  bool _isSelectionMode = false;
+  Set<String> _selectedProducts = {};
+
+  Future<void> _showAlertDialog() async {
+    await showAlertDialog(
+      context,
+      message: "Bạn chưa chọn sản phẩm nào để tạo phiếu nhập hàng",
+      iconPath: IconHelper.warning,
+      duration: Duration(seconds: 1),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      shopId = ModalRoute.of(context)!.settings.arguments as String;
+      context
+          .read<ListProductBloc>()
+          .add(FetchListProductEventByShopId(shopId));
+    });
+
+    _tabController = TabController(length: 3, vsync: this);
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: BlocListener<ProductBloc, ProductState>(
+        listener: (context, state) {
+          if (state is ProductLoaded) {
+            final shopId = ModalRoute.of(context)!.settings.arguments as String;
+            context
+                .read<ListProductBloc>()
+                .add(FetchListProductEventByShopId(shopId));
+          }
+        },
+        child: BlocBuilder<ListProductBloc, ListProductState>(
+          builder: (context, productState) {
+            if (productState is ListProductLoading) {
+              return _buildLoading();
+            } else if (productState is ListProductLoaded) {
+              return _buildShopContent(context, productState.listProduct);
+            } else if (productState is ListProductError) {
+              return _buildError(productState.message);
+            }
+            return _buildInitializing();
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoading() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget _buildError(String message) {
+    return Center(child: Text('Error: $message'));
+  }
+
+  Widget _buildInitializing() {
+    return const Center(child: Text('Đang khởi tạo'));
+  }
+
+  Widget _buildShopContent(BuildContext context, List<Product> listProduct) {
+    // Filter products based on search query
+    final filteredProducts = _searchQuery.isEmpty
+        ? listProduct
+        : listProduct
+            .where(
+                (product) => product.name.toLowerCase().contains(_searchQuery))
+            .toList();
+
+    final allProducts = filteredProducts
+        .where((product) =>
+            !product.isDeleted &&
+            !product.isHidden &&
+            product.getTotalOptionStock() > 0)
+        .toList();
+
+    final lowStockProducts = filteredProducts
+        .where((product) =>
+            !product.isDeleted &&
+            !product.isHidden &&
+            product.getTotalOptionStock() <= 5 &&
+            product.getTotalOptionStock() > 0)
+        .toList();
+    final outOfStockProducts = filteredProducts
+        .where((product) =>
+            !product.isDeleted &&
+            !product.isHidden &&
+            product.getTotalOptionStock() == 0)
+        .toList();
+
+    return Column(
+      children: [
+        // Header
+        Container(
+          height: 90,
+          width: MediaQuery.of(context).size.width,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+          ),
+          padding:
+              const EdgeInsets.only(top: 30, left: 10, right: 10, bottom: 0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  height: 40,
+                  width: 40,
+                  alignment: Alignment.center,
+                  margin: EdgeInsets.only(bottom: 5),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.brown,
+                    size: 24,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 40,
+                child: Text(
+                  "Kho hàng của tôi",
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isSelectionMode = !_isSelectionMode;
+                      if (!_isSelectionMode) {
+                        _selectedProducts.clear();
+                      }
+                    });
+                  },
+                  child: SizedBox(
+                    height: 40,
+                    child: Text(
+                      _isSelectionMode ? "Hủy" : "Chọn",
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Search bar
+        Container(
+          color: Colors.white,
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Container(
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(Icons.search, color: Colors.grey, size: 20),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: 'Tìm sản phẩm',
+                      hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    style: TextStyle(fontSize: 13),
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty)
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(minWidth: 32),
+                    icon: Icon(Icons.clear, color: Colors.grey, size: 20),
+                    onPressed: () {
+                      setState(() {
+                        _searchController.clear();
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+        // TabBar
+        Container(
+          color: Colors.white,
+          child: TabBar(
+            controller: _tabController,
+            labelColor: Colors.black,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: Colors.brown,
+            labelStyle: TextStyle(fontSize: 13),
+            tabs: [
+              Tab(text: 'Tất cả (${allProducts.length})'),
+              Tab(text: 'Sắp hết hàng (${lowStockProducts.length})'),
+              Tab(text: 'Đã hết hàng (${outOfStockProducts.length})'),
+            ],
+          ),
+        ),
+        // TabBarView
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildProductList(allProducts),
+              lowStockProducts.isEmpty
+                  ? _buildEmptyTab("Không có sản phẩm sắp hết hàng")
+                  : _buildProductList(lowStockProducts),
+              outOfStockProducts.isEmpty
+                  ? _buildEmptyTab("Không có sản phẩm đã hết hàng")
+                  : _buildProductList(outOfStockProducts),
+            ],
+          ),
+        ),
+        // Bottom buttons
+        Container(
+          height: 70,
+          color: Colors.white,
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_isSelectionMode && _selectedProducts.isNotEmpty) {
+                      final selectedProductsList = filteredProducts
+                          .where((product) =>
+                              _selectedProducts.contains(product.id))
+                          .toList();
+
+                      Navigator.of(context).pushNamed(
+                        AddImportReceiptScreen.routeName,
+                        arguments: selectedProductsList,
+                      );
+                    } else {
+                      _showAlertDialog();
+                    }
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(10),
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                    ),
+                    child: Text(
+                      "Tạo phiếu nhập hàng",
+                      style: TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pushNamed(
+                      AddProductScreen.routeName,
+                      arguments: shopId,
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(10),
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                    ),
+                    child: Text(
+                      "Quản lý nhập hàng và điều chỉnh tồn kho",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProductList(List<Product> products) {
+    return Container(
+      color: Colors.white,
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height,
+      ),
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 90),
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          final product = products[index];
+          return Container(
+            padding: const EdgeInsets.all(10),
+            margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: GestureDetector(
+              onTap: () {
+                if (_isSelectionMode) {
+                  setState(() {
+                    if (_selectedProducts.contains(product.id)) {
+                      _selectedProducts.remove(product.id);
+                    } else {
+                      _selectedProducts.add(product.id);
+                    }
+                  });
+                } else {
+                  Navigator.pushNamed(
+                      context, DetailsProductShopScreen.routeName,
+                      arguments: product.id);
+                }
+              },
+              child: Row(
+                children: [
+                  if (_isSelectionMode)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: _selectedProducts.contains(product.id),
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                _selectedProducts.add(product.id);
+                              } else {
+                                _selectedProducts.remove(product.id);
+                              }
+                            });
+                          },
+                          activeColor: Colors.brown,
+                        ),
+                      ),
+                    ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      product.imageUrl.isNotEmpty
+                          ? product.imageUrl[0]
+                          : 'https://via.placeholder.com/80',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Image.network(
+                        'https://via.placeholder.com/80',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Kho hàng: ${product.getTotalOptionStock()}",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyTab(String message) {
+    return Container(
+      color: Colors.white,
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height,
+      ),
+      child: Center(
+        child: Text(
+          message,
+          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+        ),
+      ),
+    );
+  }
+}

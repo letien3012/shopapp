@@ -30,6 +30,7 @@ import 'package:luanvan/ui/shop/product_manager/ship_manager_screen.dart';
 import 'package:luanvan/ui/shop/analysis/revenue_screen.dart';
 import 'package:luanvan/ui/shop/analysis/sales_analysis_screen.dart';
 import 'package:luanvan/ui/shop/shop_manager/setting_shop_screen.dart';
+import 'package:luanvan/ui/shop/supplier/my_suppier.dart';
 import 'package:luanvan/ui/shop/user/my_user_screen.dart';
 import 'package:luanvan/ui/shop/warehouse/my_watehouse_screen.dart';
 
@@ -233,7 +234,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
               color: Colors.white,
             ),
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height + 60,
+              maxHeight: MediaQuery.of(context).size.height + 120,
               minHeight: MediaQuery.of(context).size.height,
               minWidth: MediaQuery.of(context).size.width,
             ),
@@ -672,6 +673,55 @@ class _MyShopScreenState extends State<MyShopScreen> {
                               ),
                               Text(
                                 "Quản lý danh mục",
+                                style: TextStyle(fontSize: 16),
+                              )
+                            ],
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 15,
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Material(
+                  color: Colors.white,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        MySupplierScreen.routeName,
+                      );
+                    },
+                    splashColor: Colors.transparent.withOpacity(0.2),
+                    highlightColor: Colors.transparent.withOpacity(0.1),
+                    child: Container(
+                      height: 60,
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(
+                        width: 0.2,
+                        color: Colors.grey,
+                      ))),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                IconHelper.supply,
+                                color: const Color.fromARGB(255, 20, 48, 173),
+                                height: 25,
+                                width: 25,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                "Quản lý nhà cung cấp",
                                 style: TextStyle(fontSize: 16),
                               )
                             ],

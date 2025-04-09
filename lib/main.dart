@@ -12,6 +12,7 @@ import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
 import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
 import 'package:luanvan/blocs/favoriteproduct/product_favorite_bloc.dart';
+import 'package:luanvan/blocs/import_receipt/import_receipt_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/list_shop_search/list_shop_search_bloc.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
@@ -26,6 +27,7 @@ import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productsearchimage/product_search_image_bloc.dart';
 import 'package:luanvan/blocs/search/search_bloc.dart';
 import 'package:luanvan/blocs/searchbyimage/search_image_bloc.dart';
+import 'package:luanvan/blocs/suppiler/supplier_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_bloc.dart';
@@ -39,10 +41,12 @@ import 'package:luanvan/services/category_service.dart';
 import 'package:luanvan/services/chat_service.dart';
 import 'package:luanvan/services/comment_service.dart';
 import 'package:luanvan/services/image_feature_service.dart';
+import 'package:luanvan/services/import_receipt_service.dart';
 import 'package:luanvan/services/order_service.dart';
 import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/search_service.dart';
 import 'package:luanvan/services/shop_service.dart';
+import 'package:luanvan/services/supplier_service.dart';
 import 'package:luanvan/services/user_service.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -189,6 +193,12 @@ class ShopApp extends StatelessWidget {
         BlocProvider<ProductFavoriteBloc>(
           create: (context) =>
               ProductFavoriteBloc(UserService(), ProductService()),
+        ),
+        BlocProvider<SupplierBloc>(
+          create: (context) => SupplierBloc(SupplierService()),
+        ),
+        BlocProvider<ImportReceiptBloc>(
+          create: (context) => ImportReceiptBloc(ImportReceiptService()),
         ),
       ],
       child: MaterialApp(

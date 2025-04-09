@@ -72,8 +72,15 @@ import 'package:luanvan/ui/shop/sign_shop/add_shop_phone.dart';
 import 'package:luanvan/ui/shop/sign_shop/ship_setting_screen.dart';
 import 'package:luanvan/ui/shop/sign_shop/sign_shop.dart';
 import 'package:luanvan/ui/shop/sign_shop/start_shop.dart';
+import 'package:luanvan/ui/shop/supplier/add_supplier.dart';
+import 'package:luanvan/ui/shop/supplier/edit_supplier.dart';
+import 'package:luanvan/ui/shop/supplier/my_suppier.dart';
 import 'package:luanvan/ui/shop/user/my_user_screen.dart';
 import 'package:luanvan/ui/shop/user/user_detail_screen.dart';
+import 'package:luanvan/ui/shop/warehouse/add%20_import_receipt.dart';
+import 'package:luanvan/ui/shop/warehouse/add_import_receipt_supplier.dart';
+import 'package:luanvan/ui/shop/warehouse/edit_stock_detail_screen.dart';
+import 'package:luanvan/ui/shop/warehouse/import_receipt_manager/import_receipt_manager_screen.dart';
 import 'package:luanvan/ui/shop/warehouse/my_watehouse_screen.dart';
 import 'package:luanvan/ui/splashscreen.dart';
 import 'package:luanvan/ui/user/change_account_info.dart';
@@ -179,4 +186,13 @@ final Map<String, WidgetBuilder> routes = {
   ChatbotScreen.routeName: (context) => ChatbotScreen(),
   FavoriteProductScreen.routeName: (context) => FavoriteProductScreen(),
   MyWarehouseScreen.routeName: (context) => MyWarehouseScreen(),
+  MySupplierScreen.routeName: (context) => MySupplierScreen(),
+  AddSupplierScreen.routeName: (context) => AddSupplierScreen(),
+  EditSupplierScreen.routeName: (context) => EditSupplierScreen(),
+  AddImportReceiptScreen.routeName: (context) => AddImportReceiptScreen(),
+  AddImportReceiptSupplierScreen.routeName: (context) =>
+      AddImportReceiptSupplierScreen(),
+  EditStockDetailScreen.routeName: (context) => EditStockDetailScreen(),
+  ImportReceiptManagerScreen.routeName: (context) =>
+      ImportReceiptManagerScreen(),
 };

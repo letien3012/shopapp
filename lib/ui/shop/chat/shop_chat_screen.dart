@@ -337,6 +337,9 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
                 ),
                 child: GestureDetector(
                   onTap: () {
+                    context
+                        .read<ChatBloc>()
+                        .add(ReadMessageEvent(true, chatRoom.chatRoomId));
                     Navigator.of(context).pushNamed(
                       ShopChatDetailScreen.routeName,
                       arguments: chatRoom.chatRoomId,
@@ -417,7 +420,7 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
                           ),
                         ),
                       ),
-                      if (chatRoom.unreadCountBuyer > 0)
+                      if (chatRoom.unreadCountShop > 0)
                         Container(
                           padding: const EdgeInsets.all(5),
                           decoration: const BoxDecoration(

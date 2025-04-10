@@ -220,7 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildFilteredChatRoomList(
       BuildContext context, List<ChatRoom> chatRooms) {
     if (chatRooms.isEmpty) {
-      return const Center(child: Text('No chat rooms available'));
+      return const Center(child: Text('Không có cuộc trò chuyện nào'));
     }
 
     var filteredRooms = chatRooms;
@@ -279,6 +279,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   child: GestureDetector(
                     onTap: () {
+                      context
+                          .read<ChatBloc>()
+                          .add(ReadMessageEvent(false, chatRoom.chatRoomId));
                       Navigator.of(context).pushNamed(
                         ChatDetailScreen.routeName,
                         arguments: chatRoom.chatRoomId,

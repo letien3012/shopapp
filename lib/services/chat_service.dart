@@ -93,6 +93,22 @@ class ChatService {
     }
   }
 
+  Future<void> updateRead(bool isShop, String chatRoomId) async {
+    try {
+      if (isShop) {
+        await _firestore.collection('chatRooms').doc(chatRoomId).update({
+          'unreadCountShop': 0,
+        });
+      } else {
+        await _firestore.collection('chatRooms').doc(chatRoomId).update({
+          'unreadCountBuyer': 0,
+        });
+      }
+    } catch (e) {
+      throw Exception('Lỗi cập nhật trạng thái đọc');
+    }
+  }
+
   Future<ChatRoom> startChat(String buyerId, String shopId) async {
     try {
       final query = await _firestore

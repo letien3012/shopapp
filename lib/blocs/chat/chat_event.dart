@@ -22,6 +22,12 @@ class SendMessageEvent extends ChatEvent {
   });
 }
 
+class ReadMessageEvent extends ChatEvent {
+  bool isShop;
+  String chatRoomId;
+  ReadMessageEvent(this.isShop, this.chatRoomId);
+}
+
 class StartChatEvent extends ChatEvent {
   final String buyerId;
   final String shopId;

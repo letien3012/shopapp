@@ -25,7 +25,38 @@ class ImportReceiptService {
     }
   }
 
-  // Create a new import receipt
+  Future<void> updateProductStock(ImportReceipt receipt) async {
+    for (var item in receipt.items) {
+      final productRef =
+          await _firestore.collection('products').doc(item.productId).get();
+
+      final product = Product.fromFirestore(productRef);
+      if (product.optionInfos.isNotEmpty) {
+        final optionInfos = product.optionInfos;
+        for (var optionInfo in optionInfos) {
+          if (optionInfo.optionId2 != null) {
+            if (optionInfo.optionId1 == item.optionId1 &&
+                optionInfo.optionId2 == item.optionId2) {
+              optionInfo.stock += item.adjustmentQuantities!;
+            }
+          } else {
+            if (optionInfo.optionId1 == item.optionId1) {
+              optionInfo.stock += item.adjustmentQuantities!;
+            }
+          }
+        }
+        await _firestore
+            .collection('products')
+            .doc(item.productId)
+            .update(product.copyWith(optionInfos: optionInfos).toMap());
+      } else {
+        await _firestore.collection('products').doc(item.productId).set({
+          'quantity': FieldValue.increment(item.adjustmentQuantities!),
+        });
+      }
+    }
+  } // Create a new import receipt
+
   Future<ImportReceipt> createImportReceipt(ImportReceipt receipt) async {
     try {
       final code = await generateRandomNumberCode();
@@ -33,35 +64,7 @@ class ImportReceiptService {
       final docRef =
           await _firestore.collection(_collection).add(receiptWithCode.toMap());
       if (receiptWithCode.status == ImportReceiptStatus.completed) {
-        for (var item in receipt.items) {
-          final productRef =
-              await _firestore.collection('products').doc(item.productId).get();
-
-          final product = Product.fromFirestore(productRef);
-          if (product.optionInfos.isNotEmpty) {
-            final optionInfos = product.optionInfos;
-            for (var optionInfo in optionInfos) {
-              if (optionInfo.optionId2 != null) {
-                if (optionInfo.optionId1 == item.optionId1 &&
-                    optionInfo.optionId2 == item.optionId2) {
-                  optionInfo.stock += item.adjustmentQuantities!;
-                }
-              } else {
-                if (optionInfo.optionId1 == item.optionId1) {
-                  optionInfo.stock += item.adjustmentQuantities!;
-                }
-              }
-            }
-            await _firestore
-                .collection('products')
-                .doc(item.productId)
-                .update(product.copyWith(optionInfos: optionInfos).toMap());
-          } else {
-            await _firestore.collection('products').doc(item.productId).set({
-              'quantity': FieldValue.increment(item.adjustmentQuantities!),
-            });
-          }
-        }
+        await updateProductStock(receiptWithCode);
       }
       return receipt.copyWith(id: docRef.id);
     } catch (e) {
@@ -103,6 +106,9 @@ class ImportReceiptService {
           .collection(_collection)
           .doc(receipt.id)
           .update(receipt.toMap());
+      if (receipt.status == ImportReceiptStatus.completed) {
+        await updateProductStock(receipt);
+      }
     } catch (e) {
       throw Exception('Lỗi khi cập nhật phiếu nhập: $e');
     }

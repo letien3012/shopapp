@@ -7,6 +7,7 @@ import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/chatbot/chat_bot_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
+import 'package:luanvan/ui/shop/category/my_category_screen.dart';
 import 'package:luanvan/ui/user/user_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -25,6 +26,7 @@ class _MainScreenState extends State<MainScreen> {
           index: _currentIndex,
           children: [
             const HomeScreen(),
+            AllCategoriesScreen(),
             ChatbotScreen(),
             const ChatScreen(),
             UserScreen(),
@@ -41,9 +43,11 @@ class _MainScreenState extends State<MainScreen> {
                   IconHelper.homeFilledIcon),
               _buildNavItem(IconHelper.category_outline, "Danh mục", 1,
                   IconHelper.category_filled),
-              _buildNavItem(IconHelper.chat_round_dots, "Tin nhắn", 2,
+              _buildNavItem(
+                  IconHelper.bot_outline, "Chatbot", 2, IconHelper.bot_filled),
+              _buildNavItem(IconHelper.chat_round_dots, "Tin nhắn", 3,
                   IconHelper.chat_round_dots_filled),
-              _buildNavItem(IconHelper.userOutlineIcon, "Tôi", 3,
+              _buildNavItem(IconHelper.userOutlineIcon, "Tôi", 4,
                   IconHelper.userFilledIcon)
             ],
           ),

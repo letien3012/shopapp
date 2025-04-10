@@ -27,7 +27,7 @@ class _LocationShopScreenState extends State<LocationShopScreen> {
       builder: (BuildContext context, state) {
         if (state is AuthLoading) {
           return _buildLoading();
-        } else if (state is AuthAuthenticated) {
+        } else if (state is AdminAuthenticated) {
           return BlocBuilder<ShopBloc, ShopState>(
             builder: (context, shopState) {
               if (shopState is ShopLoading) {

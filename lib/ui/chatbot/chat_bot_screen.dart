@@ -396,7 +396,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chatbot'),
+        automaticallyImplyLeading: false,
+        title: Center(child: Text('Chatbot')),
         backgroundColor: Colors.white,
         elevation: 0,
       ),

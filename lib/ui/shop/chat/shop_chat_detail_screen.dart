@@ -23,9 +23,6 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
   final _chatController = TextEditingController();
   bool _showSendButton = false;
   String _chatRoomId = '';
-  String _userId = '';
-  bool _shouldReverse = false;
-  bool _hasMeasured = false;
   int _lastMessageCount = 0;
   final FocusNode focusNode = FocusNode();
   final _scrollController = ScrollController();
@@ -36,7 +33,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _chatRoomId = ModalRoute.of(context)!.settings.arguments as String;
-      _userId = _chatRoomId.split('-')[0];
+      final _userId = _chatRoomId.split('-')[0];
       context.read<ChatBloc>().add(LoadMessagesEvent(_chatRoomId));
       context.read<UserChatBloc>().add(FetchUserChatEvent(_userId));
     });
@@ -96,9 +93,10 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                     children: [
                       _buildAppBar(context),
                       Expanded(
-                        child: _buildMessagesArea(context, _userId),
+                        child:
+                            _buildMessagesArea(context, authState.shop.shopId!),
                       ),
-                      _buildInputArea(context, _userId),
+                      _buildInputArea(context, authState.shop.shopId!),
                     ],
                   ),
                 ),
@@ -192,10 +190,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
   }
 
   Widget _buildMessagesArea(BuildContext context, String currentUserId) {
-    final GlobalKey contentKey = GlobalKey();
-
     return Container(
-      key: contentKey,
       padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
       decoration: BoxDecoration(
         color: Colors.grey[200],
@@ -207,10 +202,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
           }
           if (state is MessagesLoaded && state.chatRoomId == _chatRoomId) {
             final messages = state.messages;
-
             if (messages.isEmpty) {
-              _shouldReverse = false;
-              _hasMeasured = false;
               return const Center(
                 child: Text(
                   'Chưa có tin nhắn nào. Hãy gửi tin nhắn đầu tiên!',
@@ -219,32 +211,11 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
               );
             }
 
-            if (!_hasMeasured || messages.length != _lastMessageCount) {
+            if (messages.length != _lastMessageCount) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                final RenderBox? renderBox =
-                    contentKey.currentContext?.findRenderObject() as RenderBox?;
-                if (renderBox != null && mounted) {
-                  final contentHeight = renderBox.size.height;
-                  final availableHeight = MediaQuery.of(context).size.height -
-                      MediaQuery.of(context).size.height * 0.1 -
-                      60;
-                  print('$contentHeight - $availableHeight');
-                  final newReverse = contentHeight > availableHeight;
-                  if (newReverse) {
-                    _scrollController.animateTo(
-                      _scrollController.position.maxScrollExtent,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    );
-                  }
-                  if (newReverse != _shouldReverse) {
-                    setState(() {
-                      _shouldReverse = newReverse;
-                      _hasMeasured = true; // Đánh dấu đã đo
-                      _lastMessageCount = messages.length;
-                    });
-                  }
-                }
+                _scrollController
+                    .jumpTo(_scrollController.position.maxScrollExtent);
+                _lastMessageCount = messages.length;
               });
             }
 
@@ -253,10 +224,9 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
 
             for (int index = 0; index < messages.length; index++) {
               final message = messages[index];
-              final messageDate = message.sentAt; // Giả sử message có timestamp
+              final messageDate = message.sentAt;
               final isSender = message.senderId == currentUserId;
 
-              // Kiểm tra xem có cần hiển thị nhãn ngày không
               if (lastDate == null ||
                   messageDate.day != lastDate.day ||
                   messageDate.month != lastDate.month ||
@@ -274,17 +244,14 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                       ),
                       child: Text(
                         _formatDate(messageDate),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                        ),
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.white),
                       ),
                     ),
                   ),
                 );
               }
 
-              // Tạo widget tin nhắn
               messageWidgets.add(
                 Row(
                   mainAxisAlignment: isSender
@@ -298,9 +265,8 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                         ),
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: isSender
-                              ? Colors.lightBlue[100] // Tin nhắn của người gửi
-                              : Colors.white, // Tin nhắn của người nhận
+                          color:
+                              isSender ? Colors.lightBlue[100] : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         margin: const EdgeInsets.only(bottom: 10),
@@ -326,7 +292,6 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                             if (message.orderId != null)
                               Text('Đơn hàng: ${message.orderId}'),
                             const SizedBox(height: 5),
-                            // Thêm thời gian của tin nhắn
                             Text(
                               _formatTime(messageDate),
                               style: const TextStyle(
@@ -345,20 +310,11 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
               );
             }
 
-            return SingleChildScrollView(
+            return ListView.builder(
               controller: _scrollController,
-              reverse: _shouldReverse,
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: ListView(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                children: messageWidgets,
-              ),
+              itemCount: messageWidgets.length,
+              itemBuilder: (context, index) => messageWidgets[index],
             );
-          }
-          if (state is ChatError) {
-            return Center(child: Text('Lỗi: ${state.message}'));
           }
           return const Center(
             child: Text(
@@ -371,7 +327,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
     );
   }
 
-  Widget _buildInputArea(BuildContext context, String userId) {
+  Widget _buildInputArea(BuildContext context, String shopId) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
@@ -411,7 +367,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                         context.read<ChatBloc>().add(
                               SendMessageEvent(
                                 chatRoomId: _chatRoomId,
-                                senderId: userId,
+                                senderId: shopId,
                                 content: value.trim(),
                               ),
                             );
@@ -450,7 +406,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                       context.read<ChatBloc>().add(
                             SendMessageEvent(
                               chatRoomId: _chatRoomId,
-                              senderId: userId,
+                              senderId: shopId,
                               content: _chatController.text.trim(),
                             ),
                           );

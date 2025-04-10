@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
+import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
+import 'package:luanvan/blocs/chat_room/chat_room_event.dart';
 import 'package:luanvan/models/message.dart';
 import 'package:luanvan/services/chat_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,6 +15,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<LoadMessagesEvent>(_onLoadMessages);
     on<SendMessageEvent>(_onSendMessage);
     on<StartChatEvent>(_onStartChat);
+    on<ReadMessageEvent>(_onReadMessage);
     // on<MarkMessageAsReadEvent>(_onMarkMessageAsRead);
   }
 
@@ -44,6 +47,27 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       final messages = await chatService.getMessages(event.chatRoomId);
       emit(MessagesLoaded(event.chatRoomId, messages));
+    } catch (e) {
+      emit(ChatError('Failed to send message: $e'));
+    }
+  }
+
+  Future<void> _onReadMessage(
+      ReadMessageEvent event, Emitter<ChatState> emit) async {
+    try {
+      final ChatRoomBloc chatRoomBloc;
+      await chatService.updateRead(event.isShop, event.chatRoomId);
+      if (event.isShop) {
+        final shopId = event.chatRoomId.split('-')[1];
+        // chatRoomBloc is declared but never initialized, so we need to initialize it
+        final chatRoomBloc = ChatRoomBloc(chatService);
+        chatRoomBloc.add(LoadChatRoomsShopEvent(shopId));
+      } else {
+        final userId = event.chatRoomId.split('-')[0];
+        // chatRoomBloc is declared but never initialized, so we need to initialize it
+        final chatRoomBloc = ChatRoomBloc(chatService);
+        chatRoomBloc.add(LoadChatRoomsUserEvent(userId));
+      }
     } catch (e) {
       emit(ChatError('Failed to send message: $e'));
     }

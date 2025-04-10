@@ -24,8 +24,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _showSendButton = false;
   String _chatRoomId = '';
   String _shopId = '';
-  bool _shouldReverse = false;
-  bool _hasMeasured = false;
+
   int _lastMessageCount = 0;
   final FocusNode focusNode = FocusNode();
   final _scrollController = ScrollController();
@@ -36,6 +35,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _chatRoomId = ModalRoute.of(context)!.settings.arguments as String;
+
       context.read<ChatBloc>().add(LoadMessagesEvent(_chatRoomId));
       _shopId = _chatRoomId.split('-')[1];
       context.read<ShopBloc>().add(FetchShopEventByShopId(_shopId));

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:luanvan/models/shop.dart';
+import 'package:printing/printing.dart';
 import '../models/user_info_model.dart';
 import '../models/cart.dart';
 
@@ -378,8 +379,17 @@ class AuthService {
         email: email,
         password: password,
       );
+    } on FirebaseAuthException catch (e) {
+      print(e.code);
+      if (e.code == 'user-not-found') {
+        throw Exception('Tài khoản không tồn tại.');
+      } else if (e.code == 'wrong-password') {
+        throw Exception('Mật khẩu không chính xác.');
+      } else {
+        throw Exception('Đăng nhập thất bại: ${e.message}');
+      }
     } catch (e) {
-      rethrow;
+      throw Exception('Lỗi không xác định: $e');
     }
   }
 

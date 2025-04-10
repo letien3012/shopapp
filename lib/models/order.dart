@@ -1,5 +1,4 @@
 import 'package:luanvan/models/address.dart';
-import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/order_history.dart';
 import 'package:luanvan/models/shipping_method.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

@@ -107,6 +107,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
       emit(AuthError(message));
     } catch (e) {
+      print(e);
       emit(AuthError('Đã xảy ra lỗi: ${e.toString()}'));
     }
   }

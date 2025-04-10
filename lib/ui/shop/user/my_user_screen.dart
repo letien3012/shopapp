@@ -277,36 +277,36 @@ class _MyUserScreenState extends State<MyUserScreen>
             ],
           ),
         ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            height: 70,
-            width: double.infinity,
-            color: Colors.white,
-            child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).pushNamed(
-                  AddProductScreen.routeName,
-                  arguments: shopId,
-                );
-              },
-              child: Container(
-                margin: const EdgeInsets.all(10),
-                height: 50,
-                width: double.infinity,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.brown,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  "Thêm 1 sản phẩm mới",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
-        ),
+        // Align(
+        //   alignment: Alignment.bottomCenter,
+        //   child: Container(
+        //     height: 70,
+        //     width: double.infinity,
+        //     color: Colors.white,
+        //     child: GestureDetector(
+        //       onTap: () {
+        //         Navigator.of(context).pushNamed(
+        //           AddProductScreen.routeName,
+        //           arguments: shopId,
+        //         );
+        //       },
+        //       child: Container(
+        //         margin: const EdgeInsets.all(10),
+        //         height: 50,
+        //         width: double.infinity,
+        //         alignment: Alignment.center,
+        //         decoration: BoxDecoration(
+        //           color: Colors.brown,
+        //           borderRadius: BorderRadius.circular(10),
+        //         ),
+        //         child: Text(
+        //           "Thêm 1 sản phẩm mới",
+        //           style: TextStyle(fontSize: 18, color: Colors.white),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }
@@ -405,8 +405,8 @@ class _MyUserScreenState extends State<MyUserScreen>
                           ? () => _hideUser(user.copyWith(isLock: false))
                           : () => _hideUser(user.copyWith(isLock: true))),
                   const SizedBox(width: 10),
-                  _buildActionButton(
-                      "Sửa", Colors.brown, Colors.white, () => _editUser(user)),
+                  // _buildActionButton(
+                  //     "Sửa", Colors.brown, Colors.white, () => _editUser(user)),
                   const SizedBox(width: 10),
                 ],
               ),

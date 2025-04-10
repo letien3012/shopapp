@@ -111,6 +111,9 @@ class _SigninScreenState extends State<SigninScreen> {
               ),
             );
           }
+          if (state is AuthError) {
+            _showDialog(state.message);
+          }
         },
         builder: (BuildContext context, state) {
           if (state is AuthLoading) {
@@ -141,7 +144,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       ),
                       const SizedBox(height: 50),
                       const Text(
-                        'Số điện thoại hoặc email',
+                        'Email',
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 10),

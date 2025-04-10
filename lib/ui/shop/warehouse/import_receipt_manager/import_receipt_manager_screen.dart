@@ -187,11 +187,11 @@ class _ImportReceiptManagerScreenState extends State<ImportReceiptManagerScreen>
         minHeight: MediaQuery.of(context).size.height,
       ),
       child: ListView.builder(
+        shrinkWrap: true,
         padding: const EdgeInsets.only(bottom: 90),
         itemCount: importReceipts.length,
         itemBuilder: (context, index) {
           final importReceipt = importReceipts[index];
-
           return Container(
             padding: const EdgeInsets.all(10),
             margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
@@ -244,6 +244,68 @@ class _ImportReceiptManagerScreenState extends State<ImportReceiptManagerScreen>
                             fontWeight: FontWeight.normal,
                           ),
                         ),
+                        if (importReceipt.status ==
+                            ImportReceiptStatus.pending) ...[
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  context.read<ImportReceiptBloc>().add(
+                                      UpdateImportReceipt(
+                                          importReceipt.copyWith(
+                                              status: ImportReceiptStatus
+                                                  .cancelled)));
+                                },
+                                child: Container(
+                                  height: 40,
+                                  padding: EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          width: 1, color: Colors.brown)),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'Hủy nhập hàng',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.brown,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  context.read<ImportReceiptBloc>().add(
+                                      UpdateImportReceipt(
+                                          importReceipt.copyWith(
+                                              status: ImportReceiptStatus
+                                                  .completed)));
+                                },
+                                child: Container(
+                                  height: 40,
+                                  padding: EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          width: 1, color: Colors.brown)),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'Hoàn thành',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.brown,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              )
+                            ],
+                          )
+                        ]
                       ],
                     ),
                   ),

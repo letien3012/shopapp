@@ -7,6 +7,9 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
 import 'package:luanvan/blocs/checkPhoneAndEmail/check_event.dart';
 import 'package:luanvan/blocs/checkPhoneAndEmail/check_state.dart';
+import 'package:luanvan/blocs/user/user_bloc.dart';
+import 'package:luanvan/blocs/user/user_event.dart';
+import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/login/verify_screen.dart';
@@ -44,13 +47,23 @@ class _SingupScreenState extends State<SingupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is AuthAuthenticated) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => MainScreen(),
-              ),
-            );
+            context.read<UserBloc>().add(FetchUserEvent(state.user.uid));
+            await context
+                .read<UserBloc>()
+                .stream
+                .firstWhere((element) => element is UserLoaded);
+            final user = (context.read<UserBloc>().state as UserLoaded).user;
+            if (user.isLock) {
+              _showDialog("Tài khoản của bạn đã bị khóa ");
+            } else {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => MainScreen(),
+                ),
+              );
+            }
           }
         },
         child: BlocConsumer<CheckBloc, CheckState>(

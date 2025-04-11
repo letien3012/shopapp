@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:luanvan/blocs/allmessage/all_message_bloc.dart';
+import 'package:luanvan/blocs/allmessage/all_message_event.dart';
+import 'package:luanvan/blocs/allmessage/all_message_state.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
@@ -56,6 +59,7 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
       if (authState is AdminAuthenticated) {
         shopId = authState.shop.shopId!;
         context.read<ChatRoomBloc>().add(LoadChatRoomsShopEvent(shopId));
+        context.read<AllMessageBloc>().add(LoadAllMessagesEvent());
       }
       // final chatState = context.read<ChatRoomBloc>().state;
       // if (chatState is ChatRoomsUserLoaded) {
@@ -92,6 +96,7 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
                   context
                       .read<ListUserBloc>()
                       .add(FetchListUserChatEventByUserId(userIds));
+                  context.read<AllMessageBloc>().add(LoadAllMessagesEvent());
                 }
                 return Stack(
                   children: [
@@ -99,6 +104,9 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
                       onRefresh: () async {
                         context.read<ChatRoomBloc>().add(
                             LoadChatRoomsShopEvent(shopState.shop.shopId!));
+                        context
+                            .read<AllMessageBloc>()
+                            .add(LoadAllMessagesEvent());
                       },
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -314,129 +322,125 @@ class _ShopChatScreenState extends State<ShopChatScreen> {
     return BlocBuilder<ListUserBloc, ListUserState>(
       builder: (context, listUserState) {
         if (listUserState is ListUserChatLoaded) {
-          return ListView.builder(
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount: chatRooms.length,
-            itemBuilder: (context, index) {
-              context
-                  .read<ChatBloc>()
-                  .add(LoadMessagesEvent(chatRooms[index].chatRoomId));
-              final chatRoom = chatRooms[index];
-              final user = listUserState.users
-                  .firstWhere((user) => user.id == chatRoom.buyerId);
-              return Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(width: 1, color: Colors.grey[300]!),
-                  ),
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: GestureDetector(
-                  onTap: () {
-                    context
-                        .read<ChatBloc>()
-                        .add(ReadMessageEvent(true, chatRoom.chatRoomId));
-                    Navigator.of(context).pushNamed(
-                      ShopChatDetailScreen.routeName,
-                      arguments: chatRoom.chatRoomId,
+          return BlocBuilder<AllMessageBloc, AllMessageState>(
+            builder: (context, allMessageState) {
+              if (allMessageState is AllMessageLoaded) {
+                return ListView.builder(
+                  padding: EdgeInsets.zero,
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: chatRooms.length,
+                  itemBuilder: (context, index) {
+                    final chatRoom = chatRooms[index];
+                    final user = listUserState.users
+                        .firstWhere((user) => user.id == chatRoom.buyerId);
+                    final lastMessage = allMessageState.messages.firstWhere(
+                        (message) =>
+                            message.messageId == chatRoom.lastMessageId);
+                    return Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom:
+                              BorderSide(width: 1, color: Colors.grey[300]!),
+                        ),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          context
+                              .read<ChatBloc>()
+                              .add(ReadMessageEvent(true, chatRoom.chatRoomId));
+                          Navigator.of(context).pushNamed(
+                            ShopChatDetailScreen.routeName,
+                            arguments: chatRoom.chatRoomId,
+                          );
+                        },
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            ClipOval(
+                              child: Image.network(
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                user.avataUrl ??
+                                    '', // Thay bằng ảnh của shop nếu có
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Text(
+                                  "Lỗi",
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: SizedBox(
+                                height: 50,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          user.userName ?? '',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          lastMessage.sentAt
+                                              .toString()
+                                              .substring(11, 16),
+                                          maxLines: 1,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                    Text(
+                                      lastMessage.content,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (chatRoom.unreadCountShop > 0)
+                              Container(
+                                padding: const EdgeInsets.all(5),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '${chatRoom.unreadCountShop}',
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 12),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     );
                   },
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ClipOval(
-                        child: Image.network(
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          user.avataUrl ?? '', // Thay bằng ảnh của shop nếu có
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Text(
-                            "Lỗi",
-                            style: TextStyle(fontSize: 15),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: SizedBox(
-                          height: 50,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    user.userName ?? '',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    chatRoom.createdAt
-                                        .toString()
-                                        .substring(11, 16), // Hiển thị giờ phút
-                                    maxLines: 1,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              BlocSelector<ChatBloc, ChatState, String>(
-                                selector: (state) {
-                                  if (state is MessagesLoaded) {
-                                    return state.messages.isNotEmpty
-                                        ? state.messages.last.content
-                                        : "Chưa có tin nhắn";
-                                  }
-                                  return "Đang tải...";
-                                },
-                                builder:
-                                    (BuildContext context, String lastMessage) {
-                                  return Text(
-                                    lastMessage,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (chatRoom.unreadCountShop > 0)
-                        Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '${chatRoom.unreadCountShop}',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 12),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
+                );
+              }
+              return const SizedBox.shrink();
             },
           );
         }

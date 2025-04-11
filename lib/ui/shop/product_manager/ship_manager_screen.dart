@@ -28,8 +28,6 @@ class _ShipManagerScreenState extends State<ShipManagerScreen> {
     phoneNumber: '',
     email: '',
     submittedAt: DateTime.now(),
-    isClose: false,
-    isLocked: false,
     shippingMethods: [],
   );
 

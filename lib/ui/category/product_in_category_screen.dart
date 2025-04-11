@@ -302,7 +302,7 @@ class _ProductInCategoryScreenState extends State<ProductInCategoryScreen> {
     var filteredProducts = products.where((product) {
       final shop = _getShopForProduct(product);
       if (shop == null) return false;
-      return !shop.isClose;
+      return true;
     }).toList();
 
     // Nếu không có filter nào được áp dụng, trả về danh sách đã lọc shop đóng cửa

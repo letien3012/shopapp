@@ -4,11 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
-import 'package:luanvan/blocs/user/user_bloc.dart';
-import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/shop.dart';
-import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/checkout/add_addressline_screen.dart.dart';
 import 'package:luanvan/ui/checkout/pick_location.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -30,8 +27,6 @@ class _EditLocationShopScreenState extends State<EditLocationShopScreen> {
       phoneNumber: '',
       email: '',
       submittedAt: DateTime.now(),
-      isClose: false,
-      isLocked: false,
       shippingMethods: []);
   final FocusNode _focusName = FocusNode();
   final FocusNode _focusPhone = FocusNode();

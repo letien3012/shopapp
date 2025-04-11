@@ -15,7 +15,6 @@ import 'package:luanvan/ui/shop/shop_manager/my_shop_screen.dart';
 import 'package:luanvan/ui/shop/sign_shop/add_shop_phone.dart';
 import 'package:luanvan/ui/shop/sign_shop/ship_setting_screen.dart';
 import 'package:luanvan/ui/user/change_info/change_email.dart';
-import 'package:luanvan/ui/user/change_info/change_phone.dart';
 
 class SignShop extends StatefulWidget {
   const SignShop({super.key});
@@ -192,8 +191,6 @@ class _SignShopState extends State<SignShop> {
       backgroundImageUrl: default_background,
       avatarUrl: avatarUrl,
       submittedAt: DateTime.now(),
-      isClose: false,
-      isLocked: false,
       shippingMethods: [],
     );
     sellerRegistrationModel.shippingMethods

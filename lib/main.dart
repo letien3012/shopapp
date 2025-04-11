@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:luanvan/blocs/allmessage/all_message_bloc.dart';
 import 'package:luanvan/blocs/alluser/all_user_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/banner/banner_bloc.dart';
@@ -199,6 +200,9 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<ImportReceiptBloc>(
           create: (context) => ImportReceiptBloc(ImportReceiptService()),
+        ),
+        BlocProvider<AllMessageBloc>(
+          create: (context) => AllMessageBloc(ChatService()),
         ),
       ],
       child: MaterialApp(

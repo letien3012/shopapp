@@ -32,10 +32,10 @@ class SupplierService {
 
   // Cập nhật nhà cung cấp
   Future<void> updateSupplier(Supplier supplier) async {
-    await _firestore
-        .collection(_collection)
-        .doc(supplier.id)
-        .update(supplier.toJson());
+    supplier.updatedAt = Timestamp.now();
+    await _firestore.collection(_collection).doc(supplier.id).update(
+          supplier.toJson(),
+        );
   }
 
   // Xóa nhà cung cấp (soft delete)

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
 import 'package:luanvan/blocs/list_shop_search/list_shop_search_bloc.dart';
 import 'package:luanvan/blocs/list_shop_search/list_shop_search_event.dart';
 import 'package:luanvan/blocs/list_shop_search/list_shop_search_state.dart';
@@ -267,7 +265,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     var filteredProducts = products.where((product) {
       final shop = _getShopForProduct(product);
       if (shop == null) return false;
-      return !shop.isClose;
+      return true;
     }).toList();
 
     if (!_shouldApplyFilter) return filteredProducts;

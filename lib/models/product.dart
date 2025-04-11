@@ -17,8 +17,6 @@ class Product {
   String category;
   String videoUrl;
   String shopId;
-  bool isViolated;
-  String violationReason;
   bool isHidden;
   bool isDeleted;
   bool hasVariantImages;
@@ -43,8 +41,6 @@ class Product {
     this.category = '',
     this.videoUrl = '',
     required this.shopId,
-    this.isViolated = false,
-    this.violationReason = '',
     this.isHidden = false,
     this.isDeleted = false,
     this.hasVariantImages = false,
@@ -70,8 +66,6 @@ class Product {
     String? category,
     String? videoUrl,
     String? shopId,
-    bool? isViolated,
-    String? violationReason,
     bool? isHidden,
     bool? isDeleted,
     bool? hasVariantImages,
@@ -96,8 +90,6 @@ class Product {
       category: category ?? this.category,
       videoUrl: videoUrl ?? this.videoUrl,
       shopId: shopId ?? this.shopId,
-      isViolated: isViolated ?? this.isViolated,
-      violationReason: violationReason ?? this.violationReason,
       isHidden: isHidden ?? this.isHidden,
       isDeleted: isDeleted ?? this.isDeleted,
       hasVariantImages: hasVariantImages ?? this.hasVariantImages,
@@ -124,8 +116,6 @@ class Product {
       'category': category,
       'videoUrl': videoUrl,
       'shopId': shopId,
-      'isViolated': isViolated,
-      'violationReason': violationReason,
       'isHidden': isHidden,
       'isDeleted': isDeleted,
       'hasVariantImages': hasVariantImages,
@@ -157,8 +147,6 @@ class Product {
       category: map['category'] as String? ?? '',
       videoUrl: map['videoUrl'] as String? ?? '',
       shopId: map['shopId'] as String,
-      isViolated: map['isViolated'] as bool? ?? false,
-      violationReason: map['violationReason'] as String? ?? '',
       isHidden: map['isHidden'] as bool? ?? false,
       isDeleted: map['isDeleted'] as bool? ?? false,
       hasVariantImages: map['hasVariantImages'] as bool? ?? false,
@@ -204,8 +192,6 @@ class Product {
       category: data['category'] as String? ?? '',
       videoUrl: data['videoUrl'] as String? ?? '',
       shopId: data['shopId'] as String? ?? '',
-      isViolated: data['isViolated'] as bool? ?? false,
-      violationReason: data['violationReason'] as String? ?? '',
       isHidden: data['isHidden'] as bool? ?? false,
       isDeleted: data['isDeleted'] as bool? ?? false,
       hasVariantImages: data['hasVariantImages'] as bool? ?? false,
@@ -241,7 +227,7 @@ class Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isViolated: $isViolated, violationReason: $violationReason, isHidden: $isHidden, isDeleted: $isDeleted, hasVariantImages: $hasVariantImages, hasWeightVariant: $hasWeightVariant, weight: $weight, price: $price, viewCount: $viewCount, favoriteCount: $favoriteCount, shippingMethods: $shippingMethods, optionInfos: $optionInfos)';
+    return 'Product(id: $id, name: $name, quantity: $quantity, quantitySold: $quantitySold, description: $description, averageRating: $averageRating, variants: $variants, imageUrl: $imageUrl, category: $category, videoUrl: $videoUrl, shopId: $shopId, isHidden: $isHidden, isDeleted: $isDeleted, hasVariantImages: $hasVariantImages, hasWeightVariant: $hasWeightVariant, weight: $weight, price: $price, viewCount: $viewCount, favoriteCount: $favoriteCount, shippingMethods: $shippingMethods, optionInfos: $optionInfos)';
   }
 
   double getMaxOptionPrice() {

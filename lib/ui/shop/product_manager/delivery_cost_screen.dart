@@ -29,7 +29,6 @@ class _DeliveryCostScreenState extends State<DeliveryCostScreen> {
       averageRating: 0,
       variants: [],
       shopId: '',
-      isViolated: false,
       isHidden: false,
       hasVariantImages: false,
       shippingMethods: []);

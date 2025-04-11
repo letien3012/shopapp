@@ -38,9 +38,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         chatRoomId: event.chatRoomId,
         senderId: event.senderId,
         content: event.content,
-        imageUrl: event.imageUrl,
-        productId: event.productId,
-        orderId: event.orderId,
         sentAt: DateTime.now(),
       );
       await chatService.sendMessage(message);

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:luanvan/blocs/allmessage/all_message_bloc.dart';
+import 'package:luanvan/blocs/allmessage/all_message_event.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/chat/chat_state.dart';
+import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
+import 'package:luanvan/blocs/chat_room/chat_room_event.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_bloc.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_event.dart';
 import 'package:luanvan/blocs/user_chat/user_chat_state.dart';
@@ -73,6 +77,10 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
     return WillPopScope(
       onWillPop: () async {
         context.read<ChatBloc>().deleteEmptyChatRoom(_chatRoomId);
+        context.read<AllMessageBloc>().add(LoadAllMessagesEvent());
+        context
+            .read<ChatRoomBloc>()
+            .add(LoadChatRoomsShopEvent(_chatRoomId.split('-')[1]));
         Navigator.of(context).pop();
         return false;
       },
@@ -126,6 +134,10 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                 GestureDetector(
                   onTap: () {
                     context.read<ChatBloc>().deleteEmptyChatRoom(_chatRoomId);
+                    context.read<AllMessageBloc>().add(LoadAllMessagesEvent());
+                    context
+                        .read<ChatRoomBloc>()
+                        .add(LoadChatRoomsShopEvent(_chatRoomId.split('-')[1]));
                     Navigator.of(context).pop();
                   },
                   child: const Icon(
@@ -280,17 +292,6 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                                 color: Colors.black,
                               ),
                             ),
-                            if (message.imageUrl != null)
-                              Image.network(
-                                message.imageUrl!,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                            if (message.productId != null)
-                              Text('Sản phẩm: ${message.productId}'),
-                            if (message.orderId != null)
-                              Text('Đơn hàng: ${message.orderId}'),
                             const SizedBox(height: 5),
                             Text(
                               _formatTime(messageDate),
@@ -371,6 +372,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                                 content: value.trim(),
                               ),
                             );
+
                         _chatController.clear();
                       },
                     ),

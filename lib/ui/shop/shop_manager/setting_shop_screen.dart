@@ -115,7 +115,6 @@ class _SettingShopScreenState extends State<SettingShopScreen> {
         if (shopState is ShopLoading) {
           return _buildLoading();
         } else if (shopState is ShopLoaded) {
-          isClose = shopState.shop.isClose;
           return _buildContent(context, shopState.shop);
         } else if (shopState is ShopError) {
           return _buildError(shopState.message);
@@ -172,10 +171,8 @@ class _SettingShopScreenState extends State<SettingShopScreen> {
                   ChangeShopInfoScreen.routeName,
                   arguments: shop.shopId),
             ),
-            const SizedBox(
-              height: 10,
-            ),
-            _buildIsCloseItem(context, shop),
+
+            // _buildIsCloseItem(context, shop),
             _buildAccountItem(
               "Địa chỉ lấy hàng",
               onTap: () => Navigator.of(context).pushNamed(
@@ -240,46 +237,46 @@ class _SettingShopScreenState extends State<SettingShopScreen> {
   }
 
   // Mục thông tin tài khoản
-  Widget _buildIsCloseItem(BuildContext context, Shop shop) {
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(width: 0.2, color: Colors.grey),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Chế độ tạm nghỉ',
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          CupertinoSwitch(
-            value: isClose,
-            onChanged: (value) async {
-              if (value) {
-                if (await _showIsCloseConfirmationDialog()) {
-                  isClose = value;
-                  context
-                      .read<ShopBloc>()
-                      .add(UpdateShopEvent(shop.copyWith(isClose: isClose)));
-                }
-              } else {
-                isClose = value;
-                context
-                    .read<ShopBloc>()
-                    .add(UpdateShopEvent(shop.copyWith(isClose: isClose)));
-              }
-            },
-          )
-        ],
-      ),
-    );
-  }
+  // Widget _buildIsCloseItem(BuildContext context, Shop shop) {
+  //   return Container(
+  //     height: 50,
+  //     padding: const EdgeInsets.symmetric(horizontal: 10),
+  //     width: double.infinity,
+  //     decoration: const BoxDecoration(
+  //       color: Colors.white,
+  //       border: Border(
+  //         bottom: BorderSide(width: 0.2, color: Colors.grey),
+  //       ),
+  //     ),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //       children: [
+  //         Text(
+  //           'Chế độ tạm nghỉ',
+  //           style: const TextStyle(fontWeight: FontWeight.w500),
+  //         ),
+  //         CupertinoSwitch(
+  //           value: isClose,
+  //           onChanged: (value) async {
+  //             if (value) {
+  //               if (await _showIsCloseConfirmationDialog()) {
+  //                 isClose = value;
+  //                 context
+  //                     .read<ShopBloc>()
+  //                     .add(UpdateShopEvent(shop.copyWith(isClose: isClose)));
+  //               }
+  //             } else {
+  //               isClose = value;
+  //               context
+  //                   .read<ShopBloc>()
+  //                   .add(UpdateShopEvent(shop.copyWith(isClose: isClose)));
+  //             }
+  //           },
+  //         )
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // AppBar
   Widget _buildAppBar(BuildContext context) {

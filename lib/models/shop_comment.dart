@@ -8,7 +8,6 @@ class ShopComment {
   final DateTime createdAt;
   final String? reply;
   final DateTime? replyAt;
-  final bool isVerified;
   final String orderId;
 
   ShopComment({
@@ -19,7 +18,6 @@ class ShopComment {
     required this.createdAt,
     this.reply,
     this.replyAt,
-    this.isVerified = false,
     required this.orderId,
   });
 
@@ -34,7 +32,6 @@ class ShopComment {
       replyAt: map['replyAt'] != null
           ? (map['replyAt'] as Timestamp).toDate()
           : null,
-      isVerified: map['isVerified'] as bool? ?? false,
       orderId: map['orderId'] as String,
     );
   }
@@ -48,7 +45,6 @@ class ShopComment {
       'createdAt': Timestamp.fromDate(createdAt),
       'reply': reply,
       'replyAt': replyAt != null ? Timestamp.fromDate(replyAt!) : null,
-      'isVerified': isVerified,
       'orderId': orderId,
     };
   }
@@ -63,7 +59,6 @@ class ShopComment {
     DateTime? createdAt,
     String? reply,
     DateTime? replyAt,
-    bool? isVerified,
     String? orderId,
   }) {
     return ShopComment(
@@ -74,7 +69,6 @@ class ShopComment {
       createdAt: createdAt ?? this.createdAt,
       reply: reply ?? this.reply,
       replyAt: replyAt ?? this.replyAt,
-      isVerified: isVerified ?? this.isVerified,
       orderId: orderId ?? this.orderId,
     );
   }
@@ -90,7 +84,6 @@ class ShopComment {
         other.createdAt == createdAt &&
         other.reply == reply &&
         other.replyAt == replyAt &&
-        other.isVerified == isVerified &&
         other.orderId == orderId;
   }
 
@@ -103,7 +96,6 @@ class ShopComment {
         createdAt.hashCode ^
         reply.hashCode ^
         replyAt.hashCode ^
-        isVerified.hashCode ^
         orderId.hashCode;
   }
 
@@ -126,7 +118,6 @@ class ShopComment {
       replyAt: data['replyAt'] != null
           ? (data['replyAt'] as Timestamp).toDate()
           : null,
-      isVerified: data['isVerified'] as bool? ?? false,
       orderId: data['orderId'] as String? ?? '',
     );
   }

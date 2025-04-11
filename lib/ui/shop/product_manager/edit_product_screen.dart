@@ -58,7 +58,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
         averageRating: 0,
         variants: [],
         shopId: '',
-        isViolated: false,
         isHidden: false,
         hasVariantImages: false,
         shippingMethods: []);

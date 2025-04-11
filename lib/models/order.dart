@@ -23,29 +23,25 @@ enum PaymentMethod {
 }
 
 class Order {
-  String id; // ID đơn hàng
-  List<OrderItem> item; // Danh sách các mục trong đơn hàng
-  String shopId; // ID cửa hàng
-  ShippingMethod shipMethod; // Phương thức vận chuyển
-  String userId; // ID người dùng (người mua)
-  OrderStatus status; // Trạng thái đơn hàng
-  DateTime createdAt; // Thời gian tạo đơn hàng
-  DateTime? updateAt; // Thời gian cập nhật đơn hàng
-  Address receiveAdress; // Địa chỉ nhận hàng
-  Address? pickUpAdress; // Địa chỉ lấy hàng
-  PaymentMethod paymentMethod; // Phương thức thanh toán
-  double totalProductPrice; // Tổng tiền hàng
-  double totalShipFee; // Tổng phí vận chuyển
-  double totalPrice; // Tổng thanh toán
-  List<OrderStatusHistory> statusHistory; // Lịch sử trạng thái đơn hàng
-  String? trackingNumber; // Mã vận đơn
-  String? shippingCode; // Mã vận đơn (mã bưu điện)
-  DateTime? estimatedDeliveryDate; // Ngày giao hàng dự kiến
-  DateTime? actualDeliveryDate; // Ngày giao hàng thực tế
-  double discountAmount; // Số tiền giảm giá (nếu có)
-  String? discountCode; // Mã giảm giá (nếu có)
-  String? note; // Ghi chú của người mua (nếu có)
-  bool isRated; // Đã đánh giá đơn hàng chưa
+  String id;
+  List<OrderItem> item;
+  String shopId;
+  ShippingMethod shipMethod;
+  String userId;
+  OrderStatus status;
+  DateTime createdAt;
+  DateTime? updateAt;
+  Address receiveAdress;
+  Address? pickUpAdress;
+  PaymentMethod paymentMethod;
+  double totalProductPrice;
+  double totalShipFee;
+  double totalPrice;
+  List<OrderStatusHistory> statusHistory;
+  String? trackingNumber;
+  String? shippingCode;
+  DateTime? estimatedDeliveryDate;
+  DateTime? actualDeliveryDate;
 
   Order({
     required this.id,
@@ -66,10 +62,6 @@ class Order {
     this.shippingCode,
     this.estimatedDeliveryDate,
     this.actualDeliveryDate,
-    this.discountAmount = 0.0,
-    this.discountCode,
-    this.note,
-    this.isRated = false,
     this.pickUpAdress,
   });
 
@@ -101,8 +93,6 @@ class Order {
           : null,
       receiveAdress:
           Address.fromMap(map['receiveAdress'] as Map<String, dynamic>),
-      note: map['note'] as String?,
-      isRated: map['isRated'] as bool? ?? false,
       pickUpAdress: map['pickUpAddress'] != null
           ? Address.fromMap(map['pickUpAddress'] as Map<String, dynamic>)
           : null,
@@ -119,8 +109,6 @@ class Order {
       actualDeliveryDate: map['actualDeliveryDate'] != null
           ? (map['actualDeliveryDate'] as Timestamp).toDate()
           : null,
-      discountAmount: (map['discountAmount'] as num?)?.toDouble() ?? 0.0,
-      discountCode: map['discountCode'] as String?,
     );
   }
 
@@ -140,8 +128,6 @@ class Order {
       'createdAt': Timestamp.fromDate(createdAt),
       'updateAt': updateAt != null ? Timestamp.fromDate(updateAt!) : null,
       'receiveAdress': receiveAdress.toMap(),
-      'note': note,
-      'isRated': isRated,
       'pickUpAddress': pickUpAdress?.toMap(),
       'statusHistory': statusHistory.map((e) => e.toMap()).toList(),
       'trackingNumber': trackingNumber,
@@ -152,8 +138,6 @@ class Order {
       'actualDeliveryDate': actualDeliveryDate != null
           ? Timestamp.fromDate(actualDeliveryDate!)
           : null,
-      'discountAmount': discountAmount,
-      'discountCode': discountCode,
     };
   }
 
@@ -197,10 +181,6 @@ class Order {
       actualDeliveryDate: json['actualDeliveryDate'] != null
           ? DateTime.parse(json['actualDeliveryDate'])
           : null,
-      discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
-      discountCode: json['discountCode'],
-      note: json['note'],
-      isRated: json['isRated'] ?? false,
       pickUpAdress: json['pickUpAddress'] != null
           ? Address.fromMap(json['pickUpAddress'] as Map<String, dynamic>)
           : null,
@@ -228,10 +208,6 @@ class Order {
       'shippingCode': shippingCode,
       'estimatedDeliveryDate': estimatedDeliveryDate?.toIso8601String(),
       'actualDeliveryDate': actualDeliveryDate?.toIso8601String(),
-      'discountAmount': discountAmount,
-      'discountCode': discountCode,
-      'note': note,
-      'isRated': isRated,
       'pickUpAddress': pickUpAdress?.toMap(),
     };
   }
@@ -256,10 +232,6 @@ class Order {
     String? shippingCode,
     DateTime? estimatedDeliveryDate,
     DateTime? actualDeliveryDate,
-    double? discountAmount,
-    String? discountCode,
-    String? note,
-    bool? isRated,
     Address? pickUpAdress,
   }) {
     return Order(
@@ -282,10 +254,6 @@ class Order {
       estimatedDeliveryDate:
           estimatedDeliveryDate ?? this.estimatedDeliveryDate,
       actualDeliveryDate: actualDeliveryDate ?? this.actualDeliveryDate,
-      discountAmount: discountAmount ?? this.discountAmount,
-      discountCode: discountCode ?? this.discountCode,
-      note: note ?? this.note,
-      isRated: isRated ?? this.isRated,
       pickUpAdress: pickUpAdress ?? this.pickUpAdress,
     );
   }
@@ -308,6 +276,6 @@ class Order {
 
   // Phương thức để tính lại tổng giá (nếu cần)
   double calculateTotalPrice() {
-    return totalProductPrice + totalShipFee - discountAmount;
+    return totalProductPrice + totalShipFee;
   }
 }

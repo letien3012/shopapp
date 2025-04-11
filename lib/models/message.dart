@@ -5,9 +5,6 @@ class Message {
   final String chatRoomId;
   final String senderId;
   final String content;
-  final String? imageUrl;
-  final String? productId;
-  final String? orderId;
   final DateTime sentAt;
   final bool isRead;
 
@@ -16,9 +13,6 @@ class Message {
     required this.chatRoomId,
     required this.senderId,
     required this.content,
-    this.imageUrl,
-    this.productId,
-    this.orderId,
     required this.sentAt,
     this.isRead = false,
   });
@@ -30,9 +24,6 @@ class Message {
       chatRoomId: json['chatRoomId'] as String,
       senderId: json['senderId'] as String,
       content: json['content'] as String,
-      imageUrl: json['imageUrl'] as String?,
-      productId: json['productId'] as String?,
-      orderId: json['orderId'] as String?,
       sentAt: DateTime.parse(json['sentAt'] as String),
       isRead: json['isRead'] as bool? ?? false,
     );
@@ -45,9 +36,6 @@ class Message {
       chatRoomId: map['chatRoomId'] as String,
       senderId: map['senderId'] as String,
       content: map['content'] as String,
-      imageUrl: map['imageUrl'] as String?,
-      productId: map['productId'] as String?,
-      orderId: map['orderId'] as String?,
       sentAt: DateTime.parse(map['sentAt'] as String),
       isRead: map['isRead'] as bool? ?? false,
     );
@@ -60,9 +48,6 @@ class Message {
       chatRoomId: firestoreData['chatRoomId'] as String,
       senderId: firestoreData['senderId'] as String,
       content: firestoreData['content'] as String,
-      imageUrl: firestoreData['imageUrl'] as String?,
-      productId: firestoreData['productId'] as String?,
-      orderId: firestoreData['orderId'] as String?,
       // Xử lý sentAt: có thể là String hoặc Timestamp từ Firestore
       sentAt: firestoreData['sentAt'] is String
           ? DateTime.parse(firestoreData['sentAt'] as String)
@@ -78,9 +63,6 @@ class Message {
       'chatRoomId': chatRoomId,
       'senderId': senderId,
       'content': content,
-      'imageUrl': imageUrl,
-      'productId': productId,
-      'orderId': orderId,
       'sentAt': sentAt.toIso8601String(),
       'isRead': isRead,
     };

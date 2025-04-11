@@ -211,6 +211,9 @@ class _SalesAnalysisScreenState extends State<SalesAnalysisScreen> {
                 if (productState is ProductOrderListLoaded) {
                   return Container(
                     color: Colors.white,
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height,
+                    ),
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,6 +335,7 @@ class _SalesAnalysisScreenState extends State<SalesAnalysisScreen> {
 
   void _showOrderStatusFilter() {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
@@ -817,6 +821,7 @@ class _SalesAnalysisScreenState extends State<SalesAnalysisScreen> {
   // Thêm method hiển thị bottom sheet chọn thời gian
   Future<void> _showDateRangePicker() async {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       builder: (BuildContext context) {
         return Column(

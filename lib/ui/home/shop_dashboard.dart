@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
+
 import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_bloc.dart';
 import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_event.dart';
 import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_state.dart';
@@ -173,26 +171,26 @@ class _ShopDashboardState extends State<ShopDashboard>
                                       color: Colors.white),
                                 ],
                               ),
-                              Row(
-                                children: [
-                                  const Icon(Icons.star,
-                                      color: Colors.amber, size: 16),
-                                  Text(
-                                    ' ${shop.isLocked} | ${shop.name}',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              // Row(
+                              //   children: [
+                              //     const Icon(Icons.star,
+                              //         color: Colors.amber, size: 16),
+                              //     Text(
+                              //       ' ${shop.ra}',
+                              //       style: const TextStyle(
+                              //         fontSize: 13,
+                              //         color: Colors.white,
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
                             ],
                           ),
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            _buildActionButton('Theo dõi', Icons.add),
+                            // _buildActionButton('Theo dõi', Icons.add),
                             const SizedBox(height: 5),
                             _buildActionButton('Chat', null, isChat: true),
                           ],
@@ -414,7 +412,7 @@ class _ShopDashboardState extends State<ShopDashboard>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '4.5',
+                                '${product.averageRating}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -424,7 +422,7 @@ class _ShopDashboardState extends State<ShopDashboard>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Đã bán 2k',
+                            'Đã bán ${product.quantitySold}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],

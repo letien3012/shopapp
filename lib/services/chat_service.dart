@@ -67,6 +67,20 @@ class ChatService {
     }
   }
 
+  Future<List<Message>> getAllMessages() async {
+    try {
+      final querySnapshot = await _firestore.collection('messages').get();
+
+      List<Message> messages = querySnapshot.docs
+          .map((doc) => Message.fromFirestore(doc.data()))
+          .toList();
+
+      return messages;
+    } catch (e) {
+      throw Exception('Error fetching messages: $e');
+    }
+  }
+
   // Gửi tin nhắn
   Future<void> sendMessage(Message message) async {
     try {
@@ -125,7 +139,6 @@ class ChatService {
           buyerId: buyerId,
           shopId: shopId,
           createdAt: DateTime.now(),
-          isActive: true,
           lastMessageSenderId: buyerId,
         );
         await _firestore

@@ -125,20 +125,15 @@ class _MyProductScreenState extends State<MyProductScreen>
             .toList();
 
     final inStockProducts = filteredProducts
-        .where((product) =>
-            !product.isViolated &&
-            !product.isHidden &&
-            product.getMaxOptionStock() > 0)
+        .where(
+            (product) => !product.isHidden && product.getMaxOptionStock() > 0)
         .toList();
     final outOfStockProducts = filteredProducts
-        .where((product) =>
-            !product.isViolated &&
-            !product.isHidden &&
-            product.getMaxOptionStock() == 0)
+        .where(
+            (product) => !product.isHidden && product.getMaxOptionStock() == 0)
         .toList();
-    final hiddenProducts = filteredProducts
-        .where((product) => !product.isViolated && product.isHidden)
-        .toList();
+    final hiddenProducts =
+        filteredProducts.where((product) => product.isHidden).toList();
 
     return Stack(
       children: [

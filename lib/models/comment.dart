@@ -11,7 +11,6 @@ class Comment {
   String? replyContent;
   DateTime? replyAt;
   final String? shopId;
-  final bool isVerified;
   final String? variant;
   final String orderId;
   final String? videoUrl;
@@ -28,7 +27,6 @@ class Comment {
     this.replyContent,
     this.replyAt,
     this.shopId,
-    this.isVerified = false,
     this.variant,
     required this.orderId,
     this.videoUrl,
@@ -50,7 +48,6 @@ class Comment {
           ? (map['replyAt'] as Timestamp).toDate()
           : null,
       shopId: map['shopId'] as String?,
-      isVerified: map['isVerified'] as bool? ?? false,
       variant: map['variant'] as String?,
       orderId: map['orderId'] as String,
       videoUrl: map['videoUrl'] as String?,
@@ -71,7 +68,6 @@ class Comment {
       'replyContent': replyContent,
       'replyAt': replyAt != null ? Timestamp.fromDate(replyAt!) : null,
       'shopId': shopId,
-      'isVerified': isVerified,
       'variant': variant,
       'orderId': orderId,
       'videoUrl': videoUrl,
@@ -91,7 +87,6 @@ class Comment {
     String? replyContent,
     DateTime? replyAt,
     String? shopId,
-    bool? isVerified,
     String? variant,
     String? orderId,
     String? videoUrl,
@@ -108,7 +103,6 @@ class Comment {
       replyContent: replyContent ?? this.replyContent,
       replyAt: replyAt ?? this.replyAt,
       shopId: shopId ?? this.shopId,
-      isVerified: isVerified ?? this.isVerified,
       variant: variant ?? this.variant,
       orderId: orderId ?? this.orderId,
       videoUrl: videoUrl ?? this.videoUrl,
@@ -129,7 +123,6 @@ class Comment {
         other.replyContent == replyContent &&
         other.replyAt == replyAt &&
         other.shopId == shopId &&
-        other.isVerified == isVerified &&
         other.variant == variant &&
         other.orderId == orderId &&
         other.videoUrl == videoUrl &&
@@ -146,7 +139,6 @@ class Comment {
         replyContent.hashCode ^
         replyAt.hashCode ^
         shopId.hashCode ^
-        isVerified.hashCode ^
         variant.hashCode ^
         orderId.hashCode ^
         videoUrl.hashCode ^
@@ -177,7 +169,6 @@ class Comment {
           ? (data['replyAt'] as Timestamp).toDate()
           : null,
       shopId: data['shopId'] as String?,
-      isVerified: data['isVerified'] as bool? ?? false,
       variant: data['variant'] as String?,
       orderId: data['orderId'] as String? ?? '',
       videoUrl: data['videoUrl'] as String?,

@@ -281,17 +281,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                     color: Colors.black,
                                   ),
                                 ),
-                                if (message.imageUrl != null)
-                                  Image.network(
-                                    message.imageUrl!,
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                  ),
-                                if (message.productId != null)
-                                  Text('Sản phẩm: ${message.productId}'),
-                                if (message.orderId != null)
-                                  Text('Đơn hàng: ${message.orderId}'),
                                 const SizedBox(height: 5),
                                 Text(
                                   _formatTime(messageDate),

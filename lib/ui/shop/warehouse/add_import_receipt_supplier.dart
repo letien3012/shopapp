@@ -37,7 +37,8 @@ class _AddImportReceiptSupplierScreenState
           final state = context.read<SupplierBloc>().state as SupplierLoaded;
 
           final supplier = state.suppliers
-              .where((s) => s.status == SupplierStatus.active)
+              .where((s) =>
+                  s.status == SupplierStatus.active && s.isDeleted == false)
               .toList();
           _findAndSetSelectedSupplier(selectedSupplierId, supplier);
         }

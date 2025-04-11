@@ -14,8 +14,6 @@ class Shop {
   final String? avatarUrl;
   final String? backgroundImageUrl;
   final String? description;
-  final bool isClose;
-  final bool isLocked;
   final List<ShippingMethod> shippingMethods;
 
   Shop({
@@ -29,8 +27,6 @@ class Shop {
     this.avatarUrl,
     this.backgroundImageUrl,
     this.description,
-    required this.isClose,
-    required this.isLocked,
     required this.shippingMethods,
   });
 
@@ -60,8 +56,6 @@ class Shop {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       backgroundImageUrl: backgroundImageUrl ?? this.backgroundImageUrl,
       description: description ?? this.description,
-      isClose: isClose ?? this.isClose,
-      isLocked: isLocked ?? this.isLocked,
       shippingMethods: shippingMethods ?? this.shippingMethods,
     );
   }
@@ -82,8 +76,6 @@ class Shop {
       avatarUrl: map['avatarUrl'] as String?,
       backgroundImageUrl: map['backgroundImageUrl'] as String?,
       description: map['description'] as String?,
-      isClose: map['isClose'] as bool,
-      isLocked: map['isLocked'] as bool,
       shippingMethods: (map['shippingMethods'] as List<dynamic>? ?? [])
           .map((e) => ShippingMethod.fromMap(e as Map<String, dynamic>))
           .toList(),
@@ -105,8 +97,6 @@ class Shop {
       avatarUrl: data['avatarUrl'] as String?,
       backgroundImageUrl: data['backgroundImageUrl'] as String?,
       description: data['description'] as String?,
-      isClose: data['isClose'] as bool,
-      isLocked: data['isLocked'] as bool,
       shippingMethods: (data['shippingMethods'] as List<dynamic>? ?? [])
           .map((e) => ShippingMethod.fromMap(e as Map<String, dynamic>))
           .toList(),
@@ -125,8 +115,6 @@ class Shop {
       'avatarUrl': avatarUrl,
       'backgroundImageUrl': backgroundImageUrl,
       'description': description,
-      'isClose': isClose,
-      'isLocked': isLocked,
       'shippingMethods':
           shippingMethods.map((method) => method.toMap()).toList(),
     };
@@ -143,6 +131,6 @@ class Shop {
         'addresses: $addresses, phoneNumber: $phoneNumber, email: $email, '
         'submittedAt: $submittedAt, avatarUrl: $avatarUrl, '
         'backgroundImageUrl: $backgroundImageUrl, description: $description, '
-        'isClose: $isClose, isLocked: $isLocked, shippingMethods: $shippingMethods)';
+        'shippingMethods: $shippingMethods)';
   }
 }

@@ -6,7 +6,6 @@ class ChatRoom {
   final String shopId;
   final DateTime createdAt;
   final String? lastMessageId;
-  final bool isActive;
   final int unreadCountBuyer;
   final int unreadCountShop;
   final String lastMessageSenderId;
@@ -17,7 +16,6 @@ class ChatRoom {
     required this.shopId,
     required this.createdAt,
     this.lastMessageId,
-    required this.isActive,
     this.unreadCountBuyer = 0,
     this.unreadCountShop = 0,
     required this.lastMessageSenderId,
@@ -30,7 +28,6 @@ class ChatRoom {
       shopId: json['shopId'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       lastMessageId: json['lastMessageId'] as String?,
-      isActive: json['isActive'] as bool? ?? true,
       unreadCountBuyer: json['unreadCountBuyer'] as int? ?? 0,
       unreadCountShop: json['unreadCountShop'] as int? ?? 0,
       lastMessageSenderId: json['lastMessageSenderId'] as String,
@@ -46,7 +43,6 @@ class ChatRoom {
       unreadCountShop: map['unreadCountShop'] as int,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       lastMessageId: map['lastMessageId'] as String?,
-      isActive: map['isActive'] as bool? ?? true,
       lastMessageSenderId: map['lastMessageSenderId'] as String,
     );
   }
@@ -60,7 +56,6 @@ class ChatRoom {
           ? DateTime.parse(firestoreData['createdAt'] as String)
           : (firestoreData['createdAt'] as Timestamp).toDate(),
       lastMessageId: firestoreData['lastMessageId'] as String?,
-      isActive: firestoreData['isActive'] as bool? ?? true,
       unreadCountBuyer: firestoreData['unreadCountBuyer'] as int? ?? 0,
       unreadCountShop: firestoreData['unreadCountShop'] as int? ?? 0,
       lastMessageSenderId: firestoreData['lastMessageSenderId'] as String,
@@ -74,7 +69,6 @@ class ChatRoom {
       'shopId': shopId,
       'createdAt': createdAt.toIso8601String(),
       'lastMessageId': lastMessageId,
-      'isActive': isActive,
       'unreadCountBuyer': unreadCountBuyer,
       'unreadCountShop': unreadCountShop,
       'lastMessageSenderId': lastMessageSenderId,

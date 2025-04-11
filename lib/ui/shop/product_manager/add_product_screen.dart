@@ -60,7 +60,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
       averageRating: 0,
       variants: [],
       shopId: '',
-      isViolated: false,
       isHidden: false,
       isDeleted: false,
       hasVariantImages: false,

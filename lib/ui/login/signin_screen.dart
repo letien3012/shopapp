@@ -96,6 +96,7 @@ class _SigninScreenState extends State<SigninScreen> {
             final user = (context.read<UserBloc>().state as UserLoaded).user;
             if (user.isLock) {
               _showDialog("Tài khoản của bạn đã bị khóa ");
+              context.read<AuthBloc>().add(SignOutEvent());
             } else {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(

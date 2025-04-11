@@ -77,7 +77,7 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
                       ? _selectedGender = userState.user.gender!
                       : null;
 
-                  userState.user.date != null
+                  userState.user.date != null && _selectedDate.isEmpty
                       ? _selectedDate = userState.user.date!
                       : null;
                   _avatarUrlController.text.isEmpty
@@ -89,7 +89,6 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
                       ? _nameController.text = userState.user.name!
                       : null;
 
-                  _dateController.text = _selectedDate;
                   _genderController.text = _selectedGender.name;
                   return _buildContent(context, userState);
                 } else if (userState is UserError) {
@@ -439,6 +438,7 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
               _selectedDate =
                   "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
               _dateController.text = _selectedDate;
+
               if (_dateController.text != user.date) {
                 setState(() {
                   _isInfoChange = true;
@@ -625,6 +625,7 @@ class _ChangeInfomationUserState extends State<ChangeInfomationUser> {
                     userName: user.userName,
                     role: user.role,
                   );
+
                   context
                       .read<UserBloc>()
                       .add(UpdateBasicInfoUserEvent(userUpdate));

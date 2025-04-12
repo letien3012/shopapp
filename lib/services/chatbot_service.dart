@@ -146,9 +146,7 @@ class ChatbotService {
   }
 
   Future<String> generateAnswer(
-    String query,
-    List<Map<String, String>> chatHistory,
-  ) async {
+      String query, List<Map<String, String>> chatHistory) async {
     final apiKey = dotenv.env['API_KEY'];
     const url =
         'https://router.huggingface.co/novita/v3/openai/chat/completions';
@@ -163,16 +161,36 @@ class ChatbotService {
       return await generateProductChunk(
           await _fetchProductWithSubcollections(e));
     }));
-
     final prompt = '''
-    Bạn là một trợ lý bán hàng chuyên nghiệp.
-    Đây là danh sách sản phẩm có trong cửa hàng
+    Bạn là một trợ lý bán hàng chuyên nghiệp, thân thiện và nhiệt tình.
+    Dưới đây là danh sách sản phẩm có trong cửa hàng:
     $context
-    Câu hỏi của khách hàng: $query
 
-    Nếu câu hỏi liên quan đến sản phẩm, hãy trả lời dựa trên danh sách sản phẩm một cách tự nhiên và thân thiện.
-    Nếu không liên quan đến sản phẩm, hãy trả lời 1 cách tự nhiên và hợp lý nhất.
+    Câu hỏi của khách hàng: "$query"
+
+    Hãy làm theo hướng dẫn sau:
+    - Nếu câu hỏi liên quan đến sản phẩm, hãy trả lời tự nhiên và thân thiện trước, giống như đang nói chuyện với khách.
+    - Không cần ghi "Trả lời khách hàng", "P/s" "Ưu đã".
+    - Sau phần trả lời, mới đưa thông tin chi tiết của các sản phẩm phù hợp (nếu có) theo định dạng:
+    [{
+      "productId": "id sản phẩm",
+      "name": "tên sản phẩm",
+      "price": "giá sản phẩm",
+      "imageUrl": "url ảnh sản phẩm"
+    }]
+    - Nếu câu hỏi không liên quan đến sản phẩm, hãy trả lời hợp lý và tự nhiên nhất có thể.
+    Luôn ưu tiên trải nghiệm thân thiện và dễ hiểu cho khách hàng.
     ''';
+
+    // final prompt = '''
+    // Bạn là một trợ lý bán hàng chuyên nghiệp.
+    // Đây là danh sách sản phẩm có trong cửa hàng
+    // $context
+    // Câu hỏi của khách hàng: $query
+
+    // Nếu câu hỏi liên quan đến sản phẩm, hãy trả lời dựa trên danh sách sản phẩm một cách tự nhiên và thân thiện.
+    // Nếu không liên quan đến sản phẩm, hãy trả lời 1 cách tự nhiên và hợp lý nhất.
+    // ''';
 
     final response = await http.post(
       Uri.parse(url),
@@ -199,7 +217,6 @@ class ChatbotService {
         // 'inputs': prompt,
       }),
     );
-    print(response.body);
     if (response.statusCode == 200) {
       final responseData = utf8.decode(response.bodyBytes);
       final data = json.decode(responseData);

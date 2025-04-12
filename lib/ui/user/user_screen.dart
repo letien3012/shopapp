@@ -731,7 +731,14 @@ class _UserScreenState extends State<UserScreen> {
         splashColor: Colors.grey.withOpacity(0.3),
         highlightColor: Colors.grey.withOpacity(0.1),
         onTap: routeName != null
-            ? () => Navigator.of(context).pushNamed(routeName)
+            ? () {
+                final authState = context.read<AuthBloc>().state;
+                if (authState is AuthAuthenticated) {
+                  Navigator.of(context).pushNamed(routeName);
+                } else {
+                  Navigator.of(context).pushNamed(SigninScreen.routeName);
+                }
+              }
             : null,
         child: Container(
           height: 50,

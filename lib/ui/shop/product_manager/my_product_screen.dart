@@ -9,10 +9,13 @@ import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class MyProductScreen extends StatefulWidget {
   const MyProductScreen({super.key});
@@ -49,17 +52,44 @@ class _MyProductScreenState extends State<MyProductScreen>
     });
   }
 
-  void _hideProduct(Product product) {
-    context.read<ProductBloc>().add(UpdateProductEvent(product));
+  Future<bool> _showConfirmLockUserDialog(String title) async {
+    final confirmed = await ConfirmDialog(
+      title: title,
+      cancelText: "Không",
+      confirmText: "Đồng ý",
+    ).show(context);
+    return confirmed;
+  }
+
+  Future<void> _showAlertDialog(String title) async {
+    await showAlertDialog(
+      context,
+      message: title,
+      iconPath: IconHelper.check,
+      duration: Duration(seconds: 1),
+    );
+  }
+
+  void _hideProduct(Product product) async {
+    bool confirmed = false;
+    if (product.isHidden) {
+      confirmed = await _showConfirmLockUserDialog("Xác nhận ẩn sản phẩm?");
+    } else {
+      confirmed = await _showConfirmLockUserDialog("Xác nhận hiện sản phẩm?");
+    }
+    if (confirmed) {
+      if (product.isHidden) {
+        await _showAlertDialog("Đã ẩn sản phẩm");
+      } else {
+        await _showAlertDialog("Đã hiện sản phẩm");
+      }
+      context.read<ProductBloc>().add(UpdateProductEvent(product));
+    }
   }
 
   void _editProduct(Product product) {
-    Navigator.of(context).pushNamed(
-      EditProductScreen.routeName,
-      arguments: {
-        'product': product,
-      },
-    );
+    Navigator.of(context)
+        .pushNamed(EditProductScreen.routeName, arguments: product);
   }
 
   void _deleteProduct(Product product) {

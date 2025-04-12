@@ -177,16 +177,16 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                               color: Colors.black,
                             ),
                           ),
-                          const Text(
-                            "Truy cập 10 phút trước",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey,
-                            ),
-                          ),
+                          // const Text(
+                          //   "Truy cập 10 phút trước",
+                          //   maxLines: 1,
+                          //   overflow: TextOverflow.ellipsis,
+                          //   style: TextStyle(
+                          //     fontSize: 12,
+                          //     fontWeight: FontWeight.w500,
+                          //     color: Colors.grey,
+                          //   ),
+                          // ),
                         ],
                       );
                     },
@@ -334,13 +334,13 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () {},
-            child: const Icon(
-              HeroIcons.plus_circle,
-              size: 30,
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: () {},
+          //   child: const Icon(
+          //     HeroIcons.plus_circle,
+          //     size: 30,
+          //   ),
+          // ),
           const SizedBox(width: 5),
           Expanded(
             child: Container(
@@ -377,13 +377,13 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
                       },
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {},
-                    child: const Icon(
-                      Icons.emoji_emotions,
-                      size: 30,
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: () {},
+                  //   child: const Icon(
+                  //     Icons.emoji_emotions,
+                  //     size: 30,
+                  //   ),
+                  // ),
                   const SizedBox(width: 10),
                 ],
               ),

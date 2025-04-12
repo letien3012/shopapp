@@ -1,8 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/favoriteproduct/product_favorite_event.dart';
 import 'package:luanvan/blocs/favoriteproduct/product_favorite_state.dart';
-import 'package:luanvan/blocs/listproductbycategory/listproductbycategory_event.dart';
-import 'package:luanvan/blocs/listproductbycategory/listproductbycategory_state.dart';
 import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/user_service.dart';
 
@@ -45,9 +43,13 @@ class ProductFavoriteBloc
     try {
       final listProductId =
           await _userService.fetchFavoriteProduct(event.userId);
-      final listProduct =
-          await _productService.fetchProductsByListProductId(listProductId);
-      emit(ProductFavoriteLoaded(listProduct));
+      if (listProductId.isEmpty) {
+        emit(ProductFavoriteLoaded([]));
+      } else {
+        final listProduct =
+            await _productService.fetchProductsByListProductId(listProductId);
+        emit(ProductFavoriteLoaded(listProduct));
+      }
     } catch (e) {
       emit(ProductFavoriteError(e.toString()));
     }

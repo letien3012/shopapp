@@ -9,6 +9,8 @@ import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/baner/edit_banner_screen.dart';
 import 'package:luanvan/ui/shop/baner/add_banner_screen.dart';
 import 'package:luanvan/models/banner.dart' as model;
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class MyBannerScreen extends StatefulWidget {
   const MyBannerScreen({super.key});
@@ -27,8 +29,39 @@ class _MyBannerScreenState extends State<MyBannerScreen> {
     });
   }
 
-  void _hideBanner(model.Banner banner) {
-    context.read<BannerBloc>().add(UpdateBannerEvent(banner: banner));
+  Future<bool> _showConfirmLockUserDialog(String title) async {
+    final confirmed = await ConfirmDialog(
+      title: title,
+      cancelText: "Không",
+      confirmText: "Đồng ý",
+    ).show(context);
+    return confirmed;
+  }
+
+  Future<void> _showAlertDialog(String title) async {
+    await showAlertDialog(
+      context,
+      message: title,
+      iconPath: IconHelper.check,
+      duration: Duration(seconds: 1),
+    );
+  }
+
+  void _hideBanner(model.Banner banner) async {
+    bool confirmed = false;
+    if (!banner.isHidden) {
+      confirmed = await _showConfirmLockUserDialog("Xác nhận hiện banner?");
+    } else {
+      confirmed = await _showConfirmLockUserDialog("Xác nhận ẩn banner?");
+    }
+    if (confirmed) {
+      if (!banner.isHidden) {
+        await _showAlertDialog("Đã hiện banner");
+      } else {
+        await _showAlertDialog("Đã ẩn banner");
+      }
+      context.read<BannerBloc>().add(UpdateBannerEvent(banner: banner));
+    }
   }
 
   void _editBanner(model.Banner banner) {

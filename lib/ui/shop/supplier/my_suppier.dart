@@ -10,6 +10,7 @@ import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/supplier/add_supplier.dart';
 import 'package:luanvan/ui/shop/supplier/edit_supplier.dart';
 import 'package:luanvan/ui/widgets/alert_diablog.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class MySupplierScreen extends StatefulWidget {
   const MySupplierScreen({super.key});
@@ -31,10 +32,19 @@ class _MySupplierScreenState extends State<MySupplierScreen> {
     });
   }
 
-  Future<void> _showDeleteSuccessDialog() async {
+  Future<bool> _showConfirmLockUserDialog(String title) async {
+    final confirmed = await ConfirmDialog(
+      title: title,
+      cancelText: "Không",
+      confirmText: "Đồng ý",
+    ).show(context);
+    return confirmed;
+  }
+
+  Future<void> _showAlertDialog(String title) async {
     await showAlertDialog(
       context,
-      message: "Xóa nhà cung cấp thành công",
+      message: title,
       iconPath: IconHelper.check,
       duration: Duration(seconds: 1),
     );
@@ -48,16 +58,20 @@ class _MySupplierScreenState extends State<MySupplierScreen> {
   }
 
   Future<void> _deleteSupplier(String supplierId) async {
-    context.read<SupplierBloc>().add(DeleteSupplier(supplierId));
-    await context
-        .read<SupplierBloc>()
-        .stream
-        .firstWhere((state) => state is SupplierOperationSuccess);
-    final supplierState = context.read<SupplierBloc>().state;
-    if (supplierState is SupplierOperationSuccess &&
-        supplierState.message == 'Xóa nhà cung cấp thành công') {
-      context.read<SupplierBloc>().add(LoadSuppliers());
-      _showDeleteSuccessDialog();
+    bool confirmed =
+        await _showConfirmLockUserDialog("Xác nhận xóa nhà cung cấp?");
+    if (confirmed) {
+      context.read<SupplierBloc>().add(DeleteSupplier(supplierId));
+      await context
+          .read<SupplierBloc>()
+          .stream
+          .firstWhere((state) => state is SupplierOperationSuccess);
+      final supplierState = context.read<SupplierBloc>().state;
+      if (supplierState is SupplierOperationSuccess &&
+          supplierState.message == 'Xóa nhà cung cấp thành công') {
+        context.read<SupplierBloc>().add(LoadSuppliers());
+        _showAlertDialog("Xóa nhà cung cấp thành công");
+      }
     }
   }
 
@@ -71,6 +85,7 @@ class _MySupplierScreenState extends State<MySupplierScreen> {
     if (supplierState is SupplierOperationSuccess &&
         supplierState.message == 'Cập nhật nhà cung cấp thành công') {
       context.read<SupplierBloc>().add(LoadSuppliers());
+      _showAlertDialog("Cập nhật trạng thái nhà cung cấp thành công");
     }
   }
 

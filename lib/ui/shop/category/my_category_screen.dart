@@ -11,6 +11,8 @@ import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/category/add_category_screen.dart';
 import 'package:luanvan/ui/shop/category/edit_category_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class MyCategoryScreen extends StatefulWidget {
   const MyCategoryScreen({super.key});
@@ -32,8 +34,39 @@ class _MyCategoryScreenState extends State<MyCategoryScreen> {
     });
   }
 
-  void _hideCategory(Category category) {
-    context.read<CategoryBloc>().add(UpdateCategoryEvent(category: category));
+  Future<bool> _showConfirmLockUserDialog(String title) async {
+    final confirmed = await ConfirmDialog(
+      title: title,
+      cancelText: "Không",
+      confirmText: "Đồng ý",
+    ).show(context);
+    return confirmed;
+  }
+
+  Future<void> _showAlertDialog(String title) async {
+    await showAlertDialog(
+      context,
+      message: title,
+      iconPath: IconHelper.check,
+      duration: Duration(seconds: 1),
+    );
+  }
+
+  void _hideCategory(Category category) async {
+    bool confirmed = false;
+    if (category.isHidden) {
+      confirmed = await _showConfirmLockUserDialog("Xác nhận hiện danh mục?");
+    } else {
+      confirmed = await _showConfirmLockUserDialog("Xác nhận ẩn danh mục?");
+    }
+    if (confirmed) {
+      if (category.isHidden) {
+        await _showAlertDialog("Đã hiện danh mục");
+      } else {
+        await _showAlertDialog("Đã ẩn danh mục");
+      }
+      context.read<CategoryBloc>().add(UpdateCategoryEvent(category: category));
+    }
   }
 
   void _editCategory(Category category) {

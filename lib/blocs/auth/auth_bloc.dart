@@ -92,23 +92,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       } else {
         emit(AuthAuthenticated(userCredential.user!));
       }
-    } on FirebaseAuthException catch (e) {
-      String message = 'Đã xảy ra lỗi';
-      if (e.code == 'user-not-found') {
-        message = 'Tài khoản không tồn tại';
-      } else if (e.code == 'wrong-password') {
-        message = 'Mật khẩu không chính xác';
-      } else if (e.code == 'invalid-email') {
-        message = 'Email không hợp lệ';
-      } else if (e.code == 'user-disabled') {
-        message = 'Tài khoản đã bị vô hiệu hóa';
-      } else if (e.code == 'too-many-requests') {
-        message = 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau';
-      }
-      emit(AuthError(message));
     } catch (e) {
-      print(e);
-      emit(AuthError('Đã xảy ra lỗi: ${e.toString()}'));
+      emit(AuthError(e.toString().split(':')[1]));
     }
   }
 

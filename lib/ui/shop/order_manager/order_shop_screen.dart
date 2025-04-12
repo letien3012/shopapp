@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/list_user/list_user_bloc.dart';
@@ -15,7 +14,6 @@ import 'package:luanvan/blocs/productorder/product_order_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/order.dart';
-import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/shop/order_manager/user_order_item.dart';
 import 'package:luanvan/ui/widgets/confirm_diablog.dart';

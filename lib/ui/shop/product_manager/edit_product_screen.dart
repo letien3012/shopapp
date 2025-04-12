@@ -63,15 +63,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
         shippingMethods: []);
 
     Future.microtask(() {
-      final args =
-          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      product = ModalRoute.of(context)!.settings.arguments as Product;
       context.read<CategoryBloc>().add(FetchCategoriesEvent());
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context.read<ShopBloc>().add(FetchShopEvent(authState.user.uid));
       }
-
-      product = args['product'] as Product;
       _nameController.text = product.name;
       _descriptionController.text = product.description;
       _category =
@@ -264,279 +261,399 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   Widget _buildShopContent(
       BuildContext context, Shop shop, List<Category> categories) {
-    return Stack(
-      children: [
-        SingleChildScrollView(
-          child: Container(
-            color: Colors.grey[100],
-            padding:
-                const EdgeInsets.only(top: 90, bottom: 80, left: 10, right: 10),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
+    return BlocBuilder<CategoryBloc, CategoryState>(
+        builder: (context, categoryState) {
+      return Stack(
+        children: [
+          SingleChildScrollView(
+            child: Container(
+              color: Colors.grey[100],
+              padding: const EdgeInsets.only(
+                  top: 90, bottom: 80, left: 10, right: 10),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      margin: EdgeInsets.only(top: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                "Hình ảnh/Video sản phẩm ",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                "*",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                              Spacer(),
+                              Text("Tỉ lệ hình ảnh 1:1")
+                            ],
+                          ),
+                          Text(
+                            "(Vui lòng giữ và kéo thả ảnh bìa ở đầu)",
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 10),
+                          ReorderableGridView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _imageFiles.length + 1,
+                            itemBuilder: (context, index) {
+                              return index != _imageFiles.length
+                                  ? Stack(
+                                      key: ValueKey(index),
+                                      children: [
+                                        Positioned.fill(
+                                          child: _imageFiles[index]
+                                                  .path
+                                                  .startsWith('http')
+                                              ? Image.network(
+                                                  _imageFiles[index].path,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : Image.file(
+                                                  File(_imageFiles[index].path),
+                                                  fit: BoxFit.cover,
+                                                ),
+                                        ),
+                                        Align(
+                                          alignment: Alignment.topRight,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              setState(() {
+                                                _imageFiles.removeAt(index);
+                                              });
+                                            },
+                                            child: Icon(
+                                              Icons.cancel,
+                                              color: Colors.red[700],
+                                              size: 15,
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    )
+                                  : GestureDetector(
+                                      key: ValueKey(index),
+                                      onTap: () {
+                                        showImagePickMethod(context);
+                                      },
+                                      child: Container(
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                            border: Border.all(
+                                              width: 0.5,
+                                              color: Colors.red,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
+                                        child: Text(
+                                          "Thêm ảnh",
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    );
+                            },
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 1,
+                            ),
+                            onReorder: (int oldIndex, int newIndex) {
+                              if (oldIndex == _imageFiles.length ||
+                                  newIndex == _imageFiles.length) return;
+                              setState(() {
+                                final item = _imageFiles.removeAt(oldIndex);
+                                _imageFiles.insert(newIndex, item);
+                              });
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    padding: const EdgeInsets.all(16),
-                    margin: EdgeInsets.only(top: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                    const SizedBox(height: 10),
+                    Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    "Tên sản phẩm ",
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  Text(
+                                    "*",
+                                    style: TextStyle(color: Colors.red),
+                                  )
+                                ],
+                              ),
+                              const Spacer(),
+                              ValueListenableBuilder<TextEditingValue>(
+                                valueListenable: _nameController,
+                                builder: (context, value, child) {
+                                  return Text(
+                                    "${value.text.length}/120",
+                                    style: const TextStyle(
+                                        fontSize: 14, color: Colors.grey),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: _nameController,
+                            maxLength: 120,
+                            decoration: const InputDecoration(
+                              hintText: "Nhập tên sản phẩm",
+                              border: InputBorder.none,
+                              counterText: '',
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                product.name = value;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Vui lòng nhập tên sản phẩm";
+                              }
+                              if (value.length < 10) {
+                                return "Tên sản phẩm ít nhất 10 ký tự";
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    "Mô tả sản phẩm ",
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  Text(
+                                    "*",
+                                    style: TextStyle(color: Colors.red),
+                                  )
+                                ],
+                              ),
+                              const Spacer(),
+                              ValueListenableBuilder<TextEditingValue>(
+                                valueListenable: _descriptionController,
+                                builder: (context, value, child) {
+                                  return Text(
+                                    "${value.text.length}/3000",
+                                    style: const TextStyle(
+                                        fontSize: 14, color: Colors.grey),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: _descriptionController,
+                            maxLength: 3000,
+                            maxLines: 4,
+                            decoration: const InputDecoration(
+                              hintText: "Nhập mô tả sản phẩm",
+                              border: InputBorder.none,
+                              counterText: '',
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                product.description = value;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Vui lòng nhập mô tả sản phẩm";
+                              }
+                              if (value.length < 100) {
+                                return "Mô tả sản phẩm ít 100 ký tự";
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () async {
+                        final result = await Navigator.pushNamed(
+                                context, AddProductCategoryScreen.routeName,
+                                arguments: {'selectedCategory': _category})
+                            as Category;
+                        if (result != null) {
+                          setState(() {
+                            _category = result.id;
+                          });
+                        }
+                      },
+                      child: Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Text(
+                                  "Danh mục",
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                Text(
+                                  "*",
+                                  style: TextStyle(color: Colors.red),
+                                )
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  _category == "Chọn danh mục"
+                                      ? _category
+                                      : categories
+                                          .where((element) =>
+                                              element.id == _category)
+                                          .first
+                                          .name,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _category == "Chọn danh mục"
+                                        ? Colors.grey
+                                        : Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                const Icon(Icons.arrow_forward_ios,
+                                    size: 16, color: Colors.grey),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () async {
+                        final updatedProduct = await Navigator.pushNamed(
+                          context,
+                          EditVariantScreen.routeName,
+                          arguments: product,
+                        );
+
+                        if (updatedProduct != null &&
+                            updatedProduct is Product) {
+                          setState(() {
+                            product = updatedProduct;
+                            if (product.variants.isNotEmpty) {
+                              _product_variant = product.variants
+                                  .map((val) => val.label)
+                                  .join(", ");
+                              _priceController.text =
+                                  "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
+                              _stockController.text =
+                                  "${product.getMaxOptionStock()}";
+                            } else {
+                              _product_variant = 'Thiết lập màu sắc kích thước';
+                              _priceController.text = product.price.toString();
+                              _stockController.text =
+                                  product.quantity.toString();
+                            }
+                          });
+                        }
+                      },
+                      child: Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              "Hình ảnh/Video sản phẩm ",
+                              "Phân loại hàng",
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w500),
                             ),
-                            Text(
-                              "*",
-                              style: TextStyle(color: Colors.red),
-                            ),
-                            Spacer(),
-                            Text("Tỉ lệ hình ảnh 1:1")
-                          ],
-                        ),
-                        Text(
-                          "(Vui lòng giữ và kéo thả ảnh bìa ở đầu)",
-                          style: TextStyle(fontSize: 13, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 10),
-                        ReorderableGridView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _imageFiles.length + 1,
-                          itemBuilder: (context, index) {
-                            return index != _imageFiles.length
-                                ? Stack(
-                                    key: ValueKey(index),
-                                    children: [
-                                      Positioned.fill(
-                                        child: _imageFiles[index]
-                                                .path
-                                                .startsWith('http')
-                                            ? Image.network(
-                                                _imageFiles[index].path,
-                                                fit: BoxFit.cover,
-                                              )
-                                            : Image.file(
-                                                File(_imageFiles[index].path),
-                                                fit: BoxFit.cover,
-                                              ),
-                                      ),
-                                      Align(
-                                        alignment: Alignment.topRight,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _imageFiles.removeAt(index);
-                                            });
-                                          },
-                                          child: Icon(
-                                            Icons.cancel,
-                                            color: Colors.red[700],
-                                            size: 15,
-                                          ),
-                                        ),
-                                      )
-                                    ],
-                                  )
-                                : GestureDetector(
-                                    key: ValueKey(index),
-                                    onTap: () {
-                                      showImagePickMethod(context);
-                                    },
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                            width: 0.5,
-                                            color: Colors.red,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(8)),
-                                      child: Text(
-                                        "Thêm ảnh",
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
-                                  );
-                          },
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                            childAspectRatio: 1,
-                          ),
-                          onReorder: (int oldIndex, int newIndex) {
-                            if (oldIndex == _imageFiles.length ||
-                                newIndex == _imageFiles.length) return;
-                            setState(() {
-                              final item = _imageFiles.removeAt(oldIndex);
-                              _imageFiles.insert(newIndex, item);
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
                             Row(
                               children: [
-                                const Text(
-                                  "Tên sản phẩm ",
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500),
-                                ),
                                 Text(
-                                  "*",
-                                  style: TextStyle(color: Colors.red),
-                                )
+                                  _product_variant,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: _product_variant ==
+                                            "Thiết lập màu sắc kích thước"
+                                        ? Colors.grey
+                                        : Colors.black,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                const Icon(Icons.arrow_forward_ios,
+                                    size: 16, color: Colors.grey),
                               ],
-                            ),
-                            const Spacer(),
-                            ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _nameController,
-                              builder: (context, value, child) {
-                                return Text(
-                                  "${value.text.length}/120",
-                                  style: const TextStyle(
-                                      fontSize: 14, color: Colors.grey),
-                                );
-                              },
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        TextFormField(
-                          controller: _nameController,
-                          maxLength: 120,
-                          decoration: const InputDecoration(
-                            hintText: "Nhập tên sản phẩm",
-                            border: InputBorder.none,
-                            counterText: '',
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              product.name = value;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Vui lòng nhập tên sản phẩm";
-                            }
-                            if (value.length < 10) {
-                              return "Tên sản phẩm ít nhất 10 ký tự";
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  "Mô tả sản phẩm ",
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                Text(
-                                  "*",
-                                  style: TextStyle(color: Colors.red),
-                                )
-                              ],
-                            ),
-                            const Spacer(),
-                            ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _descriptionController,
-                              builder: (context, value, child) {
-                                return Text(
-                                  "${value.text.length}/3000",
-                                  style: const TextStyle(
-                                      fontSize: 14, color: Colors.grey),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        TextFormField(
-                          controller: _descriptionController,
-                          maxLength: 3000,
-                          maxLines: 4,
-                          decoration: const InputDecoration(
-                            hintText: "Nhập mô tả sản phẩm",
-                            border: InputBorder.none,
-                            counterText: '',
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              product.description = value;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Vui lòng nhập mô tả sản phẩm";
-                            }
-                            if (value.length < 100) {
-                              return "Mô tả sản phẩm ít 100 ký tự";
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () async {
-                      final result = await Navigator.pushNamed(
-                              context, AddProductCategoryScreen.routeName,
-                              arguments: {'selectedCategory': _category})
-                          as Category;
-                      if (result != null) {
-                        setState(() {
-                          _category = result.id;
-                        });
-                      }
-                    },
-                    child: Container(
+                    const SizedBox(height: 10),
+                    Container(
                       color: Colors.white,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
                             children: [
+                              SvgPicture.asset(
+                                IconHelper.pricetag,
+                                height: 20,
+                                width: 20,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
                               const Text(
-                                "Danh mục",
+                                "Giá ",
                                 style: TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w500),
                               ),
@@ -546,300 +663,260 @@ class _EditProductScreenState extends State<EditProductScreen> {
                               )
                             ],
                           ),
-                          Row(
-                            children: [
-                              Text(
-                                _category == "Chọn danh mục"
-                                    ? _category
-                                    : categories
-                                        .firstWhere((element) =>
-                                            element.id == _category)
-                                        .name,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _category == "Chọn danh mục"
-                                      ? Colors.grey
-                                      : Colors.black,
-                                ),
+                          SizedBox(
+                            width: 150,
+                            child: TextFormField(
+                              textAlign: TextAlign.end,
+                              controller: _priceController,
+                              keyboardType: TextInputType.number,
+                              readOnly: product.variants.isNotEmpty,
+                              decoration: const InputDecoration(
+                                hintText: "Đặt",
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
                               ),
-                              const SizedBox(width: 5),
-                              const Icon(Icons.arrow_forward_ios,
-                                  size: 16, color: Colors.grey),
-                            ],
+                              onChanged: (value) {
+                                if (product.variants.isNotEmpty) return;
+                                setState(() {
+                                  if (_formKey.currentState!.validate()) {
+                                    double price = double.tryParse(value) ?? 0;
+                                    product.price = price;
+                                  }
+                                });
+                              },
+                              validator: (value) {
+                                if (product.variants.isNotEmpty) return null;
+                                if (value == null || value.isEmpty) {
+                                  return "Vui lòng nhập giá";
+                                }
+                                if (double.tryParse(value) == null) {
+                                  return "Giá không hợp lệ";
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () async {
-                      final updatedProduct = await Navigator.pushNamed(
-                        context,
-                        EditVariantScreen.routeName,
-                        arguments: product,
-                      );
-
-                      if (updatedProduct != null && updatedProduct is Product) {
-                        setState(() {
-                          product = updatedProduct;
-                          if (product.variants.isNotEmpty) {
-                            _product_variant = product.variants
-                                .map((val) => val.label)
-                                .join(", ");
-                            _priceController.text =
-                                "${product.getMinOptionPrice()} - ${product.getMaxOptionPrice()}";
-                            _stockController.text =
-                                "${product.getMaxOptionStock()}";
-                          } else {
-                            _product_variant = 'Thiết lập màu sắc kích thước';
-                            _priceController.text = product.price.toString();
-                            _stockController.text = product.quantity.toString();
-                          }
-                        });
-                      }
-                    },
-                    child: Container(
-                      color: Colors.white,
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            "Phân loại hàng",
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                _product_variant,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _product_variant ==
-                                          "Thiết lập màu sắc kích thước"
-                                      ? Colors.grey
-                                      : Colors.black,
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              const Icon(Icons.arrow_forward_ios,
-                                  size: 16, color: Colors.grey),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    color: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            SvgPicture.asset(
-                              IconHelper.pricetag,
-                              height: 20,
-                              width: 20,
-                            ),
-                            const SizedBox(
-                              width: 10,
-                            ),
-                            const Text(
-                              "Giá ",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              "*",
-                              style: TextStyle(color: Colors.red),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          width: 150,
-                          child: TextFormField(
-                            textAlign: TextAlign.end,
-                            controller: _priceController,
-                            keyboardType: TextInputType.number,
-                            readOnly: product.variants.isNotEmpty,
-                            decoration: const InputDecoration(
-                              hintText: "Đặt",
-                              hintStyle: TextStyle(color: Colors.grey),
-                              border: InputBorder.none,
-                            ),
-                            onChanged: (value) {
-                              if (product.variants.isNotEmpty) return;
-                              setState(() {
-                                if (_formKey.currentState!.validate()) {
-                                  double price = double.tryParse(value) ?? 0;
-                                  product.price = price;
-                                }
-                              });
-                            },
-                            validator: (value) {
-                              if (product.variants.isNotEmpty) return null;
-                              if (value == null || value.isEmpty) {
-                                return "Vui lòng nhập giá";
-                              }
-                              if (double.tryParse(value) == null) {
-                                return "Giá không hợp lệ";
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    color: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            SvgPicture.asset(
-                              IconHelper.cube,
-                              height: 25,
-                              width: 25,
-                            ),
-                            const SizedBox(
-                              width: 10,
-                            ),
-                            const Text(
-                              "Kho hàng ",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              "*",
-                              style: TextStyle(color: Colors.red),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          width: 150,
-                          child: TextFormField(
-                            textAlign: TextAlign.end,
-                            controller: _stockController,
-                            keyboardType: TextInputType.number,
-                            readOnly: product.variants.isNotEmpty,
-                            decoration: const InputDecoration(
-                              hintText: "Đặt",
-                              hintStyle: TextStyle(color: Colors.grey),
-                              border: InputBorder.none,
-                            ),
-                            onChanged: (value) {
-                              if (product.variants.isNotEmpty) return;
-                              setState(() {
-                                if (_formKey.currentState!.validate()) {
-                                  int stock = int.tryParse(value) ?? 0;
-                                  product.quantity = stock;
-                                }
-                              });
-                            },
-                            validator: (value) {
-                              if (product.variants.isNotEmpty) return null;
-                              if (value == null || value.isEmpty) {
-                                return "Vui lòng nhập số lượng";
-                              }
-                              if (int.tryParse(value) == null) {
-                                return "Số lượng không hợp lệ";
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Vận chuyển
-                  GestureDetector(
-                    onTap: () async {
-                      final updatedProduct = await Navigator.pushNamed(
-                        context,
-                        DeliveryCostScreen.routeName,
-                        arguments: {'product': product},
-                      ) as Product;
-                      setState(() {
-                        product = updatedProduct as Product;
-                        if (product.hasWeightVariant) {
-                          _shipController.text = 'Đã cài đặt';
-                        } else {
-                          _shipController.text = 'Đã cài đặt';
-                        }
-                      });
-                    },
-                    child: Container(
+                    const SizedBox(height: 10),
+                    Container(
                       color: Colors.white,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                SvgPicture.asset(
-                                  IconHelper.truck,
-                                  height: 25,
-                                  width: 25,
-                                ),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                const Text(
-                                  "Phí vận chuyển ",
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                Text(
-                                  "*",
-                                  style: TextStyle(
-                                      color: Colors.red, fontSize: 16),
-                                ),
-                                Expanded(
-                                  child: TextFormField(
-                                    readOnly: true,
-                                    textAlign: TextAlign.end,
-                                    controller: _shipController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                      hintText: "Thiết lập",
-                                      hintStyle: TextStyle(color: Colors.grey),
-                                      border: InputBorder.none,
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return "Vui lòng chọn cân nặng";
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                              ],
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                IconHelper.cube,
+                                height: 25,
+                                width: 25,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              const Text(
+                                "Kho hàng ",
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                "*",
+                                style: TextStyle(color: Colors.red),
+                              )
+                            ],
+                          ),
+                          SizedBox(
+                            width: 150,
+                            child: TextFormField(
+                              textAlign: TextAlign.end,
+                              controller: _stockController,
+                              keyboardType: TextInputType.number,
+                              readOnly: true,
+                              decoration: const InputDecoration(
+                                hintText: "Đặt",
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
+                              ),
+                              onChanged: (value) {
+                                if (product.variants.isNotEmpty) return;
+                                setState(() {
+                                  if (_formKey.currentState!.validate()) {
+                                    int stock = int.tryParse(value) ?? 0;
+                                    product.quantity = stock;
+                                  }
+                                });
+                              },
+                              validator: (value) {
+                                if (product.variants.isNotEmpty) return null;
+                                if (value == null || value.isEmpty) {
+                                  return "Vui lòng nhập số lượng";
+                                }
+                                if (int.tryParse(value) == null) {
+                                  return "Số lượng không hợp lệ";
+                                }
+                                return null;
+                              },
                             ),
                           ),
-                          _shipController.text.isEmpty
-                              ? const SizedBox(
-                                  width: 10,
-                                )
-                              : Container(),
-                          _shipController.text.isEmpty
-                              ? const Icon(Icons.arrow_forward_ios,
-                                  size: 16, color: Colors.grey)
-                              : Container(),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Vận chuyển
+                    GestureDetector(
+                      onTap: () async {
+                        final updatedProduct = await Navigator.pushNamed(
+                          context,
+                          DeliveryCostScreen.routeName,
+                          arguments: {'product': product},
+                        ) as Product;
+                        setState(() {
+                          product = updatedProduct as Product;
+                          if (product.hasWeightVariant) {
+                            _shipController.text = 'Đã cài đặt';
+                          } else {
+                            _shipController.text = 'Đã cài đặt';
+                          }
+                        });
+                      },
+                      child: Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  SvgPicture.asset(
+                                    IconHelper.truck,
+                                    height: 25,
+                                    width: 25,
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  const Text(
+                                    "Phí vận chuyển ",
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  Text(
+                                    "*",
+                                    style: TextStyle(
+                                        color: Colors.red, fontSize: 16),
+                                  ),
+                                  Expanded(
+                                    child: TextFormField(
+                                      readOnly: true,
+                                      textAlign: TextAlign.end,
+                                      controller: _shipController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: const InputDecoration(
+                                        hintText: "Thiết lập",
+                                        hintStyle:
+                                            TextStyle(color: Colors.grey),
+                                        border: InputBorder.none,
+                                      ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return "Vui lòng chọn cân nặng";
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _shipController.text.isEmpty
+                                ? const SizedBox(
+                                    width: 10,
+                                  )
+                                : Container(),
+                            _shipController.text.isEmpty
+                                ? const Icon(Icons.arrow_forward_ios,
+                                    size: 16, color: Colors.grey)
+                                : Container(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              height: 90,
+              width: MediaQuery.of(context).size.width,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+              ),
+              padding: const EdgeInsets.only(
+                  top: 30, left: 10, right: 10, bottom: 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Container(
+                      height: 40,
+                      width: 40,
+                      alignment: Alignment.center,
+                      margin: const EdgeInsets.only(bottom: 5),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.black,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const SizedBox(
+                    height: 40,
+                    child: Text(
+                      "Chỉnh sửa sản phẩm",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              height: 70,
+              width: double.infinity,
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _submitForm(shop.shopId!);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.brown,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        "Lưu",
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                   ),
@@ -847,79 +924,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
               ),
             ),
           ),
-        ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: Container(
-            height: 90,
-            width: MediaQuery.of(context).size.width,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-            ),
-            padding:
-                const EdgeInsets.only(top: 30, left: 10, right: 10, bottom: 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Container(
-                    height: 40,
-                    width: 40,
-                    alignment: Alignment.center,
-                    margin: const EdgeInsets.only(bottom: 5),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black,
-                      size: 24,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const SizedBox(
-                  height: 40,
-                  child: Text(
-                    "Chỉnh sửa sản phẩm",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            height: 70,
-            width: double.infinity,
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _submitForm(shop.shopId!);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.brown,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      "Lưu",
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 }

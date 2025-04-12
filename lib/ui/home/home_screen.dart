@@ -18,6 +18,7 @@ import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
+import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -59,28 +60,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocBuilder<AuthBloc, AuthState>(
-          builder: (BuildContext context, AuthState authState) {
-        if (authState is AuthLoading) return _buildLoading();
-        if (authState is AuthAuthenticated) {
-          return BlocBuilder<HomeBloc, HomeState>(
-            builder: (context, homeState) {
-              if (homeState is HomeLoading) return _buildLoading();
-              if (homeState is HomeLoaded) {
-                return _buildHomeScreen(context, homeState.products);
-              } else if (homeState is HomeError) {
-                return _buildError(homeState.message);
-              }
-              return _buildInitializing();
-            },
-          );
-        } else if (authState is AuthError) {
-          return _buildError(authState.message);
+    return Scaffold(body: BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, homeState) {
+        if (homeState is HomeLoading) return _buildLoading();
+        if (homeState is HomeLoaded) {
+          return _buildHomeScreen(context, homeState.products);
+        } else if (homeState is HomeError) {
+          return _buildError(homeState.message);
         }
         return _buildInitializing();
-      }),
-    );
+      },
+    ));
   }
 
   // Trạng thái đang tải
@@ -380,7 +370,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   InkWell(
                     onTap: () {
-                      Navigator.of(context).pushNamed(CartScreen.routeName);
+                      if (context.read<AuthBloc>().state is AuthAuthenticated) {
+                        Navigator.of(context).pushNamed(CartScreen.routeName);
+                      } else {
+                        Navigator.of(context).pushNamed(SigninScreen.routeName);
+                      }
                     },
                     child: SizedBox(
                       height: 40,

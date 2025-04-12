@@ -564,6 +564,13 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
                                               textAlign: TextAlign.start,
                                               textAlignVertical:
                                                   TextAlignVertical.center,
+                                              enabled: product
+                                                          .optionInfos[index]
+                                                          .optionId1 ==
+                                                      null &&
+                                                  product.optionInfos[index]
+                                                          .optionId2 ==
+                                                      null,
                                               decoration: InputDecoration(
                                                 border: OutlineInputBorder(
                                                   borderRadius:
@@ -578,6 +585,22 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
                                                         bottom: 15, left: 10),
                                                 errorText:
                                                     _stockOptionErrors[index],
+                                                hintText: product
+                                                                .optionInfos[
+                                                                    index]
+                                                                .optionId1 !=
+                                                            null ||
+                                                        product
+                                                                .optionInfos[
+                                                                    index]
+                                                                .optionId2 !=
+                                                            null
+                                                    ? "Không thể chỉnh sửa"
+                                                    : null,
+                                                hintStyle: TextStyle(
+                                                  color: Colors.grey.shade400,
+                                                  fontSize: 14,
+                                                ),
                                               ),
                                               controller:
                                                   _stockOptionControllers[

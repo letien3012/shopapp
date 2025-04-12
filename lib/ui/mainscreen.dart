@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:icons_plus/icons_plus.dart';
-import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/ui/category/all_categories_screen.dart';
 import 'package:luanvan/ui/chat/chat_screen.dart';
 import 'package:luanvan/ui/chatbot/chat_bot_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/home_screen.dart';
-import 'package:luanvan/ui/shop/category/my_category_screen.dart';
 import 'package:luanvan/ui/user/user_screen.dart';
 
 class MainScreen extends StatefulWidget {

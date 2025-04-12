@@ -17,7 +17,10 @@ import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_product_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/ui/shop/user/user_detail_screen.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'dart:async';
+
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class MyUserScreen extends StatefulWidget {
   const MyUserScreen({super.key});
@@ -67,9 +70,41 @@ class _MyUserScreenState extends State<MyUserScreen>
     );
   }
 
-  void _hideUser(UserInfoModel user) {
-    context.read<UserBloc>().add(UpdateUserEvent(user));
-    context.read<AllUserBloc>().add(FetchAllUserEvent());
+  Future<bool> _showConfirmLockUserDialog(String title) async {
+    final confirmed = await ConfirmDialog(
+      title: title,
+      cancelText: "Không",
+      confirmText: "Đồng ý",
+    ).show(context);
+    return confirmed;
+  }
+
+  Future<void> _showAlertDialog(String title) async {
+    await showAlertDialog(
+      context,
+      message: title,
+      iconPath: IconHelper.check,
+      duration: Duration(seconds: 1),
+    );
+  }
+
+  void _hideUser(UserInfoModel user) async {
+    bool confirmed = false;
+    if (!user.isLock) {
+      confirmed =
+          await _showConfirmLockUserDialog("Xác nhận mở khoá người dùng?");
+    } else {
+      confirmed = await _showConfirmLockUserDialog("Xác nhận khoá người dùng?");
+    }
+    if (confirmed) {
+      if (!user.isLock) {
+        await _showAlertDialog("Đã mở khoá người dùng");
+      } else {
+        await _showAlertDialog("Đã khoá người dùng");
+      }
+      context.read<UserBloc>().add(UpdateUserEvent(user));
+      context.read<AllUserBloc>().add(FetchAllUserEvent());
+    }
   }
 
   void _editUser(UserInfoModel user) {

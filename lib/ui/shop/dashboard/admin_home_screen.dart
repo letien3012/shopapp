@@ -434,7 +434,10 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               order.status == OrderStatus.reviewed)
           .length;
       final processingOrders = orderState.orders
-          .where((order) => order.status == OrderStatus.processing)
+          .where((order) =>
+              order.status == OrderStatus.processing ||
+              order.status == OrderStatus.pending ||
+              order.status == OrderStatus.shipped)
           .length;
       final cancelledOrders = orderState.orders
           .where((order) => order.status == OrderStatus.cancelled)

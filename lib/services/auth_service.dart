@@ -83,12 +83,9 @@ class AuthService {
         throw Exception('Xác thực thất bại: ${e.message}');
       },
       codeSent: (String verificationId, int? resendToken) {
-        print('Mã đã gửi, verificationId: $verificationId');
         onCodeSent(verificationId);
       },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        print('Hết thời gian tự động lấy mã: $verificationId');
-      },
+      codeAutoRetrievalTimeout: (String verificationId) {},
     );
   }
 
@@ -191,7 +188,6 @@ class AuthService {
         throw Exception('Đăng nhập thất bại: ${loginResult.message}');
       }
 
-      print('Access Token: ${loginResult.accessToken!.tokenString}');
       final OAuthCredential facebookAuthCredential =
           FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
 
@@ -199,7 +195,6 @@ class AuthService {
       try {
         userCredential =
             await _firebaseAuth.signInWithCredential(facebookAuthCredential);
-        print('Đăng nhập thành công: ${userCredential.user?.displayName}');
         User? user = userCredential.user;
         if (user != null) {
           QuerySnapshot querySnapshot = await _firestore
@@ -380,14 +375,17 @@ class AuthService {
         password: password,
       );
     } on FirebaseAuthException catch (e) {
-      print(e.code);
-      if (e.code == 'user-not-found') {
-        throw Exception('Tài khoản không tồn tại.');
-      } else if (e.code == 'wrong-password') {
-        throw Exception('Mật khẩu không chính xác.');
-      } else {
-        throw Exception('Đăng nhập thất bại: ${e.message}');
+      String message = 'Đã xảy ra lỗi';
+      if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+        message = 'Tài khoản hoặc mật khẩu không chính xác';
+      } else if (e.code == 'invalid-email') {
+        message = 'Email không hợp lệ';
+      } else if (e.code == 'user-disabled') {
+        message = 'Tài khoản đã bị vô hiệu hóa';
+      } else if (e.code == 'too-many-requests') {
+        message = 'Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau';
       }
+      throw Exception(message);
     } catch (e) {
       throw Exception('Lỗi không xác định: $e');
     }
@@ -429,7 +427,6 @@ class AuthService {
           password: 'temporary_password',
         );
         if (userExits.user != null) {
-          print('Tài khoản đã tồn tại');
           userExits.user!.delete();
         }
         final UserCredential userCredential =

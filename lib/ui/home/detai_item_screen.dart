@@ -38,6 +38,7 @@ import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/home/shop_dashboard.dart';
 import 'package:luanvan/ui/item/review_screen.dart';
+import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/ui/widgets/add_to_cart.dart';
@@ -89,11 +90,10 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
         context
             .read<ProductFavoriteBloc>()
             .add(FetchFavoriteProductEvent(authState.user.uid));
-        context
-            .read<ProductBloc>()
-            .add(FetchProductEventByProductId(productId));
-        context.read<CommentBloc>().add(LoadCommentsEvent(productId));
       }
+      context.read<ProductBloc>().add(FetchProductEventByProductId(productId));
+      context.read<CommentBloc>().add(LoadCommentsEvent(productId));
+
       final commentState = context.read<CommentBloc>().state;
       if (commentState is CommentLoaded) {
         final comments = commentState.comments;
@@ -1155,23 +1155,27 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
             const SizedBox(width: 10),
             Row(
               children: [
-                GestureDetector(
-                  onTap: () {},
-                  child: ClipOval(
-                    child: Container(
-                      height: 40,
-                      width: 40,
-                      alignment: Alignment.center,
-                      color: Colors.black12,
-                      child: Icon(Icons.share_outlined,
-                          color: _logoColor, size: 25),
-                    ),
-                  ),
-                ),
+                // GestureDetector(
+                //   onTap: () {},
+                //   child: ClipOval(
+                //     child: Container(
+                //       height: 40,
+                //       width: 40,
+                //       alignment: Alignment.center,
+                //       color: Colors.black12,
+                //       child: Icon(Icons.share_outlined,
+                //           color: _logoColor, size: 25),
+                //     ),
+                //   ),
+                // ),
                 const SizedBox(width: 10),
                 InkWell(
                   onTap: () {
-                    Navigator.of(context).pushNamed(CartScreen.routeName);
+                    if (context.read<AuthBloc>().state is AuthAuthenticated) {
+                      Navigator.of(context).pushNamed(CartScreen.routeName);
+                    } else {
+                      Navigator.of(context).pushNamed(SigninScreen.routeName);
+                    }
                   },
                   child: SizedBox(
                     height: 40,
@@ -1191,47 +1195,62 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                                 color: _logoColor,
                               )),
                         ),
-                        cart.totalItems != 0
-                            ? Positioned(
-                                right: 15,
-                                top: 5,
-                                child: Container(
-                                  height: 20,
-                                  width: 30,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                        width: 1.5, color: Colors.white),
-                                  ),
-                                  child: Text(
-                                    '${cart.totalItems}',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
+                        (context.read<AuthBloc>().state is AuthAuthenticated)
+                            ? BlocSelector<CartBloc, CartState, String>(
+                                builder: (BuildContext context, cartItem) {
+                                  if (cartItem != '0') {
+                                    return Positioned(
+                                      right: 15,
+                                      top: 5,
+                                      child: Container(
+                                        height: 20,
+                                        width: 30,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                              width: 1.5, color: Colors.white),
+                                        ),
+                                        child: Text(
+                                          '$cartItem',
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    return Container();
+                                  }
+                                },
+                                selector: (state) {
+                                  if (state is CartLoaded) {
+                                    return state.cart.totalItems.toString();
+                                  }
+                                  return '';
+                                },
                               )
                             : Container()
                       ],
                     ),
                   ),
                 ),
-                GestureDetector(
-                  onTap: () {},
-                  child: ClipOval(
-                    child: Container(
-                      height: 40,
-                      width: 40,
-                      alignment: Alignment.center,
-                      color: Colors.black12,
-                      child: Icon(Icons.more_horiz_outlined,
-                          color: _logoColor, size: 30),
-                    ),
-                  ),
-                ),
+                // GestureDetector(
+                //   onTap: () {},
+                //   child: ClipOval(
+                //     child: Container(
+                //       height: 40,
+                //       width: 40,
+                //       alignment: Alignment.center,
+                //       color: Colors.black12,
+                //       child: Icon(Icons.more_horiz_outlined,
+                //           color: _logoColor, size: 30),
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ],
@@ -1240,7 +1259,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     );
   }
 
-  Widget _buildBottomBar(Product product, String userId) {
+  Widget _buildBottomBar(Product product) {
     return Positioned(
       bottom: 0,
       child: Container(
@@ -1259,16 +1278,23 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
-                          context.read<ChatBloc>().add(StartChatEvent(
-                                userId,
-                                product.shopId,
-                              ));
-                          final tempChatRoomId = '$userId-${product.shopId}';
-                          Navigator.pushNamed(
-                            context,
-                            ChatDetailScreen.routeName,
-                            arguments: tempChatRoomId,
-                          );
+                          final authState = context.read<AuthBloc>().state;
+                          if (authState is AuthAuthenticated) {
+                            context.read<ChatBloc>().add(StartChatEvent(
+                                  authState.user.uid,
+                                  product.shopId,
+                                ));
+                            final tempChatRoomId =
+                                '$authState.user.uid-${product.shopId}';
+                            Navigator.pushNamed(
+                              context,
+                              ChatDetailScreen.routeName,
+                              arguments: tempChatRoomId,
+                            );
+                          } else {
+                            Navigator.of(context)
+                                .pushNamed(SigninScreen.routeName);
+                          }
                         },
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -1295,24 +1321,30 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
-                          if (product.variants.isEmpty ||
-                              (product.variants.length == 2 &&
-                                  product.variants.every((variant) =>
-                                      variant.options.length <= 1)) ||
-                              (product.variants.length == 1 &&
-                                  product.variants[0].options.length <= 1)) {
-                            context.read<CartBloc>().add(AddCartEvent(
-                                product.id,
-                                _quantityAddToCart,
-                                userId,
-                                product.shopId,
-                                null,
-                                null,
-                                null,
-                                null));
-                            _showAddToCartDialog();
+                          final authState = context.read<AuthBloc>().state;
+                          if (authState is AuthAuthenticated) {
+                            if (product.variants.isEmpty ||
+                                (product.variants.length == 2 &&
+                                    product.variants.every((variant) =>
+                                        variant.options.length <= 1)) ||
+                                (product.variants.length == 1 &&
+                                    product.variants[0].options.length <= 1)) {
+                              context.read<CartBloc>().add(AddCartEvent(
+                                  product.id,
+                                  _quantityAddToCart,
+                                  authState.user.uid,
+                                  product.shopId,
+                                  null,
+                                  null,
+                                  null,
+                                  null));
+                              _showAddToCartDialog();
+                            } else {
+                              showAddToCart(context, product);
+                            }
                           } else {
-                            showAddToCart(context, product);
+                            Navigator.of(context)
+                                .pushNamed(SigninScreen.routeName);
                           }
                         },
                         child: const Column(
@@ -1341,32 +1373,45 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                 listener: (context, state) {
                   if (state is ProductFavoriteAdded ||
                       state is ProductFavoriteRemoved) {
-                    context
-                        .read<ProductFavoriteBloc>()
-                        .add(FetchFavoriteProductEvent(userId));
+                    final authState = context.read<AuthBloc>().state;
+                    if (authState is AuthAuthenticated) {
+                      context
+                          .read<ProductFavoriteBloc>()
+                          .add(FetchFavoriteProductEvent(authState.user.uid));
+                    }
                   }
                 },
                 builder: (context, state) {
+                  if (state is ProductFavoriteError) {
+                    print(state.message);
+                  }
                   if (state is ProductFavoriteLoaded) {
                     isFavorited = state.listProduct
                         .any((element) => element.id == product.id);
                   }
                   return GestureDetector(
                     onTap: () {
-                      if (isFavorited) {
-                        context.read<ProductFavoriteBloc>().add(
-                              RemoveFavoriteProductEvent(product.id, userId),
-                            );
-                        context.read<ProductBloc>().add(
-                              DecrementProductFavoriteCountEvent(product.id),
-                            );
+                      final authState = context.read<AuthBloc>().state;
+                      if (authState is AuthAuthenticated) {
+                        if (isFavorited) {
+                          context.read<ProductFavoriteBloc>().add(
+                                RemoveFavoriteProductEvent(
+                                    product.id, authState.user.uid),
+                              );
+                          context.read<ProductBloc>().add(
+                                DecrementProductFavoriteCountEvent(product.id),
+                              );
+                        } else {
+                          context.read<ProductFavoriteBloc>().add(
+                                AddFavoriteProductEvent(
+                                    product.id, authState.user.uid),
+                              );
+                          context.read<ProductBloc>().add(
+                                IncrementProductFavoriteCountEvent(product.id),
+                              );
+                        }
                       } else {
-                        context.read<ProductFavoriteBloc>().add(
-                              AddFavoriteProductEvent(product.id, userId),
-                            );
-                        context.read<ProductBloc>().add(
-                              IncrementProductFavoriteCountEvent(product.id),
-                            );
+                        Navigator.of(context).pushNamed(SigninScreen.routeName);
                       }
                     },
                     child: Container(
@@ -1626,29 +1671,14 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
             },
           ),
           // 8. BottomBar (Tải từ AuthBloc và ProductBloc)
-          BlocConsumer<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is AuthUnauthenticated) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Vui lòng đăng nhập để mua hàng')),
-                );
+
+          BlocConsumer<ProductBloc, ProductState>(
+            listener: (context, state) {},
+            builder: (context, productState) {
+              if (productState is ProductLoaded) {
+                return _buildBottomBar(productState.product);
               }
-            },
-            builder: (context, authState) {
-              if (authState is AuthAuthenticated) {
-                return BlocConsumer<ProductBloc, ProductState>(
-                  listener: (context, state) {},
-                  builder: (context, productState) {
-                    if (productState is ProductLoaded) {
-                      return _buildBottomBar(
-                          productState.product, authState.user.uid);
-                    }
-                    return _buildSkeletonBottomBar(); // Skeleton loading
-                  },
-                );
-              }
-              return _buildSkeletonBottomBar(); // Hiển thị mặc định khi chưa đăng nhập
+              return _buildSkeletonBottomBar(); // Skeleton loading
             },
           ),
         ],

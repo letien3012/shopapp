@@ -382,8 +382,8 @@ class _AddToCartBottomSheetState extends State<AddToCartBottomSheet> {
                                   : null,
                             ));
                       }
-                      _showAddToCartDialog();
                       Navigator.pop(context);
+                      _showAddToCartDialog();
                     }
                   : null,
               style: ElevatedButton.styleFrom(

@@ -12,6 +12,7 @@ import 'package:luanvan/blocs/category/category_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
 import 'package:luanvan/blocs/checkPhoneAndEmail/check_bloc.dart';
+import 'package:luanvan/blocs/checkcartproduct/check_product_checkout_bloc.dart';
 import 'package:luanvan/blocs/favoriteproduct/product_favorite_bloc.dart';
 import 'package:luanvan/blocs/import_receipt/import_receipt_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
@@ -203,6 +204,9 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<AllMessageBloc>(
           create: (context) => AllMessageBloc(ChatService()),
+        ),
+        BlocProvider<CheckProductCheckoutBloc>(
+          create: (context) => CheckProductCheckoutBloc(ProductService()),
         ),
       ],
       child: MaterialApp(

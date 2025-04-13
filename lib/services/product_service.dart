@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/product_variant.dart';
 import 'package:luanvan/models/product_option.dart';
@@ -8,6 +9,7 @@ import 'package:luanvan/models/option_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:luanvan/rag/product_chunk.dart';
+import 'package:luanvan/services/cart_service.dart';
 
 class ProductService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
@@ -47,6 +49,68 @@ class ProductService {
     } else {
       throw Exception('Failed to generate embedding');
     }
+  }
+
+  Future<bool> checkProductCheckout(
+      String userId, Map<String, List<String>> productCheckout) async {
+    bool result = true;
+    final cartSnapshot = await firebaseFirestore
+        .collection('carts')
+        .where('userId', isEqualTo: userId)
+        .get();
+    final cart = Cart.fromMap(cartSnapshot.docs.first.data());
+    if (cart == null) {
+      result = false;
+    } else {
+      for (var shopId in productCheckout.keys) {
+        final shop = cart.getShop(shopId);
+        if (shop == null) {
+          result = false;
+        } else {
+          for (var itemId in productCheckout[shopId]!) {
+            final cartItem = shop.items[itemId];
+            if (cartItem == null) {
+              result = false;
+            } else {
+              final product = await fetchProductByProductId(cartItem.productId);
+              if (product.isDeleted || product.isHidden) {
+                result = false;
+              }
+              if (product.variants.isEmpty) {
+                print(product.quantity);
+                print(cartItem.quantity);
+                if (product.quantity! - cartItem.quantity < 0) {
+                  result = false;
+                  // cartItem.quantity = product.quantity!;
+                }
+              } else if (product.variants.length > 1) {
+                int i = product.variants[0].options
+                    .indexWhere((opt) => opt.id == cartItem.optionId1);
+                int j = product.variants[1].options
+                    .indexWhere((opt) => opt.id == cartItem.optionId2);
+                if (i == -1) i = 0;
+                if (j == -1) j = 0;
+                int optionInfoIndex =
+                    i * product.variants[1].options.length + j;
+                if (optionInfoIndex < product.optionInfos.length) {
+                  if (product.optionInfos[optionInfoIndex].stock -
+                          cartItem.quantity <
+                      0) {
+                    result = false;
+                    // cartItem.quantity =
+                    //     product.optionInfos[optionInfoIndex].stock;
+                  }
+                }
+              }
+              // shop.items[itemId] = cartItem;
+            }
+          }
+          // cart.copyWith(shops: [shop]);
+        }
+      }
+      // await _cartService.updateCart(cart);
+    }
+    return result;
   }
 
   Future<String> addProduct(Product product) async {

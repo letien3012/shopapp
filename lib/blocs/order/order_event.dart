@@ -1,4 +1,6 @@
+import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/product.dart';
 
 abstract class OrderEvent {
   const OrderEvent();
@@ -20,8 +22,10 @@ class FetchOrderById extends OrderEvent {
 }
 
 class CreateOrder extends OrderEvent {
-  final List<Order> orders;
-  const CreateOrder(this.orders);
+  final Order order;
+  final Cart cart;
+  final List<String> listItemId;
+  const CreateOrder(this.order, this.cart, this.listItemId);
 }
 
 class UpdateOrder extends OrderEvent {

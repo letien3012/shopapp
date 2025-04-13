@@ -7,8 +7,14 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
+import 'package:luanvan/blocs/checkcartproduct/check_product_checkout.dart';
+import 'package:luanvan/blocs/checkcartproduct/check_product_checkout_bloc.dart';
+import 'package:luanvan/blocs/checkcartproduct/check_product_checkout_state.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_event.dart';
+import 'package:luanvan/blocs/product/product_bloc.dart';
+import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_event.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
@@ -51,23 +57,26 @@ class _CartScreenState extends State<CartScreen> {
     return confirmed;
   }
 
-  Future<void> _showAlertDialog() async {
+  Future<void> _showAlertDialog(String message) async {
     await showAlertDialog(
       context,
-      message: "Bạn chưa chọn sản phẩm nào để mua",
+      message: message,
       iconPath: IconHelper.warning,
       duration: Duration(seconds: 1),
     );
   }
 
   Future<void> _fetchData(Cart cart) async {
+    checkedShop = [];
+    checkedProduct = {};
+    productCheckOut = {};
+    quantityControllers = {};
     listShopId = cart.shops.map((shop) => shop.shopId).toList();
     listProductId = cart.shops
         .expand((shop) => shop.items.values)
         .map((item) => item.productId)
         .toList();
     listItemId = cart.shops.expand((shop) => shop.items.keys).toList();
-
     if (listShopId.isNotEmpty) {
       context.read<ListShopBloc>().add(FetchListShopEventByShopId(listShopId));
     }
@@ -107,14 +116,32 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
     context.read<CartBloc>().add(ResetCartEvent());
     context.read<ProductCartBloc>().add(ResetProductCartEvent());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
       }
-      final cartState = context.read<CartBloc>().state;
-
+      final cartState = await context
+          .read<CartBloc>()
+          .stream
+          .firstWhere((state) => state is CartLoaded);
       if (cartState is CartLoaded) {
+        // context.read<CheckProductCheckoutBloc>().add(
+        //         CheckProductCheckoutBeforeCheckoutEvent(cartState.cart.userId, {
+        //       for (var shop in cartState.cart.shops)
+        //         shop.shopId: shop.items.keys.toList()
+        //     }));
+        // await context.read<CheckProductCheckoutBloc>().stream.firstWhere(
+        //     (state) =>
+        //         state is CheckProductCheckoutSuccess ||
+        //         state is CheckProductCheckoutError);
+        // final checkProductCheckoutState =
+        //     context.read<CheckProductCheckoutBloc>().state;
+        // if (checkProductCheckoutState is CheckProductCheckoutError) {
+        //   context
+        //       .read<CartBloc>()
+        //       .add(FetchCartEventUserId(cartState.cart.userId));
+        // }
         _fetchData(cartState.cart);
       }
     });
@@ -207,7 +234,7 @@ class _CartScreenState extends State<CartScreen> {
     return 0;
   }
 
-  void _updateQuantity(String shopId, String itemId, int newQuantity) {
+  void _updateQuantity(String shopId, String itemId, int newQuantity) async {
     final userId =
         (context.read<AuthBloc>().state as AuthAuthenticated).user.uid;
     final cartState = context.read<CartBloc>().state;
@@ -215,10 +242,15 @@ class _CartScreenState extends State<CartScreen> {
       final shop = cartState.cart.getShop(shopId);
       if (shop != null && shop.items.containsKey(itemId)) {
         final item = shop.items[itemId]!;
-        final productState = context.read<ProductCartBloc>().state;
-        if (productState is ProductCartListLoaded) {
-          final product =
-              productState.products.firstWhere((p) => p.id == item.productId);
+        context.read<ProductBloc>().add(
+              FetchProductEventByProductId(item.productId),
+            );
+        final productState = await context
+            .read<ProductBloc>()
+            .stream
+            .firstWhere((state) => state is ProductLoaded);
+        if (productState is ProductLoaded) {
+          final product = productState.product;
           int maxStock = _getMaxStock(product, item);
 
           // Nếu số lượng mới vượt quá kho, hiển thị alert và điều chỉnh về số lượng kho
@@ -304,12 +336,19 @@ class _CartScreenState extends State<CartScreen> {
     return false;
   }
 
-  void _deleteProduct(String shopId, String itemId) {
+  void _deleteProduct(String shopId, String itemId) async {
     final userId =
         (context.read<AuthBloc>().state as AuthAuthenticated).user.uid;
     context
         .read<CartBloc>()
         .add(DeleteCartProductEvent(itemId, shopId, userId));
+    final cartState = await context
+        .read<CartBloc>()
+        .stream
+        .firstWhere((state) => state is CartLoaded);
+    if (cartState is CartLoaded) {
+      await _fetchData(cartState.cart);
+    }
   }
 
   void _deleteShop(String shopId) {
@@ -437,7 +476,11 @@ class _CartScreenState extends State<CartScreen> {
                       context
                           .read<CartBloc>()
                           .add(FetchCartEventUserId(authState.user.uid));
-                      final cartState = context.read<CartBloc>().state;
+
+                      final cartState = await context
+                          .read<CartBloc>()
+                          .stream
+                          .firstWhere((state) => state is CartLoaded);
                       if (cartState is CartLoaded) {
                         await _fetchData(cartState.cart);
                       }
@@ -569,16 +612,6 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          height: 40,
-                          width: 40,
-                          alignment: Alignment.center,
-                          child: const Icon(BoxIcons.bx_chat,
-                              color: Colors.brown, size: 30),
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -753,6 +786,14 @@ class _CartScreenState extends State<CartScreen> {
                                     context
                                         .read<CartBloc>()
                                         .add(UpdateCartEvent(newCart));
+                                    final cartState = await context
+                                        .read<CartBloc>()
+                                        .stream
+                                        .firstWhere(
+                                            (state) => state is CartLoaded);
+                                    if (cartState is CartLoaded) {
+                                      await _fetchData(cartState.cart);
+                                    }
                                     setState(() {
                                       cart = newCart;
                                       listShopId = newCart.shops
@@ -794,7 +835,7 @@ class _CartScreenState extends State<CartScreen> {
                                 ),
                               )
                             : GestureDetector(
-                                onTap: () {
+                                onTap: () async {
                                   if (selectedItemsCount > 0) {
                                     productCheckOut = {};
                                     for (var shopId in listShopId) {
@@ -819,14 +860,59 @@ class _CartScreenState extends State<CartScreen> {
                                         }
                                       }
                                     }
-
-                                    Navigator.of(context).pushNamed(
-                                        CheckOutScreen.routeName,
-                                        arguments: {
-                                          'productCheckOut': productCheckOut,
-                                        });
+                                    context.read<CheckProductCheckoutBloc>().add(
+                                        CheckProductCheckoutBeforeCheckoutEvent(
+                                            (context.read<AuthBloc>().state
+                                                    as AuthAuthenticated)
+                                                .user
+                                                .uid,
+                                            productCheckOut));
+                                    await context
+                                        .read<CheckProductCheckoutBloc>()
+                                        .stream
+                                        .firstWhere((state) =>
+                                            state
+                                                is CheckProductCheckoutSuccess ||
+                                            state is CheckProductCheckoutError);
+                                    final checkProductCheckoutState = context
+                                        .read<CheckProductCheckoutBloc>()
+                                        .state;
+                                    if (checkProductCheckoutState
+                                        is CheckProductCheckoutSuccess) {
+                                      final result = await Navigator.of(context)
+                                          .pushNamed(CheckOutScreen.routeName,
+                                              arguments: {
+                                            'productCheckOut': productCheckOut,
+                                          });
+                                      if (result == true) {
+                                        context.read<CartBloc>().add(
+                                            FetchCartEventUserId(cart.userId));
+                                        final cartState = await context
+                                            .read<CartBloc>()
+                                            .stream
+                                            .firstWhere(
+                                                (state) => state is CartLoaded);
+                                        if (cartState is CartLoaded) {
+                                          await _fetchData(cartState.cart);
+                                        }
+                                      }
+                                    } else {
+                                      context.read<CartBloc>().add(
+                                          FetchCartEventUserId(cart.userId));
+                                      final cartState = await context
+                                          .read<CartBloc>()
+                                          .stream
+                                          .firstWhere(
+                                              (state) => state is CartLoaded);
+                                      if (cartState is CartLoaded) {
+                                        await _fetchData(cartState.cart);
+                                      }
+                                      _showAlertDialog(
+                                          "Có vài sản phẩm thay đổi");
+                                    }
                                   } else {
-                                    _showAlertDialog();
+                                    _showAlertDialog(
+                                        "Bạn chưa chọn sản phẩm nào để mua");
                                   }
                                 },
                                 child: Container(

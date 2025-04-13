@@ -1,6 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:luanvan/models/cart_item.dart';
+import 'package:luanvan/models/cart_shop.dart';
+import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/product.dart';
+import 'package:luanvan/models/product_option.dart';
+import 'package:luanvan/models/product_variant.dart';
 import 'dart:math';
+
+import '../models/cart.dart';
 
 class OrderService {
   final firestore.FirebaseFirestore _firestore;
@@ -83,40 +91,173 @@ class OrderService {
     }
   }
 
-  Future<List<Order>> createOrder(List<Order> orders) async {
+  Future<Product> _fetchProductWithSubcollections(
+      firestore.DocumentSnapshot doc) async {
+    final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final List<ProductVariant> variants = [];
+
+    // Fetch variants
+    final variantsSnapshot = await doc.reference.collection('variants').get();
+
+    // Chuyển đổi thành list và sắp xếp theo variantIndex
+    final variantsList = variantsSnapshot.docs.toList();
+    variantsList.sort((a, b) {
+      final aIndex = (a.data()['variantIndex'] as num?)?.toInt() ?? 0;
+      final bIndex = (b.data()['variantIndex'] as num?)?.toInt() ?? 0;
+      return aIndex.compareTo(bIndex);
+    });
+
+    for (var variantDoc in variantsList) {
+      final variantData = variantDoc.data() as Map<String, dynamic>;
+      final List<ProductOption> options = [];
+
+      // Fetch options for each variant
+      final optionsSnapshot =
+          await variantDoc.reference.collection('options').get();
+
+      // Chuyển đổi options thành list và sắp xếp theo optionIndex
+      final optionsList = optionsSnapshot.docs.toList();
+      optionsList.sort((a, b) {
+        final aIndex = (a.data()['optionIndex'] as num?)?.toInt() ?? 0;
+        final bIndex = (b.data()['optionIndex'] as num?)?.toInt() ?? 0;
+        return aIndex.compareTo(bIndex);
+      });
+
+      for (var optionDoc in optionsList) {
+        final optionData = optionDoc.data() as Map<String, dynamic>;
+        options.add(ProductOption.fromMap({
+          ...optionData,
+          'id': optionDoc.id,
+        }));
+      }
+
+      variants.add(ProductVariant(
+        id: variantDoc.id,
+        label: variantData['label'] as String,
+        options: options,
+        variantIndex: variantData['variantIndex'] as int? ?? 0,
+      ));
+    }
+
+    return Product.fromMap({
+      ...data,
+      'id': doc.id,
+      'variants': variants.map((v) => v.toMap()).toList(),
+    });
+  }
+
+  Future<Order> createOrder(
+      Order order, Cart cart, List<String> listItemId) async {
     try {
-      List<Order> createdOrders = [];
+      // Tạo tracking number mới cho mỗi order
+      String trackingNumber = await _generateUniqueTrackingNumber();
+      bool isUnique = false;
 
-      for (var order in orders) {
-        // Tạo tracking number mới cho mỗi order
-        String trackingNumber = await _generateUniqueTrackingNumber();
-        bool isUnique = false;
+      while (!isUnique) {
+        // Kiểm tra xem tracking number đã tồn tại chưa
+        final querySnapshot = await _firestore
+            .collection('orders')
+            .where('trackingNumber', isEqualTo: trackingNumber)
+            .get();
+        isUnique = querySnapshot.docs.isEmpty;
+        if (!isUnique) {
+          trackingNumber = await _generateUniqueTrackingNumber();
+        }
+      }
 
-        while (!isUnique) {
-          // Kiểm tra xem tracking number đã tồn tại chưa
-          final querySnapshot = await _firestore
-              .collection('orders')
-              .where('trackingNumber', isEqualTo: trackingNumber)
-              .get();
-          isUnique = querySnapshot.docs.isEmpty;
-          if (!isUnique) {
-            trackingNumber = await _generateUniqueTrackingNumber();
+      final updatedOrder = order.copyWith(trackingNumber: trackingNumber);
+      final orderRef = _firestore.collection('orders').doc();
+      final updatedOrderWithId = updatedOrder.copyWith(id: orderRef.id);
+      await _firestore.runTransaction((transaction) async {
+        final productIds =
+            updatedOrderWithId.item.map((e) => e.productId).toList();
+        final productSnapshot = await _firestore
+            .collection('products')
+            .where('id', whereIn: productIds)
+            .get();
+        final productList = await Future.wait(productSnapshot.docs
+            .map((doc) => _fetchProductWithSubcollections(doc)));
+        final listProductUpdate = [];
+        final cartShop = cart.getShop(order.shopId);
+        if (cartShop == null) throw Exception();
+        for (var itemId in listItemId) {
+          final cartItem = cartShop.items[itemId];
+          if (cartItem == null) continue;
+          var product = productList.firstWhere(
+            (p) => p.id == cartItem.productId,
+          );
+
+          if (product.variants.isEmpty) {
+            if (product.quantity! - cartItem.quantity < 0) {
+              throw Exception('Sản phẩm ${product.name} không còn hàng');
+            }
+            product = product.copyWith(
+              quantity: product.quantity! - cartItem.quantity,
+              quantitySold: product.quantitySold + cartItem.quantity,
+            );
+            listProductUpdate.add(product);
+          } else if (product.variants.length > 1) {
+            int i = product.variants[0].options
+                .indexWhere((opt) => opt.id == cartItem.optionId1);
+            int j = product.variants[1].options
+                .indexWhere((opt) => opt.id == cartItem.optionId2);
+            if (i == -1) i = 0;
+            if (j == -1) j = 0;
+            int optionInfoIndex = i * product.variants[1].options.length + j;
+            if (optionInfoIndex < product.optionInfos.length) {
+              if (product.optionInfos[optionInfoIndex].stock -
+                      cartItem.quantity <
+                  0) {
+                throw Exception('Sản phẩm ${product.name} không còn hàng');
+              }
+              OptionInfo optionInfo =
+                  product.optionInfos[optionInfoIndex].copyWith(
+                stock: product.optionInfos[optionInfoIndex].stock -
+                    cartItem.quantity,
+              );
+              product = product.copyWith(
+                  optionInfos: [...product.optionInfos]..[optionInfoIndex] =
+                      optionInfo,
+                  quantitySold: product.quantitySold + cartItem.quantity);
+              listProductUpdate.add(product);
+            }
+          }
+
+          final updatedItems = Map<String, CartItem>.from(cartShop.items);
+          for (var itemId in listItemId) {
+            updatedItems.remove(itemId);
+          }
+          if (updatedItems.isEmpty) {
+            // Nếu không còn sản phẩm nào, xóa shop khỏi giỏ hàng
+            final updatedShops = List<CartShop>.from(cart.shops);
+            updatedShops.removeWhere((shop) => shop.shopId == shop.shopId);
+
+            cart = cart.copyWith(shops: updatedShops);
+          } else {
+            // Cập nhật lại shop với các sản phẩm còn lại
+            final updatedShop = cartShop.copyWith(items: updatedItems);
+            final updatedShops = List<CartShop>.from(cart.shops);
+            final shopIndex =
+                updatedShops.indexWhere((shop) => shop.shopId == shop.shopId);
+            if (shopIndex != -1) {
+              updatedShops[shopIndex] = updatedShop;
+            }
+            cart = cart.copyWith(shops: updatedShops);
           }
         }
 
-        final updatedOrder = order.copyWith(trackingNumber: trackingNumber);
-        final orderRef =
-            await _firestore.collection('orders').add(updatedOrder.toMap());
-        final orderData = updatedOrder.toMap();
-        orderData['id'] = orderRef.id;
-        await orderRef.update({'id': orderRef.id});
+        transaction.set(orderRef, updatedOrderWithId.toMap());
+        for (var product in listProductUpdate) {
+          final productRef = _firestore.collection('products').doc(product.id);
+          transaction.update(productRef, product.toMap());
+        }
+        transaction.update(
+            _firestore.collection('carts').doc(cart.id), cart.toMap());
+      });
 
-        createdOrders.add(Order.fromMap(orderData));
-      }
-
-      return createdOrders;
+      return updatedOrderWithId;
     } catch (e) {
-      throw Exception('Failed to create order: $e');
+      throw Exception('Lỗi khi tạo đơn hàng: $e');
     }
   }
 

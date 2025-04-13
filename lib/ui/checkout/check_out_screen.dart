@@ -6,13 +6,10 @@ import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/cart/cart_bloc.dart';
-import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
-import 'package:luanvan/blocs/product/product_bloc.dart';
-import 'package:luanvan/blocs/product/product_event.dart';
-import 'package:luanvan/blocs/product/product_state.dart';
+import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
@@ -22,7 +19,6 @@ import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/cart_shop.dart';
-import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/order_item.dart';
 import 'package:luanvan/models/product.dart';
@@ -31,7 +27,9 @@ import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/ui/checkout/add_location_screen.dart';
 import 'package:luanvan/ui/checkout/pick_location_checkout_screen.dart';
 import 'package:luanvan/ui/checkout/shop_checkout_item.dart';
+import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/order/order_success_screen.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class CheckOutScreen extends StatefulWidget {
@@ -58,12 +56,18 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   double totalProductPrice = 0.0;
   Map<String, ShippingMethod> shipMethod = {};
   Map<String, List<ShippingMethod>> listShipMethod = {};
-  int _completedOrders = 0;
+  Future<void> _showAlertDialog(String message) async {
+    await showAlertDialog(
+      context,
+      message: message,
+      iconPath: IconHelper.warning,
+      duration: Duration(seconds: 1),
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    _completedOrders = 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUserAddress();
       final arg = ModalRoute.of(context)!.settings.arguments as Map;
@@ -742,7 +746,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                     if (cartState is CartLoaded) {
                       cart = cartState.cart;
                     }
-                    List<Order> orders = [];
+                    late Order order;
+
                     for (var shopId in listShopId) {
                       final cartShop = cart.getShop(shopId);
                       if (cartShop == null) continue;
@@ -804,11 +809,11 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                           double productPrice = 0;
                           if (product.variants.isEmpty) {
                             productPrice = product.price ?? 0;
-                            product = product.copyWith(
-                              quantity: product.quantity! - cartItem.quantity,
-                              quantitySold:
-                                  product.quantitySold + cartItem.quantity,
-                            );
+                            // product = product.copyWith(
+                            //   quantity: product.quantity! - cartItem.quantity,
+                            //   quantitySold:
+                            //       product.quantitySold + cartItem.quantity,
+                            // );
                           } else if (product.variants.length > 1) {
                             int i = product.variants[0].options.indexWhere(
                                 (opt) => opt.id == cartItem.optionId1);
@@ -822,17 +827,17 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                               productPrice =
                                   product.optionInfos[optionInfoIndex].price;
                             }
-                            OptionInfo optionInfo =
-                                product.optionInfos[optionInfoIndex].copyWith(
-                              stock:
-                                  product.optionInfos[optionInfoIndex].stock -
-                                      cartItem.quantity,
-                            );
-                            product = product.copyWith(
-                                optionInfos: [...product.optionInfos]
-                                  ..[optionInfoIndex] = optionInfo,
-                                quantitySold:
-                                    product.quantitySold + cartItem.quantity);
+                            // OptionInfo optionInfo =
+                            //     product.optionInfos[optionInfoIndex].copyWith(
+                            //   stock:
+                            //       product.optionInfos[optionInfoIndex].stock -
+                            //           cartItem.quantity,
+                            // );
+                            // product = product.copyWith(
+                            //     optionInfos: [...product.optionInfos]
+                            //       ..[optionInfoIndex] = optionInfo,
+                            //     quantitySold:
+                            //         product.quantitySold + cartItem.quantity);
                           }
 
                           // Tạo OrderItem mới
@@ -879,18 +884,19 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                               productCategory: product.category,
                             ),
                           );
-                          context
-                              .read<ProductBloc>()
-                              .add(UpdateProductEvent(product));
-                          await context
-                              .read<ProductBloc>()
-                              .stream
-                              .firstWhere((state) => state is ProductLoaded);
+
+                          // context
+                          //     .read<ProductBloc>()
+                          //     .add(UpdateProductEvent(product));
+                          // await context
+                          //     .read<ProductBloc>()
+                          //     .stream
+                          //     .firstWhere((state) => state is ProductLoaded);
                         }
                       }
 
                       // Tạo đơn hàng mới với danh sách OrderItem
-                      orders.add(Order(
+                      order = Order(
                         id: '', // ID sẽ được Firestore tự động tạo
                         item: orderItems,
                         shopId: shopId,
@@ -902,35 +908,25 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         totalPrice: totalProductPrice + totalShipPrice,
                         estimatedDeliveryDate: estimatedDeliveryDate,
                         shipMethod: shipMethod[shopId]!,
-                      ));
+                      );
 
-                      // Xóa sản phẩm khỏi giỏ hàng
-                      final updatedItems =
-                          Map<String, CartItem>.from(cartShop.items);
-                      for (var itemId in listItemId) {
-                        updatedItems.remove(itemId);
+                      if (listShopId.length == 1) {
+                        context
+                            .read<OrderBloc>()
+                            .add(CreateOrder(order, cart, listItemId));
                       }
-                      if (updatedItems.isEmpty) {
-                        // Nếu không còn sản phẩm nào, xóa shop khỏi giỏ hàng
-                        final updatedShops = List<CartShop>.from(cart.shops);
-                        updatedShops
-                            .removeWhere((shop) => shop.shopId == shopId);
-
-                        cart = cart.copyWith(shops: updatedShops);
-                      } else {
-                        // Cập nhật lại shop với các sản phẩm còn lại
-                        final updatedShop =
-                            cartShop.copyWith(items: updatedItems);
-                        final updatedShops = List<CartShop>.from(cart.shops);
-                        final shopIndex = updatedShops
-                            .indexWhere((shop) => shop.shopId == shopId);
-                        if (shopIndex != -1) {
-                          updatedShops[shopIndex] = updatedShop;
-                        }
-                        cart = cart.copyWith(shops: updatedShops);
+                      final orderState = await context
+                          .read<OrderBloc>()
+                          .stream
+                          .firstWhere((state) =>
+                              state is OrderCreated || state is OrderError);
+                      if (orderState is OrderCreated) {
+                        Navigator.of(context)
+                            .pushReplacementNamed(OrderSuccessScreen.routeName);
+                      } else if (orderState is OrderError) {
+                        await _showAlertDialog("Có vài sản phẩm thay đổi");
+                        Navigator.pop(context, true);
                       }
-
-                      _handleOrderCreated(cart, orders);
                     }
                   }
                 }
@@ -983,18 +979,5 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
       // Tính toán lại phí vận chuyển
       totalShipPrice = calculateTotalShippingFee();
     });
-  }
-
-  void _handleOrderCreated(Cart newCart, List<Order> orders) {
-    setState(() {
-      _completedOrders++;
-    });
-
-    // Chỉ chuyển hướng khi tất cả các đơn hàng đã được tạo
-    if (_completedOrders == listShopId.length) {
-      context.read<CartBloc>().add(UpdateCartEvent(newCart));
-      context.read<OrderBloc>().add(CreateOrder(orders));
-      Navigator.of(context).pushReplacementNamed(OrderSuccessScreen.routeName);
-    }
   }
 }

@@ -386,7 +386,6 @@ class _ChangeCartVariantState extends State<ChangeCartVariant> {
                                 .state as AuthAuthenticated)
                             .user
                             .uid;
-                        print('itemId: ${widget.itemId}');
                         widget.parentContext
                             .read<CartBloc>()
                             .add(UpdateProductVariantEvent(

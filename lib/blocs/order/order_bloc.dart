@@ -53,8 +53,9 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       CreateOrder event, Emitter<OrderState> emit) async {
     emit(OrderLoading());
     try {
-      final orders = await _orderService.createOrder(event.orders);
-      emit(OrderCreated(orders[0]));
+      final order = await _orderService.createOrder(
+          event.order, event.cart, event.listItemId);
+      emit(OrderCreated(order));
     } catch (e) {
       emit(OrderError(e.toString()));
     }

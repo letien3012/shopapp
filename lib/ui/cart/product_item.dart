@@ -372,18 +372,19 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                                     width: 30,
                                     child: TextField(
                                       controller: widget.controller,
+                                      maxLines: 1,
                                       textAlignVertical:
                                           TextAlignVertical.center,
                                       textAlign: TextAlign.center,
                                       keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          contentPadding:
-                                              EdgeInsets.only(bottom: 13)),
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        isCollapsed: true,
+                                      ),
                                       style: TextStyle(
-                                          fontSize: 13,
-                                          textBaseline:
-                                              TextBaseline.alphabetic),
+                                        fontSize: 13,
+                                      ),
                                       onSubmitted: (value) {
                                         final newQuantity =
                                             int.tryParse(value) ?? 1;
@@ -405,8 +406,6 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                                           1;
                                       widget.onUpdateQuantity(widget.shopId,
                                           widget.itemId, newQuantity + 1);
-                                      widget.controller.text =
-                                          (newQuantity + 1).toString();
                                     },
                                     child: Container(
                                       height: double.infinity,

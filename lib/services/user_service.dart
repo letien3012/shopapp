@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
+import 'package:luanvan/models/viewedProduct.dart';
 
 class UserService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
@@ -120,5 +123,37 @@ class UserService {
 
     final List<dynamic> favorites = data['favoriteProducts'];
     return favorites.map((item) => item.toString()).toList();
+  }
+
+  Future<UserInfoModel> addViewedProduct(
+      String userId, String productId) async {
+    final user = await fetchUserInfo(userId);
+    final existingViewed = user.viewedProducts;
+
+    // Kiểm tra nếu productId đã tồn tại
+    final alreadyViewed = existingViewed.any((vp) => vp.productId == productId);
+    if (alreadyViewed) {
+      return user;
+    }
+
+    final viewedProduct = ViewedProduct(
+      productId: productId,
+      viewedAt: Timestamp.now(),
+    );
+    existingViewed.add(viewedProduct);
+    existingViewed.sort((a, b) => b.viewedAt!.compareTo(a.viewedAt!));
+    if (existingViewed.length > 20) {
+      existingViewed.removeAt(0);
+    }
+    final updatedUser = user.copyWith(
+      viewedProducts: existingViewed,
+    );
+
+    await firebaseFirestore
+        .collection('users')
+        .doc(userId)
+        .update(updatedUser.toMap());
+
+    return updatedUser;
   }
 }

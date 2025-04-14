@@ -35,13 +35,19 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authState = context.read<AuthBloc>().state;
-      if (authState is AuthAuthenticated) {
-        context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
-      }
-      context.read<HomeBloc>().add(FetchAllProducts());
+      _loadProduct();
       context.read<BannerBloc>().add(FetchBannersEvent());
     });
+  }
+
+  void _loadProduct() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
+      context.read<HomeBloc>().add(FetchProductWithUserId(authState.user.uid));
+    } else {
+      context.read<HomeBloc>().add(FetchProductWithoutUserId());
+    }
   }
 
   String formatPrice(double price) {
@@ -94,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           RefreshIndicator(
             onRefresh: () async {
-              context.read<HomeBloc>().add(FetchAllProducts());
+              _loadProduct();
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),

@@ -5,6 +5,7 @@ import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
+import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/ui/chat/chat_detail_screen.dart';
@@ -167,6 +168,26 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
             ),
           ),
+          if (order.status == OrderStatus.shipped ||
+              order.status == OrderStatus.delivered ||
+              order.status == OrderStatus.reviewed)
+            Container(
+              width: double.infinity,
+              height: 60,
+              padding: const EdgeInsets.all(10),
+              color: Colors.white,
+              alignment: Alignment.center,
+              child: Row(children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text('Thông tin vận chuyển'),
+                    Text('${order.shipMethod.name}: ${order.shippingCode}'),
+                  ],
+                ),
+              ]),
+            ),
           Container(
             padding: const EdgeInsets.all(10),
             child: Row(
@@ -233,16 +254,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Mã đơn hàng'),
-              Text(order.trackingNumber ?? ''),
+              Text('Mã đơn hàng',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(order.trackingNumber ?? '',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown)),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Phương thức thanh toán'),
-              Text(getPaymentMethodName(order.paymentMethod.name)),
+              Text(
+                'Phương thức thanh toán',
+              ),
+              Text(
+                getPaymentMethodName(order.paymentMethod.name),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -256,15 +286,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             curve: Curves.easeInOut,
             duration: const Duration(milliseconds: 300),
             height: isShowMoreDetailOrderDate
-                ? (order.statusHistory.isNotEmpty &&
-                        order.statusHistory.any(
-                            (element) => element.status == OrderStatus.shipped)
-                    ? 105
+                ? (order.status == OrderStatus.delivered ||
+                        order.status == OrderStatus.reviewed)
+                    ? 125
                     : (order.statusHistory.isNotEmpty &&
                             order.statusHistory.any((element) =>
-                                element.status == OrderStatus.processing)
-                        ? 85
-                        : 65))
+                                element.status == OrderStatus.shipped)
+                        ? 105
+                        : (order.statusHistory.isNotEmpty &&
+                                order.statusHistory.any((element) =>
+                                    element.status == OrderStatus.processing ||
+                                    element.status == OrderStatus.cancelled)
+                            ? 85
+                            : 65))
                 : 0,
             child: SingleChildScrollView(
               child: Column(
@@ -312,6 +346,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             .timestamp)),
                       ],
                     ),
+                  if (order.status == OrderStatus.delivered ||
+                      order.status == OrderStatus.reviewed)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Giao hàng thành công:'),
+                        Text(formatDate(
+                            order.actualDeliveryDate ?? DateTime.now())),
+                      ],
+                    ),
+                  if (order.status == OrderStatus.cancelled)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Thời gian hủy đơn hàng:'),
+                        Text(formatDate(order.statusHistory
+                            .firstWhere((element) =>
+                                element.status == OrderStatus.cancelled)
+                            .timestamp)),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -353,29 +408,33 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 16, top: 16),
       child: GestureDetector(
-        onTap: () {
-          showDialog(
+        onTap: () async {
+          final result = await showDialog<String>(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Hủy đơn hàng'),
               content: const Text('Bạn có chắc chắn muốn hủy đơn hàng này?'),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(context, 'no'),
                   child: const Text('Không'),
                 ),
                 TextButton(
-                  onPressed: () {
-                    context.read<OrderBloc>().add(
-                          CancelOrder(order.id),
-                        );
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context, 'yes'),
                   child: const Text('Có'),
                 ),
               ],
             ),
           );
+
+          if (result == 'yes') {
+            context.read<OrderBloc>().add(CancelOrder(order.id));
+            await context
+                .read<OrderBloc>()
+                .stream
+                .firstWhere((element) => element is OrderDetailLoaded);
+            Navigator.pop(context, 'cancel');
+          }
         },
         child: Container(
           width: double.infinity,
@@ -405,7 +464,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 order.userId,
                 order.shopId,
               ));
-          final tempChatRoomId = '$order.userId-${order.shopId}';
+          final tempChatRoomId = '${order.userId}-${order.shopId}';
           Navigator.pushNamed(
             context,
             ChatDetailScreen.routeName,

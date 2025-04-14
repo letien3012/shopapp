@@ -13,7 +13,6 @@ import 'package:luanvan/blocs/home/home_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/category/all_categories_screen.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/search/search_screen.dart';
 
@@ -33,7 +32,7 @@ class _DemoScreenState extends State<DemoScreen> {
       if (authState is AuthAuthenticated) {
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
       }
-      context.read<HomeBloc>().add(FetchAllProducts());
+      context.read<HomeBloc>().add(FetchProductWithoutUserId());
     });
   }
 
@@ -97,7 +96,7 @@ class _DemoScreenState extends State<DemoScreen> {
           ),
           child: RefreshIndicator(
             onRefresh: () async {
-              context.read<HomeBloc>().add(FetchAllProducts());
+              context.read<HomeBloc>().add(FetchProductWithoutUserId());
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),

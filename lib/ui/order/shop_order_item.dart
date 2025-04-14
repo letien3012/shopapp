@@ -19,12 +19,12 @@ import 'package:luanvan/ui/item/add_review_screen.dart';
 import 'package:luanvan/ui/order/order_detail_screen.dart';
 import 'package:luanvan/ui/order/product_order_widget.dart';
 
-import '../../blocs/shop/shop_state.dart';
-
 class ShopOrderItem extends StatefulWidget {
   Order order;
+  final Function() refreshOrder;
   ShopOrderItem({
     required this.order,
+    required this.refreshOrder,
   });
 
   @override
@@ -230,9 +230,13 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
           }
 
           return GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, OrderDetailScreen.routeName,
+            onTap: () async {
+              final result = await Navigator.pushNamed(
+                  context, OrderDetailScreen.routeName,
                   arguments: widget.order);
+              if (result == 'cancel') {
+                widget.refreshOrder();
+              }
             },
             child: Container(
               margin: const EdgeInsets.only(top: 10, left: 10, right: 10),

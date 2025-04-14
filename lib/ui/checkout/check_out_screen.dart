@@ -56,6 +56,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
   double totalProductPrice = 0.0;
   Map<String, ShippingMethod> shipMethod = {};
   Map<String, List<ShippingMethod>> listShipMethod = {};
+  double weight = 0;
   Future<void> _showAlertDialog(String message) async {
     await showAlertDialog(
       context,
@@ -200,39 +201,29 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
         );
 
         // Tính maxWeight từ item
-        double maxWeight = 0.0;
+        double totalWeight = 0.0;
 
         for (var itemId in listItemId) {
-          final item = cartShop!.items[itemId];
+          final item = cartShop.items[itemId];
           if (item == null) continue;
           final product = productCartState.products.firstWhere(
             (p) => p.id == item.productId,
           );
 
           if (product.id.isNotEmpty) {
-            if (product.variants.isEmpty &&
-                (product.shippingMethods.any(
-                  (element) => (element.isEnabled &&
-                      element.name == shipMethod[shopId]!.name),
-                ))) {
-              if (product.weight! > maxWeight) {
-                maxWeight = product.weight!;
-              }
-            } else if (product.variants.length > 1) {
+            if (product.hasWeightVariant) {
               int i = product.variants[0].options
                   .indexWhere((opt) => opt.id == item.optionId1);
               int j = product.variants[1].options
                   .indexWhere((opt) => opt.id == item.optionId2);
               if (i == -1) i = 0;
               if (j == -1) j = 0;
-              if (product
+              totalWeight += product
                       .optionInfos[i * product.variants[1].options.length + j]
-                      .weight! >
-                  maxWeight) {
-                maxWeight = product
-                    .optionInfos[i * product.variants[1].options.length + j]
-                    .weight!;
-              }
+                      .weight! *
+                  item.quantity;
+            } else {
+              totalWeight += product.weight! * item.quantity;
             }
           }
         }
@@ -241,10 +232,11 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
         if (shipMethod[shopId] != null) {
           totalShippingFee += ShippingCalculator.calculateShippingCost(
             methodName: shipMethod[shopId]!.name,
-            weight: maxWeight,
+            weight: totalWeight,
             includeDistanceFactor: false,
           );
         }
+        weight = totalWeight;
       }
     }
 
@@ -526,6 +518,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                     shipMethod: (shipMethod[shopId]!),
                     shipMethods: listShipMethod[shopId]!,
                     onShippingMethodChanged: _updateShippingMethod,
+                    totalWeight: weight,
                   );
                 },
               );
@@ -794,6 +787,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
                       // Tạo danh sách OrderItem từ các sản phẩm được chọn
                       List<OrderItem> orderItems = [];
+
                       for (var itemId in listItemId) {
                         final cartItem = cartShop.items[itemId];
                         if (cartItem == null) continue;
@@ -809,6 +803,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                           double productPrice = 0;
                           if (product.variants.isEmpty) {
                             productPrice = product.price ?? 0;
+
                             // product = product.copyWith(
                             //   quantity: product.quantity! - cartItem.quantity,
                             //   quantitySold:
@@ -908,6 +903,7 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                         totalPrice: totalProductPrice + totalShipPrice,
                         estimatedDeliveryDate: estimatedDeliveryDate,
                         shipMethod: shipMethod[shopId]!,
+                        weight: weight,
                       );
 
                       if (listShopId.length == 1) {

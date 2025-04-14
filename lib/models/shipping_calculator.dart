@@ -13,6 +13,7 @@ class ShippingCalculator {
     double weightFactor = weight > 1000.0
         ? (weight - 1000.0) / 1000 * method.additionalWeightCost
         : 0.0;
+    // print(weightFactor);
     double totalCost = baseCost + weightFactor;
     if (includeDistanceFactor) {
       double distanceFactor = (baseDistance / 100) * 2.0;

@@ -492,21 +492,38 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                               }).toList();
 
                               if (filteredOrders.isEmpty) {
-                                return Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                return RefreshIndicator(
+                                  onRefresh: () async {
+                                    _loadOrders();
+                                  },
+                                  child: ListView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
                                     children: [
-                                      Image.asset(
-                                        ImageHelper.no_order,
-                                        width: 300,
-                                        height: 300,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                        'Không tìm thấy đơn hàng nào',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.grey,
+                                      Container(
+                                        height:
+                                            MediaQuery.of(context).size.height -
+                                                200,
+                                        child: Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Image.asset(
+                                                ImageHelper.no_order,
+                                                width: 300,
+                                                height: 300,
+                                              ),
+                                              const SizedBox(height: 16),
+                                              const Text(
+                                                'Không tìm thấy đơn hàng nào',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -514,17 +531,25 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                                 );
                               }
 
-                              return ListView.builder(
-                                padding: EdgeInsets.zero,
-                                itemCount: filteredOrders.length,
-                                itemBuilder: (context, index) {
-                                  return UserOrderItem(
-                                    order: filteredOrders[index],
-                                    onConfirmOrder: handleOrderConfirmation,
-                                    onConfirmShipSuccess:
-                                        handleShipSuccessConfirmation,
-                                  );
+                              return RefreshIndicator(
+                                onRefresh: () async {
+                                  _loadOrders();
                                 },
+                                child: ListView.builder(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding: EdgeInsets.zero,
+                                  itemCount: filteredOrders.length,
+                                  itemBuilder: (context, index) {
+                                    return UserOrderItem(
+                                      order: filteredOrders[index],
+                                      onCancelOrder: _loadOrders,
+                                      onConfirmOrder: handleOrderConfirmation,
+                                      onConfirmShipSuccess:
+                                          handleShipSuccessConfirmation,
+                                    );
+                                  },
+                                ),
                               );
                             }
                             return const SizedBox();
@@ -548,24 +573,37 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                 }
 
                 if (filteredOrders.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      _loadOrders();
+                    },
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        Image.asset(
-                          ImageHelper.no_order,
-                          width: 300,
-                          height: 300,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Bạn chưa có đơn hàng nào cả',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
+                        Container(
+                          height: MediaQuery.of(context).size.height - 200,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  ImageHelper.no_order,
+                                  width: 300,
+                                  height: 300,
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Bạn chưa có đơn hàng nào cả',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 32),
                       ],
                     ),
                   );
@@ -578,7 +616,12 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                         builder:
                             (BuildContext context, ProductOrderState state) {
                           if (state is ProductOrderListLoaded) {
-                            return ListView.builder(
+                            return RefreshIndicator(
+                              onRefresh: () async {
+                                _loadOrders();
+                              },
+                              child: ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
                                 padding: EdgeInsets.zero,
                                 itemCount: filteredOrders.length,
                                 itemBuilder: (context, index) {
@@ -587,11 +630,14 @@ class _OrderShopScreenState extends State<OrderShopScreen>
                                   }
                                   return UserOrderItem(
                                     order: filteredOrders[index],
+                                    onCancelOrder: _loadOrders,
                                     onConfirmOrder: handleOrderConfirmation,
                                     onConfirmShipSuccess:
                                         handleShipSuccessConfirmation,
                                   );
-                                });
+                                },
+                              ),
+                            );
                           }
                           return const SizedBox();
                         },
@@ -645,125 +691,125 @@ class _OrderShopScreenState extends State<OrderShopScreen>
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  selectedStatus = 'all';
-                                });
-                              },
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: selectedStatus == 'all'
-                                          ? const Color(0xFF8B4513)
-                                          : Colors.transparent,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Tất cả',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: selectedStatus == 'all'
-                                        ? const Color(0xFF8B4513)
-                                        : Colors.grey[600],
-                                    fontWeight: selectedStatus == 'all'
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  selectedStatus = 'pending';
-                                });
-                              },
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: selectedStatus == 'pending'
-                                          ? const Color(0xFF8B4513)
-                                          : Colors.transparent,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Chưa xử lý',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: selectedStatus == 'pending'
-                                        ? const Color(0xFF8B4513)
-                                        : Colors.grey[600],
-                                    fontWeight: selectedStatus == 'pending'
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  selectedStatus = 'processed';
-                                });
-                              },
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: selectedStatus == 'processed'
-                                          ? const Color(0xFF8B4513)
-                                          : Colors.transparent,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Đã xử lý',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: selectedStatus == 'processed'
-                                        ? const Color(0xFF8B4513)
-                                        : Colors.grey[600],
-                                    fontWeight: selectedStatus == 'processed'
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                // Container(
+                //   padding:
+                //       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                //   color: Colors.white,
+                //   child: Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       // Row(
+                //       //   children: [
+                //       //     Expanded(
+                //       //       child: InkWell(
+                //       //         onTap: () {
+                //       //           setState(() {
+                //       //             selectedStatus = 'all';
+                //       //           });
+                //       //         },
+                //       //         child: Container(
+                //       //           padding:
+                //       //               const EdgeInsets.symmetric(vertical: 8),
+                //       //           decoration: BoxDecoration(
+                //       //             border: Border(
+                //       //               bottom: BorderSide(
+                //       //                 color: selectedStatus == 'all'
+                //       //                     ? const Color(0xFF8B4513)
+                //       //                     : Colors.transparent,
+                //       //                 width: 2,
+                //       //               ),
+                //       //             ),
+                //       //           ),
+                //       //           child: Text(
+                //       //             'Tất cả',
+                //       //             textAlign: TextAlign.center,
+                //       //             style: TextStyle(
+                //       //               color: selectedStatus == 'all'
+                //       //                   ? const Color(0xFF8B4513)
+                //       //                   : Colors.grey[600],
+                //       //               fontWeight: selectedStatus == 'all'
+                //       //                   ? FontWeight.bold
+                //       //                   : FontWeight.normal,
+                //       //             ),
+                //       //           ),
+                //       //         ),
+                //       //       ),
+                //       //     ),
+                //       //     Expanded(
+                //       //       child: InkWell(
+                //       //         onTap: () {
+                //       //           setState(() {
+                //       //             selectedStatus = 'pending';
+                //       //           });
+                //       //         },
+                //       //         child: Container(
+                //       //           padding:
+                //       //               const EdgeInsets.symmetric(vertical: 8),
+                //       //           decoration: BoxDecoration(
+                //       //             border: Border(
+                //       //               bottom: BorderSide(
+                //       //                 color: selectedStatus == 'pending'
+                //       //                     ? const Color(0xFF8B4513)
+                //       //                     : Colors.transparent,
+                //       //                 width: 2,
+                //       //               ),
+                //       //             ),
+                //       //           ),
+                //       //           child: Text(
+                //       //             'Chưa xử lý',
+                //       //             textAlign: TextAlign.center,
+                //       //             style: TextStyle(
+                //       //               color: selectedStatus == 'pending'
+                //       //                   ? const Color(0xFF8B4513)
+                //       //                   : Colors.grey[600],
+                //       //               fontWeight: selectedStatus == 'pending'
+                //       //                   ? FontWeight.bold
+                //       //                   : FontWeight.normal,
+                //       //             ),
+                //       //           ),
+                //       //         ),
+                //       //       ),
+                //       //     ),
+                //       //     Expanded(
+                //       //       child: InkWell(
+                //       //         onTap: () {
+                //       //           setState(() {
+                //       //             selectedStatus = 'processed';
+                //       //           });
+                //       //         },
+                //       //         child: Container(
+                //       //           padding:
+                //       //               const EdgeInsets.symmetric(vertical: 8),
+                //       //           decoration: BoxDecoration(
+                //       //             border: Border(
+                //       //               bottom: BorderSide(
+                //       //                 color: selectedStatus == 'processed'
+                //       //                     ? const Color(0xFF8B4513)
+                //       //                     : Colors.transparent,
+                //       //                 width: 2,
+                //       //               ),
+                //       //             ),
+                //       //           ),
+                //       //           child: Text(
+                //       //             'Đã xử lý',
+                //       //             textAlign: TextAlign.center,
+                //       //             style: TextStyle(
+                //       //               color: selectedStatus == 'processed'
+                //       //                   ? const Color(0xFF8B4513)
+                //       //                   : Colors.grey[600],
+                //       //               fontWeight: selectedStatus == 'processed'
+                //       //                   ? FontWeight.bold
+                //       //                   : FontWeight.normal,
+                //       //             ),
+                //       //           ),
+                //       //         ),
+                //       //       ),
+                //       //     ),
+                //       //   ],
+                //       // ),
+                //     ],
+                //   ),
+                // ),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -152,11 +152,12 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       alignment: const Alignment(1, 0.6),
       child: IconButton(
         onPressed: () {
-          if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop();
-          } else {
-            Navigator.of(context).pushReplacementNamed('/');
-          }
+          Navigator.pop(context);
+          // if (Navigator.of(context).canPop()) {
+          //   Navigator.of(context).pop();
+          // } else {
+          //   Navigator.of(context).pushReplacementNamed('/');
+          // }
         },
         icon: const Icon(Icons.arrow_back, color: Colors.brown, size: 30),
       ),
@@ -175,6 +176,9 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           decoration: InputDecoration(
               enabledBorder: _buildSearchBorder(),
               focusedBorder: _buildSearchBorder(),
+              isCollapsed: true,
+              isDense: true,
+              contentPadding: EdgeInsets.only(left: 10),
               hintText: 'Nhập từ khóa',
               hintStyle: const TextStyle(fontSize: 15, color: Colors.grey),
               suffixIcon: IconButton(
@@ -184,7 +188,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               suffixIconColor: Colors.brown),
           style: const TextStyle(color: Colors.black, fontSize: 15),
           textAlign: TextAlign.start,
-          textAlignVertical: TextAlignVertical.bottom,
+          textAlignVertical: TextAlignVertical.center,
           readOnly: true,
           onTap: () {
             Navigator.of(context).pushReplacementNamed(SearchScreen.routeName);

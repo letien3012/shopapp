@@ -1,3 +1,8 @@
 abstract class HomeEvent {}
 
-class FetchAllProducts extends HomeEvent {}
+class FetchProductWithUserId extends HomeEvent {
+  final String userId;
+  FetchProductWithUserId(this.userId);
+}
+
+class FetchProductWithoutUserId extends HomeEvent {}

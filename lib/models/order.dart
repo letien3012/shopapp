@@ -42,28 +42,29 @@ class Order {
   String? shippingCode;
   DateTime? estimatedDeliveryDate;
   DateTime? actualDeliveryDate;
+  double weight;
 
-  Order({
-    required this.id,
-    required this.item,
-    required this.shopId,
-    required this.userId,
-    required this.shipMethod,
-    this.status = OrderStatus.pending,
-    required this.createdAt,
-    this.updateAt,
-    required this.receiveAdress,
-    this.paymentMethod = PaymentMethod.cod,
-    required this.totalProductPrice,
-    required this.totalShipFee,
-    required this.totalPrice,
-    this.statusHistory = const [],
-    this.trackingNumber,
-    this.shippingCode,
-    this.estimatedDeliveryDate,
-    this.actualDeliveryDate,
-    this.pickUpAdress,
-  });
+  Order(
+      {required this.id,
+      required this.item,
+      required this.shopId,
+      required this.userId,
+      required this.shipMethod,
+      this.status = OrderStatus.pending,
+      required this.createdAt,
+      this.updateAt,
+      required this.receiveAdress,
+      this.paymentMethod = PaymentMethod.cod,
+      required this.totalProductPrice,
+      required this.totalShipFee,
+      required this.totalPrice,
+      this.statusHistory = const [],
+      this.trackingNumber,
+      this.shippingCode,
+      this.estimatedDeliveryDate,
+      this.actualDeliveryDate,
+      this.pickUpAdress,
+      this.weight = 0});
 
   // Chuyển từ Map sang Order
   factory Order.fromMap(Map<String, dynamic> map) {
@@ -109,6 +110,7 @@ class Order {
       actualDeliveryDate: map['actualDeliveryDate'] != null
           ? (map['actualDeliveryDate'] as Timestamp).toDate()
           : null,
+      weight: (map['weight'] as num).toDouble(),
     );
   }
 
@@ -138,6 +140,7 @@ class Order {
       'actualDeliveryDate': actualDeliveryDate != null
           ? Timestamp.fromDate(actualDeliveryDate!)
           : null,
+      'weight': weight,
     };
   }
 
@@ -184,6 +187,7 @@ class Order {
       pickUpAdress: json['pickUpAddress'] != null
           ? Address.fromMap(json['pickUpAddress'] as Map<String, dynamic>)
           : null,
+      weight: (json['weight'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -209,6 +213,7 @@ class Order {
       'estimatedDeliveryDate': estimatedDeliveryDate?.toIso8601String(),
       'actualDeliveryDate': actualDeliveryDate?.toIso8601String(),
       'pickUpAddress': pickUpAdress?.toMap(),
+      'weight': weight,
     };
   }
 
@@ -233,6 +238,7 @@ class Order {
     DateTime? estimatedDeliveryDate,
     DateTime? actualDeliveryDate,
     Address? pickUpAdress,
+    double? weight,
   }) {
     return Order(
       id: id ?? this.id,
@@ -255,6 +261,7 @@ class Order {
           estimatedDeliveryDate ?? this.estimatedDeliveryDate,
       actualDeliveryDate: actualDeliveryDate ?? this.actualDeliveryDate,
       pickUpAdress: pickUpAdress ?? this.pickUpAdress,
+      weight: weight ?? this.weight,
     );
   }
 

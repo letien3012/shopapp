@@ -24,6 +24,12 @@ class UpdateUserEvent extends UserEvent {
   UpdateUserEvent(this.user);
 }
 
+class AddViewedProductEvent extends UserEvent {
+  final String userId;
+  final String productId;
+  AddViewedProductEvent(this.userId, this.productId);
+}
+
 class RegistrationSellerEvent extends UserEvent {
   final Shop shop;
   RegistrationSellerEvent(this.shop);

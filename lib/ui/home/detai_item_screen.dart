@@ -22,9 +22,14 @@ import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
+import 'package:luanvan/blocs/recommendation/recommendation_bloc.dart';
+import 'package:luanvan/blocs/recommendation/recommendation_even.dart';
+import 'package:luanvan/blocs/recommendation/recommendation_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
+import 'package:luanvan/blocs/user/user_bloc.dart';
+import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/usercomment/list_user_comment_bloc.dart';
 import 'package:luanvan/blocs/usercomment/list_user_comment_event.dart';
 import 'package:luanvan/blocs/usercomment/list_user_comment_state.dart';
@@ -86,7 +91,13 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
       productId = ModalRoute.of(context)!.settings.arguments as String;
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
+        context
+            .read<UserBloc>()
+            .add(AddViewedProductEvent(authState.user.uid, productId));
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
+        context
+            .read<RecommendationBloc>()
+            .add(LoadRecommendations(authState.user.uid));
         context
             .read<ProductFavoriteBloc>()
             .add(FetchFavoriteProductEvent(authState.user.uid));
@@ -904,7 +915,11 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
 
   Widget _buildProductDetails(Product product) {
     return Container(
-      color: Colors.white,
+      padding: const EdgeInsets.only(bottom: 30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey, width: 0.2)),
+      ),
       child: Column(
         children: [
           Container(
@@ -998,89 +1013,107 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   }
 
   Widget _buildSimilarProducts() {
-    return Column(
-      children: [
-        Container(
-          height: 50,
-          width: double.infinity,
-          color: Colors.grey[200],
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(height: 1, width: 50, color: Colors.black45),
-              const SizedBox(width: 10),
-              const Text("Các sản phẩm tương tự",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              const SizedBox(width: 10),
-              Container(height: 1, width: 50, color: Colors.black45),
-            ],
-          ),
-        ),
-        Container(
-          color: Colors.grey[200],
-          child: GridView.builder(
-            padding: const EdgeInsets.only(top: 0, left: 10, right: 10),
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 7,
-              crossAxisSpacing: 7,
-              mainAxisExtent: 280,
+    return BlocBuilder<RecommendationBloc, RecommendationState>(
+        builder: (context, state) {
+      if (state is RecommendationLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (state is RecommendationLoaded) {
+        final products = state.recommendedProducts;
+        return Column(
+          children: [
+            Container(
+              height: 50,
+              width: double.infinity,
+              color: Colors.grey[200],
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(height: 1, width: 50, color: Colors.black45),
+                  const SizedBox(width: 10),
+                  const Text("Các sản phẩm tương tự",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 10),
+                  Container(height: 1, width: 50, color: Colors.black45),
+                ],
+              ),
             ),
-            itemCount: 100,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pushNamed(DetaiItemScreen.routeName);
-                },
-                child: Container(
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Image.network(
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.contain,
-                        'https://product.hstatic.net/200000690725/product/fstp003-wh-7_53580331133_o_208c454df2584470a1aaf98c7e718c6d_master.jpg',
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        child: const Column(
-                          children: [
-                            Text(
-                              'Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003 Áo Polo trơn bo kẻ FSTP003',
-                              style: TextStyle(fontSize: 14),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
+            Container(
+              padding: const EdgeInsets.only(bottom: 60),
+              color: Colors.grey[200],
+              child: GridView.builder(
+                padding: const EdgeInsets.only(top: 0, left: 10, right: 10),
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 7,
+                  crossAxisSpacing: 7,
+                  mainAxisExtent: 280,
+                ),
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.of(context)
+                          .pushNamed(DetaiItemScreen.routeName);
+                    },
+                    child: Container(
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.network(
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.contain,
+                            product.imageUrl.isNotEmpty
+                                ? product.imageUrl[0]
+                                : '',
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            child: Column(
                               children: [
-                                Text('đ100',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.red),
-                                    maxLines: 1),
-                                Text('Đã bán 6.1k',
-                                    style: TextStyle(fontSize: 12),
-                                    maxLines: 1),
+                                Text(
+                                  product.name,
+                                  style: TextStyle(fontSize: 14),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                        "đ${formatPrice(product.getMinOptionPrice())}",
+                                        style: TextStyle(
+                                            fontSize: 16, color: Colors.red),
+                                        maxLines: 1),
+                                    Text('Đã bán ${product.quantitySold}',
+                                        style: TextStyle(fontSize: 12),
+                                        maxLines: 1),
+                                  ],
+                                ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      }
+      return const Center(child: CircularProgressIndicator());
+    });
   }
 
   Widget _buildSepherated(BuildContext context) {
@@ -1285,7 +1318,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                                   product.shopId,
                                 ));
                             final tempChatRoomId =
-                                '$authState.user.uid-${product.shopId}';
+                                '${authState.user.uid}-${product.shopId}';
                             Navigator.pushNamed(
                               context,
                               ChatDetailScreen.routeName,

@@ -323,7 +323,11 @@ class OrderService {
         'statusHistory':
             updatedOrder.statusHistory.map((e) => e.toMap()).toList(),
       });
-
+      if (newStatus == OrderStatus.delivered) {
+        await orderRef.update({
+          'actualDeliveryDate': firestore.Timestamp.fromDate(DateTime.now()),
+        });
+      }
       return updatedOrder;
     } catch (e) {
       throw Exception('Failed to update order status: $e');

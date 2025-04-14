@@ -5,8 +5,6 @@ import 'package:luanvan/blocs/productsearchimage/product_search_image_event.dart
 import 'package:luanvan/blocs/productsearchimage/product_search_image_state.dart';
 import 'package:luanvan/blocs/searchbyimage/search_image_bloc.dart';
 import 'package:luanvan/blocs/searchbyimage/search_image_state.dart';
-import 'package:luanvan/common/constants/app_colors.dart';
-import 'package:luanvan/models/image_feature.dart';
 import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/widgets/product_grid_item.dart';
 

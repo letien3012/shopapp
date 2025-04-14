@@ -5,6 +5,7 @@ import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
+import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:intl/intl.dart';
 
@@ -74,6 +75,31 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
               _buildStatusSection(order),
               _buildPaymentInfo(order),
               _buildPaymentMethod(order),
+              if (order.status == OrderStatus.shipped ||
+                  order.status == OrderStatus.delivered ||
+                  order.status == OrderStatus.reviewed)
+                Container(
+                  margin: EdgeInsets.only(top: 10),
+                  width: double.infinity,
+                  height: 70,
+                  padding: const EdgeInsets.all(10),
+                  color: Colors.white,
+                  alignment: Alignment.center,
+                  child: Row(children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text('Thông tin vận chuyển',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            )),
+                        Text('${order.shipMethod.name}: ${order.shippingCode}'),
+                      ],
+                    ),
+                  ]),
+                ),
               DetailProductAndShop(order: order),
               _buildOrderInfoSection(order),
               if (order.status == OrderStatus.pending)
@@ -363,6 +389,16 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
                       ],
                     )
                   : SizedBox.shrink(),
+              if (order.status == OrderStatus.delivered ||
+                  order.status == OrderStatus.reviewed)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Giao hàng thành công:'),
+                    Text(
+                        formatDate(order.actualDeliveryDate ?? DateTime.now())),
+                  ],
+                ),
               const SizedBox(height: 5),
             ],
           ),
@@ -375,30 +411,33 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 16, top: 16),
       child: GestureDetector(
-        onTap: () {
-          showDialog(
+        onTap: () async {
+          final result = await showDialog<String>(
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Hủy đơn hàng'),
               content: const Text('Bạn có chắc chắn muốn hủy đơn hàng này?'),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(context, 'no'),
                   child: const Text('Không'),
                 ),
                 TextButton(
-                  onPressed: () {
-                    context.read<OrderBloc>().add(
-                          CancelOrder(order.id),
-                        );
-                    Navigator.pop(context);
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context, 'yes'),
                   child: const Text('Có'),
                 ),
               ],
             ),
           );
+
+          if (result == 'yes') {
+            context.read<OrderBloc>().add(CancelOrder(order.id));
+            await context
+                .read<OrderBloc>()
+                .stream
+                .firstWhere((element) => element is OrderDetailLoaded);
+            Navigator.pop(context, 'cancel');
+          }
         },
         child: Container(
           width: double.infinity,

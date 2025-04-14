@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/models/shipping_calculator.dart';
 import 'package:luanvan/models/shipping_method.dart';
 
 class ChoiceShipmethodForShopScreen extends StatefulWidget {
@@ -19,14 +20,17 @@ class _ChoiceShipmethodForShopScreenState
   ShippingMethod? selectedMethod;
   String shopId = '';
   List<ShippingMethod> shippingMethods = [];
+  double totalWeight = 0.0;
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final arg = ModalRoute.of(context)!.settings.arguments as Map;
+      print(arg['shopId']);
       setState(() {
         shopId = arg['shopId'];
         shippingMethods = arg['shipMethod'];
         selectedMethod = arg['selectedMethod'];
+        totalWeight = arg['totalWeight'];
       });
     });
     super.initState();
@@ -185,7 +189,7 @@ class _ChoiceShipmethodForShopScreenState
                         Row(
                           children: [
                             Text(
-                              "đ${formatPrice(price)}",
+                              "đ${formatPrice(ShippingCalculator.calculateShippingCost(methodName: name, weight: totalWeight, includeDistanceFactor: false))}",
                               style: const TextStyle(
                                   fontSize: 14, color: Colors.black),
                             ),

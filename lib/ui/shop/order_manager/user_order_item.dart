@@ -17,10 +17,12 @@ class UserOrderItem extends StatefulWidget {
   Order order;
   final Function(String) onConfirmOrder;
   final Function(String) onConfirmShipSuccess;
+  final Function() onCancelOrder;
   UserOrderItem({
     required this.order,
     required this.onConfirmOrder,
     required this.onConfirmShipSuccess,
+    required this.onCancelOrder,
   });
 
   @override
@@ -94,9 +96,13 @@ class _UserOrderItemState extends State<UserOrderItem> {
           );
 
           return GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, OrderDetailShopScreen.routeName,
+            onTap: () async {
+              final result = await Navigator.pushNamed(
+                  context, OrderDetailShopScreen.routeName,
                   arguments: widget.order);
+              if (result == 'cancel') {
+                widget.onCancelOrder();
+              }
             },
             child: Container(
               margin: const EdgeInsets.only(
@@ -258,6 +264,17 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                         OrderStatus.shipped) {
                                       widget.onConfirmShipSuccess(
                                           widget.order.id);
+                                    } else if (widget.order.status ==
+                                            OrderStatus.returned ||
+                                        widget.order.status ==
+                                            OrderStatus.cancelled) {
+                                      final result = await Navigator.pushNamed(
+                                          context,
+                                          OrderDetailShopScreen.routeName,
+                                          arguments: widget.order);
+                                      if (result == 'cancel') {
+                                        widget.onConfirmOrder(widget.order.id);
+                                      }
                                     }
                                   },
                                   child: Container(
@@ -280,7 +297,12 @@ class _UserOrderItemState extends State<UserOrderItem> {
                                                               OrderStatus
                                                                   .reviewed
                                                           ? 'Đã đánh giá'
-                                                          : '',
+                                                          : widget.order
+                                                                      .status ==
+                                                                  OrderStatus
+                                                                      .returned
+                                                              ? 'Xem chi tiết'
+                                                              : 'Xem chi tiết',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: Colors.white,

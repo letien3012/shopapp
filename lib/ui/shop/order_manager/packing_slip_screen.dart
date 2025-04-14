@@ -111,7 +111,7 @@ class _PackingSlipScreenState extends State<PackingSlipScreen> {
                                   pw.TextStyle(fontSize: 10, font: regularFont),
                             ),
                             pw.Text(
-                              'Mã đơn hàng: ${order?.id ?? ''}',
+                              'Mã đơn hàng: ${order?.trackingNumber ?? ''}',
                               style:
                                   pw.TextStyle(fontSize: 10, font: regularFont),
                             ),
@@ -296,7 +296,7 @@ class _PackingSlipScreenState extends State<PackingSlipScreen> {
                                   ),
                                   pw.SizedBox(height: 4),
                                   pw.Text(
-                                    'Khối lượng: ${order?.id ?? 0} gram',
+                                    'Khối lượng: ${order?.weight ?? 0} gram',
                                     style: pw.TextStyle(
                                         fontSize: 11, font: regularFont),
                                   ),

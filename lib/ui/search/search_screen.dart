@@ -76,7 +76,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (keyword.isNotEmpty) {
       await _saveSearch(keyword);
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed(
+        Navigator.of(context).pushNamed(
           SearchResultScreen.routeName,
           arguments: keyword,
         );
@@ -111,7 +111,7 @@ class _SearchScreenState extends State<SearchScreen> {
       onTap: () async {
         await _saveSearch(productName);
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed(
+          Navigator.of(context).pushNamed(
             SearchResultScreen.routeName,
             arguments: productName,
           );
@@ -155,6 +155,9 @@ class _SearchScreenState extends State<SearchScreen> {
                     maxLines: 1,
                     onChanged: _onSearchChanged,
                     decoration: InputDecoration(
+                        isCollapsed: true,
+                        isDense: true,
+                        contentPadding: EdgeInsets.only(left: 10),
                         enabledBorder: const OutlineInputBorder(
                           borderSide: BorderSide(width: 1, color: Colors.brown),
                           borderRadius: BorderRadius.only(
@@ -261,7 +264,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         suffixIconColor: Colors.brown),
                     style: const TextStyle(color: Colors.black, fontSize: 15),
                     textAlign: TextAlign.start,
-                    textAlignVertical: TextAlignVertical.bottom,
+                    textAlignVertical: TextAlignVertical.center,
                     autofocus: true,
                     onSubmitted: (value) {
                       _performSearch();

@@ -167,19 +167,7 @@ class _OrderScreenState extends State<OrderScreen>
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: SvgPicture.asset(
-              IconHelper.chatIcon,
-              color: Colors.brown,
-              height: 24,
-              width: 24,
-            ),
-            onPressed: () {
-              // Handle chat button press
-            },
-          ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 10),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -222,6 +210,7 @@ class _OrderScreenState extends State<OrderScreen>
   Widget _buildOrderList(String status) {
     return BlocBuilder<OrderBloc, OrderState>(
       builder: (context, state) {
+        print('state: $state');
         if (state is OrderLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -306,21 +295,36 @@ class _OrderScreenState extends State<OrderScreen>
                         }).toList();
 
                         if (filteredOrders.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                          return RefreshIndicator(
+                            onRefresh: () async {
+                              _loadOrders();
+                            },
+                            child: ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
                               children: [
-                                Image.asset(
-                                  ImageHelper.no_order,
-                                  width: 300,
-                                  height: 300,
-                                ),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'Không tìm thấy đơn hàng nào',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
+                                Container(
+                                  height:
+                                      MediaQuery.of(context).size.height - 200,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                          ImageHelper.no_order,
+                                          width: 300,
+                                          height: 300,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'Không tìm thấy đơn hàng nào',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -328,14 +332,21 @@ class _OrderScreenState extends State<OrderScreen>
                           );
                         }
 
-                        return ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemCount: filteredOrders.length,
-                          itemBuilder: (context, index) {
-                            return ShopOrderItem(
-                              order: filteredOrders[index],
-                            );
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            _loadOrders();
                           },
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            itemCount: filteredOrders.length,
+                            itemBuilder: (context, index) {
+                              return ShopOrderItem(
+                                refreshOrder: _loadOrders,
+                                order: filteredOrders[index],
+                              );
+                            },
+                          ),
                         );
                       }
                       return const SizedBox();
@@ -348,21 +359,34 @@ class _OrderScreenState extends State<OrderScreen>
           }
 
           if (filteredOrders.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+            return RefreshIndicator(
+              onRefresh: () async {
+                _loadOrders();
+              },
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Image.asset(
-                    ImageHelper.no_order,
-                    width: 300,
-                    height: 300,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Bạn chưa có đơn hàng nào cả',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
+                  Container(
+                    height: MediaQuery.of(context).size.height - 200,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            ImageHelper.no_order,
+                            width: 300,
+                            height: 300,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Bạn chưa có đơn hàng nào cả',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -376,14 +400,21 @@ class _OrderScreenState extends State<OrderScreen>
                 return BlocBuilder<ProductOrderBloc, ProductOrderState>(
                   builder: (BuildContext context, ProductOrderState state) {
                     if (state is ProductOrderListLoaded) {
-                      return ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: filteredOrders.length,
-                        itemBuilder: (context, index) {
-                          return ShopOrderItem(
-                            order: filteredOrders[index],
-                          );
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          _loadOrders();
                         },
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemCount: filteredOrders.length,
+                          itemBuilder: (context, index) {
+                            return ShopOrderItem(
+                              refreshOrder: _loadOrders,
+                              order: filteredOrders[index],
+                            );
+                          },
+                        ),
                       );
                     }
                     return const SizedBox();

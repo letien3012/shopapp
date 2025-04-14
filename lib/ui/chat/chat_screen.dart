@@ -324,15 +324,29 @@ class _ChatScreenState extends State<ChatScreen> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    Text(
-                                      chatRoom.createdAt
-                                          .toString()
-                                          .substring(11, 16),
-                                      maxLines: 1,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w400,
-                                      ),
+                                    BlocSelector<ChatBloc, ChatState, String>(
+                                      selector: (state) {
+                                        if (state is MessagesLoaded) {
+                                          if (state.messages.isNotEmpty) {
+                                            return state.messages.last.sentAt
+                                                .toString()
+                                                .substring(11, 16);
+                                          }
+                                        }
+                                        return "";
+                                      },
+                                      builder: (BuildContext context,
+                                          String sendAt) {
+                                        return Text(
+                                          sendAt,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
@@ -404,21 +418,21 @@ class _ChatScreenState extends State<ChatScreen> {
             const EdgeInsets.only(top: 30, left: 10, right: 10, bottom: 10),
         child: Row(
           children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-              child: Container(
-                height: 40,
-                width: 40,
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.brown,
-                  size: 30,
-                ),
-              ),
-            ),
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.of(context).pop();
+            //   },
+            //   child: Container(
+            //     height: 40,
+            //     width: 40,
+            //     alignment: Alignment.center,
+            //     child: const Icon(
+            //       Icons.arrow_back,
+            //       color: Colors.brown,
+            //       size: 30,
+            //     ),
+            //   ),
+            // ),
             const SizedBox(width: 10),
             const SizedBox(
               height: 40,

@@ -21,6 +21,7 @@ class ShopCheckoutItem extends StatefulWidget {
   Map<String, List<String>> productCheckOut = {};
   ShippingMethod shipMethod;
   List<ShippingMethod> shipMethods = [];
+  double totalWeight = 0.0;
   final Function(String, ShippingMethod) onShippingMethodChanged;
 
   ShopCheckoutItem({
@@ -31,6 +32,7 @@ class ShopCheckoutItem extends StatefulWidget {
     required this.shipMethod,
     required this.shipMethods,
     required this.onShippingMethodChanged,
+    required this.totalWeight,
   });
 
   @override
@@ -277,7 +279,9 @@ class _ShopCheckoutItemState extends State<ShopCheckoutItem> {
                                                     'shipMethod':
                                                         widget.shipMethods,
                                                     'selectedMethod':
-                                                        _selectedShipMethod
+                                                        _selectedShipMethod,
+                                                    'totalWeight':
+                                                        widget.totalWeight
                                                   });
                                               if (result != null &&
                                                   result is ShippingMethod) {
@@ -312,7 +316,9 @@ class _ShopCheckoutItemState extends State<ShopCheckoutItem> {
                                                 'shipMethod':
                                                     widget.shipMethods,
                                                 'selectedMethod':
-                                                    _selectedShipMethod
+                                                    _selectedShipMethod,
+                                                'totalWeight':
+                                                    widget.totalWeight
                                               });
                                         },
                                         child: Container(
@@ -339,7 +345,7 @@ class _ShopCheckoutItemState extends State<ShopCheckoutItem> {
                                                   Row(
                                                     children: [
                                                       Text(
-                                                          "đ${ShippingCalculator.calculateShippingCost(methodName: _selectedShipMethod.name, weight: maxWeight, includeDistanceFactor: false)}",
+                                                          "đ${ShippingCalculator.calculateShippingCost(methodName: _selectedShipMethod.name, weight: widget.totalWeight, includeDistanceFactor: false)}",
                                                           style: TextStyle(
                                                               fontSize: 13),
                                                           maxLines: 1,

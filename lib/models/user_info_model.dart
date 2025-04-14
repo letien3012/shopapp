@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:luanvan/models/address.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luanvan/models/viewedProduct.dart';
 
 enum Gender { male, female, other, unknown }
 
@@ -18,6 +19,7 @@ class UserInfoModel {
   List<Address> addresses;
   Timestamp createdAt;
   List<String> favoriteProducts;
+  List<ViewedProduct> viewedProducts;
 
   UserInfoModel({
     required this.id,
@@ -33,9 +35,11 @@ class UserInfoModel {
     List<Address>? addresses,
     Timestamp? createdAt,
     List<String>? favoriteProducts,
+    List<ViewedProduct>? viewedProducts,
   })  : addresses = addresses ?? [],
         createdAt = createdAt ?? Timestamp.now(),
-        favoriteProducts = favoriteProducts ?? [];
+        favoriteProducts = favoriteProducts ?? [],
+        viewedProducts = viewedProducts ?? [];
 
   UserInfoModel copyWith({
     String? id,
@@ -51,6 +55,7 @@ class UserInfoModel {
     List<Address>? addresses,
     Timestamp? createdAt,
     List<String>? favoriteProducts,
+    List<ViewedProduct>? viewedProducts,
   }) {
     return UserInfoModel(
       id: id ?? this.id,
@@ -66,6 +71,7 @@ class UserInfoModel {
       addresses: addresses ?? this.addresses,
       createdAt: createdAt ?? this.createdAt,
       favoriteProducts: favoriteProducts ?? this.favoriteProducts,
+      viewedProducts: viewedProducts ?? this.viewedProducts,
     );
   }
 
@@ -84,6 +90,8 @@ class UserInfoModel {
       'addresses': addresses.map((address) => address.toMap()).toList(),
       'createdAt': createdAt,
       'favoriteProducts': favoriteProducts,
+      'viewedProducts':
+          viewedProducts.map((viewedProduct) => viewedProduct.toMap()).toList(),
     };
   }
 
@@ -111,6 +119,10 @@ class UserInfoModel {
       createdAt: map['createdAt'] as Timestamp? ?? Timestamp.now(),
       favoriteProducts: map['favoriteProducts'] != null
           ? List<String>.from(map['favoriteProducts'])
+          : [],
+      viewedProducts: map['viewedProducts'] != null
+          ? List<ViewedProduct>.from((map['viewedProducts'] as List)
+              .map((x) => ViewedProduct.fromMap(x)))
           : [],
     );
   }
@@ -140,6 +152,10 @@ class UserInfoModel {
       favoriteProducts: data['favoriteProducts'] != null
           ? List<String>.from(data['favoriteProducts'])
           : [],
+      viewedProducts: data['viewedProducts'] != null
+          ? List<ViewedProduct>.from((data['viewedProducts'] as List)
+              .map((x) => ViewedProduct.fromMap(x)))
+          : [],
     );
   }
 
@@ -150,6 +166,6 @@ class UserInfoModel {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role, isLock: $isLock, addresses: $addresses, createdAt: $createdAt, favoriteProducts: $favoriteProducts)';
+    return 'User(id: $id, name: $name, email: $email, phone: $phone, avataUrl: $avataUrl, gender: $gender, date: $date, userName: $userName, role: $role, isLock: $isLock, addresses: $addresses, createdAt: $createdAt, favoriteProducts: $favoriteProducts, viewedProducts: $viewedProducts)';
   }
 }

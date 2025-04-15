@@ -22,6 +22,16 @@ class ShopService {
     return shop;
   }
 
+  Future<Shop> getShop() async {
+    final response = await firebaseFirestore
+        .collection('shops')
+        .limit(1)
+        .get()
+        .then((value) => value.docs.first);
+
+    return Shop.fromFirestore(response);
+  }
+
   Future<List<Shop>> fetchListShopByShopId(List<String> shopIds) async {
     final response = await firebaseFirestore
         .collection('shops')

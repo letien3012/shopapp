@@ -344,7 +344,8 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
                                 batchStock.toString();
                             if (selectedOptions.length > i) {
                               selectedOptions[i] = selectedOptions[i].copyWith(
-                                  price: batchPrice, quantity: batchStock);
+                                  price: batchPrice,
+                                  adjustmentQuantities: batchStock);
                             }
                           }
                         });
@@ -635,21 +636,21 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    GestureDetector(
-                      onTap: () async {
-                        if (await _saveData()) {
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: Container(
-                        height: 40,
-                        width: 40,
-                        alignment: Alignment.center,
-                        margin: const EdgeInsets.only(bottom: 5),
-                        child: const Icon(Icons.arrow_back,
-                            color: Colors.black, size: 24),
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () async {
+                    //     if (await _saveData()) {
+                    //       Navigator.of(context).pop();
+                    //     }
+                    //   },
+                    //   child: Container(
+                    //     height: 40,
+                    //     width: 40,
+                    //     alignment: Alignment.center,
+                    //     margin: const EdgeInsets.only(bottom: 5),
+                    //     child: const Icon(Icons.arrow_back,
+                    //         color: Colors.black, size: 24),
+                    //   ),
+                    // ),
                     const SizedBox(width: 10),
                     const SizedBox(
                       height: 40,

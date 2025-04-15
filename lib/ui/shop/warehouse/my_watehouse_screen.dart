@@ -10,7 +10,6 @@ import 'package:luanvan/models/import_item.dart';
 import 'package:luanvan/models/import_receipt.dart';
 import 'package:luanvan/models/supplier.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
 import 'package:luanvan/ui/shop/warehouse/import_receipt_manager/import_receipt_manager_screen.dart';
 import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'package:luanvan/ui/shop/warehouse/edit_stock_detail_screen.dart';

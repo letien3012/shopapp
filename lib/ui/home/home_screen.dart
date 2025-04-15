@@ -220,7 +220,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(
                           width: 10,
                         ),
-                        Text('Sản phẩm bán chạy 🔥',
+                        Text(
+                            !(context.read<AuthBloc>().state
+                                    is AuthAuthenticated)
+                                ? 'Sản phẩm bán chạy 🔥'
+                                : 'Sản phẩm phù hợp nhất',
                             textAlign: TextAlign.start,
                             style: TextStyle(
                                 fontSize: 20,

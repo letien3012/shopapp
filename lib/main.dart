@@ -63,10 +63,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  ui.PlatformDispatcher.instance.onMetricsChanged = () {
-    final double refreshRate =
-        ui.PlatformDispatcher.instance.views.first.devicePixelRatio;
-  };
+  ui.PlatformDispatcher.instance.onMetricsChanged = () {};
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate(
     // You can also use a `ReCaptchaEnterpriseProvider` provider instance as an

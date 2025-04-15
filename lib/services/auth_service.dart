@@ -519,8 +519,12 @@ class AuthService {
           .where('email', isEqualTo: email)
           .limit(1)
           .get();
-
-      return result.docs.isNotEmpty;
+      final QuerySnapshot resultShop = await FirebaseFirestore.instance
+          .collection('shops')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+      return result.docs.isNotEmpty || resultShop.docs.isNotEmpty;
     } catch (e) {
       throw Exception('Failed to check email existence: $e');
     }

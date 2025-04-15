@@ -361,7 +361,7 @@ class _ProductInCategoryScreenState extends State<ProductInCategoryScreen> {
     final state = context.read<ListShopSearchBloc>().state;
     if (state is ListShopSearchLoaded) {
       try {
-        return state.shops.firstWhere((shop) => shop.shopId == product.shopId);
+        return state.shop;
       } catch (e) {
         return null;
       }

@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
 import 'package:luanvan/blocs/search/search_bloc.dart';
-import 'package:luanvan/blocs/search/search_event.dart' as search_event;
 import 'package:luanvan/blocs/search/search_event.dart';
-import 'package:luanvan/blocs/search/search_state.dart' as search_state;
 import 'package:luanvan/blocs/search/search_state.dart';
 import 'package:luanvan/blocs/searchbyimage/search_image_bloc.dart';
 import 'package:luanvan/blocs/searchbyimage/search_image_event.dart';
-import 'package:luanvan/models/product.dart';
-import 'package:luanvan/ui/home/detai_item_screen.dart';
 import 'package:luanvan/ui/search/search_image_result.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,9 +84,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void _onSearchChanged(String query) {
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      if (query.trim().isNotEmpty) {
-        context.read<SearchBloc>().add(SuggestSearch(query));
-      }
+      context.read<SearchBloc>().add(SuggestSearch(query));
     });
   }
 

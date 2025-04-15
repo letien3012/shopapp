@@ -1,15 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/product.dart';
-import 'package:luanvan/ui/widgets/add_to_cart.dart';
 import 'package:luanvan/ui/widgets/change_cart_variant.dart';
-import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/widgets/alert_diablog.dart';
 
 class ProductItemWidget extends StatefulWidget {
   final String shopId;
@@ -81,6 +77,11 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
     String productPrice = '';
     if (product.variants.isEmpty) {
       productPrice = product.price.toString();
+    } else if (product.variants.length == 1) {
+      int i = product.variants[0].options
+          .indexWhere((element) => element.id == widget.item.optionId1);
+      if (i == -1) i = 0;
+      productPrice = product.optionInfos[i].price.toString();
     } else if (product.variants.length > 1) {
       int i = product.variants[0].options
           .indexWhere((element) => element.id == widget.item.optionId1);
@@ -220,97 +221,91 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 5),
-                      (product.optionInfos.length > 1)
-                          ? IntrinsicWidth(
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 5),
-                                height: 30,
-                                decoration: BoxDecoration(
-                                    color: Colors.grey[200],
-                                    borderRadius: BorderRadius.circular(5)),
-                                alignment: Alignment.center,
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        (widget.item.variantId1 != null)
-                                            ? product.variants
-                                                .firstWhere((variant) =>
-                                                    variant.id ==
-                                                    widget.item.variantId1)
-                                                .options
-                                                .firstWhere((option) =>
-                                                    option.id ==
-                                                    widget.item.optionId1)
-                                                .name
+                      if (product.optionInfos.length > 1)
+                        IntrinsicWidth(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            height: 30,
+                            decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(5)),
+                            alignment: Alignment.center,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    (widget.item.variantId1 != null)
+                                        ? product.variants
+                                            .firstWhere((variant) =>
+                                                variant.id ==
+                                                widget.item.variantId1)
+                                            .options
+                                            .firstWhere((option) =>
+                                                option.id ==
+                                                widget.item.optionId1)
+                                            .name
+                                        : '',
+                                    style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w500),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    if (product.variants.isEmpty ||
+                                        (product.variants.length == 2 &&
+                                            product.variants.every((variant) =>
+                                                variant.options.length <= 1)) ||
+                                        (product.variants.length == 1 &&
+                                            product.variants[0].options
+                                                    .length <=
+                                                1)) {
+                                      // context.read<CartBloc>().add(
+                                      //     AddCartEvent(
+                                      //         product.id,
+                                      //         _quantityAddToCart,
+                                      //         userId,
+                                      //         product.shopId,
+                                      //         null,
+                                      //         null,
+                                      //         null,
+                                      //         null));
+                                    } else {
+                                      if (product.variants.length > 1) {
+                                        showAddToCart(context, product,
+                                            optionId1: widget.item.optionId1,
+                                            optionId2: widget.item.optionId2);
+                                      } else {
+                                        showAddToCart(context, product,
+                                            optionId1: widget.item.optionId1);
+                                      }
+                                    }
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        (widget.item.variantId2 != null)
+                                            ? ', ${product.variants.firstWhere((variant) => variant.id == widget.item.variantId2).options.firstWhere((option) => option.id == widget.item.optionId2).name}'
                                             : '',
                                         style: const TextStyle(
                                             fontSize: 13,
                                             color: Colors.black,
                                             fontWeight: FontWeight.w500),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        if (product.variants.isEmpty ||
-                                            (product.variants.length == 2 &&
-                                                product.variants.every(
-                                                    (variant) =>
-                                                        variant
-                                                            .options.length <=
-                                                        1)) ||
-                                            (product.variants.length == 1 &&
-                                                product.variants[0].options
-                                                        .length <=
-                                                    1)) {
-                                          // context.read<CartBloc>().add(
-                                          //     AddCartEvent(
-                                          //         product.id,
-                                          //         _quantityAddToCart,
-                                          //         userId,
-                                          //         product.shopId,
-                                          //         null,
-                                          //         null,
-                                          //         null,
-                                          //         null));
-                                        } else {
-                                          if (product.variants.length > 1) {
-                                            showAddToCart(context, product,
-                                                optionId1:
-                                                    widget.item.optionId1,
-                                                optionId2:
-                                                    widget.item.optionId2);
-                                          } else {
-                                            showAddToCart(context, product,
-                                                optionId1:
-                                                    widget.item.optionId1);
-                                          }
-                                        }
-                                      },
-                                      child: Row(
-                                        children: [
-                                          Text(
-                                            (widget.item.variantId2 != null)
-                                                ? ', ${product.variants.firstWhere((variant) => variant.id == widget.item.variantId2).options.firstWhere((option) => option.id == widget.item.optionId2).name}'
-                                                : '',
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w500),
-                                          ),
-                                          const Icon(Icons
-                                              .keyboard_arrow_down_outlined),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                      const Icon(
+                                          Icons.keyboard_arrow_down_outlined),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            )
-                          : SizedBox(height: 30),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        SizedBox(height: 30),
                       const SizedBox(height: 5),
                       _buildStockStatus(product),
                       const SizedBox(height: 5),

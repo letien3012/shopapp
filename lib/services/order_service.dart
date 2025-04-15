@@ -60,26 +60,25 @@ class OrderService {
     }
   }
 
-  // Tạo mã tracking number theo format YYMMDDXXXXXXXX (X là ký tự từ 0-9 và A-Z)
   Future<String> _generateUniqueTrackingNumber() async {
     String generateTrackingNumber() {
       final now = DateTime.now();
       final datePrefix =
           '${now.year.toString().substring(2)}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
 
+      // Tạo 8 ký tự ngẫu nhiên từ chữ và số
+      final random = Random();
       const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      final random = List.generate(
-          8,
-          (index) =>
-              chars[DateTime.now().millisecondsSinceEpoch % chars.length]);
+      final randomChars =
+          List.generate(8, (index) => chars[random.nextInt(chars.length)]);
 
-      return datePrefix + random.join('');
+      return datePrefix + randomChars.join('');
     }
 
     while (true) {
       final trackingNumber = generateTrackingNumber();
 
-      // Kiểm tra xem mã đã tồn tại chưa
+      // Kiểm tra xem tracking number đã tồn tại chưa
       final querySnapshot = await _firestore
           .collection('orders')
           .where('trackingNumber', isEqualTo: trackingNumber)

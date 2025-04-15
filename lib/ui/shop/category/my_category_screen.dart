@@ -25,6 +25,8 @@ class MyCategoryScreen extends StatefulWidget {
 class _MyCategoryScreenState extends State<MyCategoryScreen> {
   late Shop shop;
   String shopId = '';
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -32,6 +34,18 @@ class _MyCategoryScreenState extends State<MyCategoryScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CategoryBloc>().add(FetchCategoriesEvent());
     });
+
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<bool> _showConfirmLockUserDialog(String title) async {
@@ -111,6 +125,14 @@ class _MyCategoryScreenState extends State<MyCategoryScreen> {
   }
 
   Widget _buildShopContent(BuildContext context, List<Category> categories) {
+    // Filter categories based on search query
+    final filteredCategories = _searchQuery.isEmpty
+        ? categories
+        : categories
+            .where((category) =>
+                category.name.toLowerCase().contains(_searchQuery))
+            .toList();
+
     return Stack(
       children: [
         Container(
@@ -123,7 +145,7 @@ class _MyCategoryScreenState extends State<MyCategoryScreen> {
             minWidth: MediaQuery.of(context).size.width,
           ),
           padding: const EdgeInsets.only(top: 90, bottom: 60),
-          child: _buildCategoryList(categories),
+          child: _buildCategoryList(filteredCategories),
         ),
         Align(
           alignment: Alignment.topCenter,
@@ -163,21 +185,45 @@ class _MyCategoryScreenState extends State<MyCategoryScreen> {
                             fontSize: 18, fontWeight: FontWeight.w500),
                       ),
                     ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: SizedBox(
-                        height: 50,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Icon(Icons.search, color: Colors.brown, size: 30),
-                            const SizedBox(width: 10),
-                            SvgPicture.asset(
-                              IconHelper.chatIcon,
-                              color: Colors.brown,
-                              height: 30,
-                              width: 30,
+                      child: Container(
+                        width: 160,
+                        height: 36,
+                        margin: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Center(
+                          child: TextField(
+                            controller: _searchController,
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'Tìm kiếm...',
+                              hintStyle: const TextStyle(fontSize: 13),
+                              prefixIcon: const Icon(Icons.search,
+                                  color: Colors.grey, size: 20),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      icon: const Icon(Icons.clear,
+                                          color: Colors.grey, size: 20),
+                                      onPressed: () {
+                                        setState(() {
+                                          _searchController.clear();
+                                        });
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 0),
                             ),
-                          ],
+                            style: const TextStyle(fontSize: 13),
+                          ),
                         ),
                       ),
                     ),
@@ -246,54 +292,46 @@ class _MyCategoryScreenState extends State<MyCategoryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(
-                      context, DetailsProductShopScreen.routeName,
-                      arguments: category.id);
-                },
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        category.imageUrl != null &&
-                                category.imageUrl!.isNotEmpty
-                            ? category.imageUrl!
-                            : 'https://via.placeholder.com/80',
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      category.imageUrl != null && category.imageUrl!.isNotEmpty
+                          ? category.imageUrl!
+                          : 'https://via.placeholder.com/80',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Image.network(
+                        'https://via.placeholder.com/80',
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Image.network(
-                          'https://via.placeholder.com/80',
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                        ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            category.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          category.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
-                          const SizedBox(height: 5),
-                        ],
-                      ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 5),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               Row(

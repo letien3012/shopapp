@@ -182,16 +182,6 @@ class ChatbotService {
     Luôn ưu tiên trải nghiệm thân thiện và dễ hiểu cho khách hàng.
     ''';
 
-    // final prompt = '''
-    // Bạn là một trợ lý bán hàng chuyên nghiệp.
-    // Đây là danh sách sản phẩm có trong cửa hàng
-    // $context
-    // Câu hỏi của khách hàng: $query
-
-    // Nếu câu hỏi liên quan đến sản phẩm, hãy trả lời dựa trên danh sách sản phẩm một cách tự nhiên và thân thiện.
-    // Nếu không liên quan đến sản phẩm, hãy trả lời 1 cách tự nhiên và hợp lý nhất.
-    // ''';
-
     final response = await http.post(
       Uri.parse(url),
       headers: {

@@ -23,6 +23,8 @@ class MySupplierScreen extends StatefulWidget {
 class _MySupplierScreenState extends State<MySupplierScreen> {
   late Shop shop;
   String shopId = '';
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -30,6 +32,18 @@ class _MySupplierScreenState extends State<MySupplierScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SupplierBloc>().add(LoadSuppliers());
     });
+
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<bool> _showConfirmLockUserDialog(String title) async {
@@ -120,6 +134,14 @@ class _MySupplierScreenState extends State<MySupplierScreen> {
   }
 
   Widget _buildSupplierContent(BuildContext context, List<Supplier> suppliers) {
+    // Filter suppliers based on search query
+    final filteredSuppliers = _searchQuery.isEmpty
+        ? suppliers
+        : suppliers
+            .where((supplier) =>
+                (supplier.name.toLowerCase()).contains(_searchQuery))
+            .toList();
+
     return Stack(
       children: [
         Container(
@@ -132,7 +154,7 @@ class _MySupplierScreenState extends State<MySupplierScreen> {
             minWidth: MediaQuery.of(context).size.width,
           ),
           padding: const EdgeInsets.only(top: 90, bottom: 60),
-          child: _buildSupplierList(suppliers),
+          child: _buildSupplierList(filteredSuppliers),
         ),
         Align(
           alignment: Alignment.topCenter,
@@ -170,6 +192,48 @@ class _MySupplierScreenState extends State<MySupplierScreen> {
                         "Quản lý nhà cung cấp",
                         style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        width: 160,
+                        height: 36,
+                        margin: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Center(
+                          child: TextField(
+                            controller: _searchController,
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'Tìm kiếm...',
+                              hintStyle: const TextStyle(fontSize: 13),
+                              prefixIcon: const Icon(Icons.search,
+                                  color: Colors.grey, size: 20),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      icon: const Icon(Icons.clear,
+                                          color: Colors.grey, size: 20),
+                                      onPressed: () {
+                                        setState(() {
+                                          _searchController.clear();
+                                        });
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 0),
+                            ),
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
                       ),
                     ),
                   ],

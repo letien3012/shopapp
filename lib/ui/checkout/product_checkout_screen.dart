@@ -59,6 +59,11 @@ class _ProductItemWidgetState extends State<ProductCheckoutWidget> {
       String productPrice = '';
       if (product.variants.isEmpty) {
         productPrice = product.price?.toString() ?? '0';
+      } else if (product.variants.length == 1) {
+        int i = product.variants[0].options
+            .indexWhere((element) => element.id == widget.item.optionId1);
+        if (i == -1) i = 0;
+        productPrice = product.optionInfos[i].price.toString();
       } else if (product.variants.length > 1) {
         int i = product.variants[0].options
             .indexWhere((element) => element.id == widget.item.optionId1);

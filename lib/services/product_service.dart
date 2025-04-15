@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/product.dart';
@@ -9,27 +8,20 @@ import 'package:luanvan/models/option_info.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:luanvan/rag/product_chunk.dart';
-import 'package:luanvan/services/cart_service.dart';
 
 class ProductService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  // Future<List<String>> generateChunks(Product product) async {
-  //   return await generateProductChunks(product);
-  // }
 
-  // Future<void> createEmbedding(Product product) async {
-  //   print('createEmbedding ${product.id}');
-  //   final chunks = await generateChunks(product);
-  //   final embeddings = await Future.wait(chunks.map(generateEmbedding));
-  //   embeddings.forEach((embedding) async {
-  //     await firebaseFirestore.collection('product_embedding').add({
-  //       'productId': product.id,
-  //       'embeddings': embedding,
-  //       'isHidden': product.isHidden,
-  //       'isDeleted': product.isDeleted,
-  //     });
-  //   });
-  // }
+  Future<void> createEmbedding(Product product) async {
+    final chunks = await generateProductChunk(product);
+    final embeddings = await generateEmbedding(chunks);
+    await firebaseFirestore.collection('product_embedding').add({
+      'productId': product.id,
+      'embeddings': embeddings,
+      'isHidden': product.isHidden,
+      'isDeleted': product.isDeleted,
+    });
+  }
 
   Future<List<double>> generateEmbedding(String text) async {
     final apiKey = dotenv.env['API_KEY'];
@@ -179,7 +171,7 @@ class ProductService {
     await docRef.update({
       'optionInfos': updatedOptionInfos.map((info) => info.toMap()).toList(),
     });
-    // createEmbedding(product.copyWith(id: productId));
+    createEmbedding(product.copyWith(id: productId));
     return productId;
   }
 
@@ -189,6 +181,7 @@ class ProductService {
     QuerySnapshot querySnapshot = await firebaseFirestore
         .collection('products')
         .where('shopId', isEqualTo: shopId)
+        .where('isDeleted', isEqualTo: false)
         .get();
 
     if (querySnapshot.docs.isNotEmpty) {
@@ -198,7 +191,9 @@ class ProductService {
     } else {
       print("Product not found!");
     }
-    return listProduct.where((product) => !product.isDeleted).toList();
+    return listProduct
+        .where((product) => product.getMaxOptionStock() > 0)
+        .toList();
   }
 
   Future<Product> fetchProductByProductId(String productId) async {

@@ -73,9 +73,13 @@ class _ShopCheckoutItemState extends State<ShopCheckoutItem> {
               (element) => (element.isEnabled &&
                   element.name == _selectedShipMethod.name),
             ))) {
-          if (product.weight! > calculatedTotal) {
-            calculatedTotal = product.weight!;
-          }
+          calculatedTotal += product.weight! * item.quantity;
+        } else if (product.variants.length == 1) {
+          int i = product.variants[0].options
+              .indexWhere((element) => element.id == item.optionId1);
+          if (i == -1) i = 0;
+
+          calculatedTotal += product.optionInfos[i].weight! * item.quantity;
         } else if (product.variants.length > 1) {
           int i = product.variants[0].options
               .indexWhere((opt) => opt.id == item.optionId1);
@@ -83,13 +87,10 @@ class _ShopCheckoutItemState extends State<ShopCheckoutItem> {
               .indexWhere((opt) => opt.id == item.optionId2);
           if (i == -1) i = 0;
           if (j == -1) j = 0;
-          if (product.optionInfos[i * product.variants[1].options.length + j]
-                  .weight! >
-              calculatedTotal) {
-            calculatedTotal = product
-                .optionInfos[i * product.variants[1].options.length + j]
-                .weight!;
-          }
+          calculatedTotal += product
+                  .optionInfos[i * product.variants[1].options.length + j]
+                  .weight! *
+              item.quantity;
         }
       }
     }
@@ -202,6 +203,14 @@ class _ShopCheckoutItemState extends State<ShopCheckoutItem> {
                                 if (product.variants.isEmpty) {
                                   totalPriceShop +=
                                       product.price! * item!.quantity;
+                                } else if (product.variants.length == 1) {
+                                  int i = product.variants[0].options
+                                      .indexWhere((element) =>
+                                          element.id == item!.optionId1);
+                                  if (i == -1) i = 0;
+                                  totalPriceShop +=
+                                      product.optionInfos[i].price *
+                                          item!.quantity;
                                 } else if (product.variants.length > 1) {
                                   int i = product.variants[0].options
                                       .indexWhere(

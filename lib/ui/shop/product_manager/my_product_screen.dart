@@ -92,10 +92,15 @@ class _MyProductScreenState extends State<MyProductScreen>
         .pushNamed(EditProductScreen.routeName, arguments: product);
   }
 
-  void _deleteProduct(Product product) {
-    context
-        .read<ProductBloc>()
-        .add(UpdateProductEvent(product.copyWith(isDeleted: true)));
+  Future<void> _deleteProduct(Product product) async {
+    bool confirmed = false;
+    confirmed = await _showConfirmLockUserDialog("Xác nhận xóa sản phẩm?");
+    if (confirmed) {
+      await _showAlertDialog("Đã xóa sản phẩm");
+      context
+          .read<ProductBloc>()
+          .add(UpdateProductEvent(product.copyWith(isDeleted: true)));
+    }
   }
 
   @override
@@ -167,56 +172,53 @@ class _MyProductScreenState extends State<MyProductScreen>
 
     return Stack(
       children: [
-        SingleChildScrollView(
-          physics: NeverScrollableScrollPhysics(),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-            ),
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height + 90,
-              minHeight: MediaQuery.of(context).size.height,
-              minWidth: MediaQuery.of(context).size.width,
-            ),
-            padding: const EdgeInsets.only(top: 90, bottom: 60),
-            child: Column(
-              children: [
-                Container(
-                  color: Colors.white,
-                  height: 40,
-                  constraints: BoxConstraints(
-                      minWidth: MediaQuery.of(context).size.width),
-                  alignment: Alignment.center,
-                  child: TabBar(
-                    padding: EdgeInsets.zero,
-                    controller: _tabController,
-                    labelColor: Colors.black,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: Colors.brown,
-                    labelStyle: TextStyle(fontSize: 13),
-                    tabs: [
-                      Tab(text: 'Còn hàng (${inStockProducts.length})'),
-                      Tab(text: 'Hết hàng (${outOfStockProducts.length})'),
-                      Tab(text: 'Đã ẩn (${hiddenProducts.length})'),
-                    ],
-                  ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+          ),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height + 90,
+            minHeight: MediaQuery.of(context).size.height,
+            minWidth: MediaQuery.of(context).size.width,
+          ),
+          padding: const EdgeInsets.only(top: 90, bottom: 60),
+          child: Column(
+            children: [
+              Container(
+                color: Colors.white,
+                height: 40,
+                constraints:
+                    BoxConstraints(minWidth: MediaQuery.of(context).size.width),
+                alignment: Alignment.center,
+                child: TabBar(
+                  padding: EdgeInsets.zero,
+                  controller: _tabController,
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.brown,
+                  labelStyle: TextStyle(fontSize: 13),
+                  tabs: [
+                    Tab(text: 'Còn hàng (${inStockProducts.length})'),
+                    Tab(text: 'Hết hàng (${outOfStockProducts.length})'),
+                    Tab(text: 'Đã ẩn (${hiddenProducts.length})'),
+                  ],
                 ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildProductList(inStockProducts),
-                      outOfStockProducts.isEmpty
-                          ? _buildEmptyTab("Không có sản phẩm hết hàng")
-                          : _buildProductList(outOfStockProducts),
-                      hiddenProducts.isEmpty
-                          ? _buildEmptyTab("Không có sản phẩm đã ẩn")
-                          : _buildProductList(hiddenProducts),
-                    ],
-                  ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildRefreshableProductList(inStockProducts),
+                    outOfStockProducts.isEmpty
+                        ? _buildEmptyTab("Không có sản phẩm hết hàng")
+                        : _buildRefreshableProductList(outOfStockProducts),
+                    hiddenProducts.isEmpty
+                        ? _buildEmptyTab("Không có sản phẩm đã ẩn")
+                        : _buildRefreshableProductList(hiddenProducts),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         Align(
@@ -341,164 +343,172 @@ class _MyProductScreenState extends State<MyProductScreen>
     );
   }
 
-  Widget _buildProductList(List<Product> products) {
+  Widget _buildRefreshableProductList(List<Product> products) {
     if (products.isEmpty) {
       return _buildEmptyTab("Không có sản phẩm");
     }
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 90),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        return Container(
-          padding: const EdgeInsets.all(10),
-          margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.grey.shade200),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(
-                      context, DetailsProductShopScreen.routeName,
-                      arguments: product.id);
-                },
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        product.imageUrl.isNotEmpty
-                            ? product.imageUrl[0]
-                            : 'https://via.placeholder.com/80',
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Image.network(
-                          'https://via.placeholder.com/80',
+    return RefreshIndicator(
+      onRefresh: () async {
+        // Refresh the product list
+        context
+            .read<ListProductBloc>()
+            .add(FetchListProductEventByShopId(shopId));
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 90),
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          final product = products[index];
+          return Container(
+            padding: const EdgeInsets.all(10),
+            margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(
+                        context, DetailsProductShopScreen.routeName,
+                        arguments: product.id);
+                  },
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          product.imageUrl.isNotEmpty
+                              ? product.imageUrl[0]
+                              : 'https://via.placeholder.com/80',
                           width: 80,
                           height: 80,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Image.network(
+                            'https://via.placeholder.com/80',
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              product.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              (product.variants.isNotEmpty)
+                                  ? (product.getMinOptionPrice() !=
+                                          product.getMaxOptionPrice())
+                                      ? "đ${_numberFormat.format(product.getMinOptionPrice())} - đ${_numberFormat.format(product.getMaxOptionPrice())}"
+                                      : "đ${_numberFormat.format(product.getMinOptionPrice())}"
+                                  : "đ${_numberFormat.format(product.price ?? 0)}",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Kho hàng: ${product.getTotalOptionStock()}",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            product.name,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Đã bán: ${product.quantitySold}",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
                           ),
-                          const SizedBox(height: 5),
-                          Text(
-                            (product.variants.isNotEmpty)
-                                ? (product.getMinOptionPrice() !=
-                                        product.getMaxOptionPrice())
-                                    ? "đ${_numberFormat.format(product.getMinOptionPrice())} - đ${_numberFormat.format(product.getMaxOptionPrice())}"
-                                    : "đ${_numberFormat.format(product.getMinOptionPrice())}"
-                                : "đ${_numberFormat.format(product.price ?? 0)}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 5),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Kho hàng: ${product.getMaxOptionStock()}",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
+                const SizedBox(height: 5),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Expanded(
                       child: Text(
-                        "Đã bán: ${product.quantitySold}",
+                        "Lượt xem: ${product.viewCount}",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade600,
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Lượt xem: ${product.viewCount}",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Thích: ${product.favoriteCount}",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Thích: ${product.favoriteCount}",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  _buildActionButton(
-                      product.isHidden ? "Hiện" : "Ẩn",
-                      Colors.white,
-                      Colors.black,
-                      product.isHidden
-                          ? () =>
-                              _hideProduct(product.copyWith(isHidden: false))
-                          : () =>
-                              _hideProduct(product.copyWith(isHidden: true))),
-                  const SizedBox(width: 10),
-                  _buildActionButton("Sửa", Colors.brown, Colors.white,
-                      () => _editProduct(product)),
-                  const SizedBox(width: 10),
-                  _buildActionButton("Xóa", Colors.red[800]!, Colors.white,
-                      () => _deleteProduct(product)),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _buildActionButton(
+                        product.isHidden ? "Hiện" : "Ẩn",
+                        Colors.white,
+                        Colors.black,
+                        product.isHidden
+                            ? () =>
+                                _hideProduct(product.copyWith(isHidden: false))
+                            : () =>
+                                _hideProduct(product.copyWith(isHidden: true))),
+                    const SizedBox(width: 10),
+                    _buildActionButton("Sửa", Colors.brown, Colors.white,
+                        () => _editProduct(product)),
+                    const SizedBox(width: 10),
+                    _buildActionButton("Xóa", Colors.red[800]!, Colors.white,
+                        () => _deleteProduct(product)),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

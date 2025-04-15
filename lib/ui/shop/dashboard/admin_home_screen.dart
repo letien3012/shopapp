@@ -386,7 +386,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     if (userState is AllUserLoaded) {
       final newUsers = userState.users.where((user) {
         final now = DateTime.now();
-        final userCreatedAt = user.createdAt?.toDate() ?? now;
+        final userCreatedAt = user.createdAt.toDate();
         return now.difference(userCreatedAt).inDays <= 30;
       }).length;
       final oldUsers = userState.users.length - newUsers;

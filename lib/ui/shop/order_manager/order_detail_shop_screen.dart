@@ -371,7 +371,36 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
                   Text(formatDate(order.createdAt)),
                 ],
               ),
-              (order.statusHistory.length > 0)
+              (order.statusHistory.length > 0 &&
+                      order.status == OrderStatus.cancelled)
+                  ? Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Thời gian hủy đơn hàng:'),
+                            Text(formatDate(order.statusHistory
+                                .firstWhere((element) =>
+                                    element.status == OrderStatus.cancelled)
+                                .timestamp)),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Lý do hủy đơn:'),
+                            Text(order.statusHistory
+                                    .firstWhere((element) =>
+                                        element.status == OrderStatus.cancelled)
+                                    .note ??
+                                'Không có lý do'),
+                          ],
+                        ),
+                      ],
+                    )
+                  : SizedBox.shrink(),
+              (order.statusHistory.length > 0 &&
+                      order.status != OrderStatus.cancelled)
                   ? Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -412,26 +441,91 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
       padding: const EdgeInsets.only(left: 16, top: 16),
       child: GestureDetector(
         onTap: () async {
-          final result = await showDialog<String>(
+          String? selectedReason;
+          final reasons = [
+            'Sản phẩm hết hàng',
+            'Không liên lạc được với khách hàng',
+            'Lý do khác'
+          ];
+
+          final result = await showModalBottomSheet<Map<String, String>>(
             context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Hủy đơn hàng'),
-              content: const Text('Bạn có chắc chắn muốn hủy đơn hàng này?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, 'no'),
-                  child: const Text('Không'),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => StatefulBuilder(
+              builder: (context, setState) => Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Lý do hủy đơn',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Vui lòng chọn lý do hủy đơn:',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 16),
+                    ...reasons.map((reason) => RadioListTile<String>(
+                          title: Text(reason),
+                          value: reason,
+                          groupValue: selectedReason,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedReason = value;
+                            });
+                          },
+                        )),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.brown,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: selectedReason == null
+                            ? null
+                            : () {
+                                Navigator.pop(
+                                    context, {'reason': selectedReason!});
+                              },
+                        child: const Text(
+                          'Xác nhận',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, 'yes'),
-                  child: const Text('Có'),
-                ),
-              ],
+              ),
             ),
           );
 
-          if (result == 'yes') {
-            context.read<OrderBloc>().add(CancelOrder(order.id));
+          if (result != null) {
+            context
+                .read<OrderBloc>()
+                .add(CancelOrder(order.id, note: result['reason']));
             await context
                 .read<OrderBloc>()
                 .stream

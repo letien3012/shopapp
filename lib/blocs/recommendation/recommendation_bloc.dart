@@ -13,7 +13,7 @@ class RecommendationBloc
       emit(RecommendationLoading());
       try {
         final recommendations =
-            await recommendationService.getRecommendations(event.userId);
+            await recommendationService.getRecommendations(event.productId);
         emit(RecommendationLoaded(recommendations));
       } catch (e) {
         emit(RecommendationError('Không thể tải gợi ý: $e'));

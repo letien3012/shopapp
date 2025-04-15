@@ -68,7 +68,7 @@ Future<String> generateProductChunk(Product product) async {
   buffer.write("Sản phẩm '${product.name}'  có id là ${product.id}");
   buffer.write(
       "thuộc danh mục '${categories.firstWhere((c) => c.id == product.category).name}', ");
-  buffer.write("được mô tả: ${product.description}. ");
+  // buffer.write("được mô tả: ${product.description}. ");
 
   if (product.optionInfos.isNotEmpty) {
     buffer.write(

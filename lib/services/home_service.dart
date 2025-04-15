@@ -4,6 +4,7 @@ import 'package:luanvan/services/cart_service.dart';
 
 import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/user_service.dart';
+import 'package:printing/printing.dart';
 
 class HomeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -44,7 +45,9 @@ class HomeService {
     try {
       final user = await _userService.fetchUserInfo(userId);
       final viewedProducts = user.viewedProducts;
+
       viewedProducts.sort((a, b) => b.viewedAt!.compareTo(a.viewedAt!));
+
       final productsIds =
           viewedProducts.map((e) => e.productId).toList().take(10).toList();
 
@@ -56,6 +59,10 @@ class HomeService {
             productsIds.add(item.productId);
           }
         }
+      }
+
+      if (productsIds.isEmpty) {
+        return await getAllProducts();
       }
       final products =
           await _productService.fetchProductsByListProductId(productsIds);

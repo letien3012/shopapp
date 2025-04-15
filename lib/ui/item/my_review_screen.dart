@@ -240,109 +240,112 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  product.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Expanded(
+                  child: Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
           ],
           Text(comment.content),
-          if (comment.videoUrl != null) ...[
+          if (comment.videoUrl != null || comment.images.isNotEmpty) ...[
             const SizedBox(height: 8),
             SizedBox(
               height: 80,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  GestureDetector(
-                    onTap: () => _showFullScreenMedia(
-                      context,
-                      comment.videoUrl!,
-                      true,
-                    ),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      width: 80,
-                      height: 80,
-                      child: FutureBuilder(
-                        future: _initializeVideo(comment.videoUrl!),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.done) {
-                            final controller =
-                                _videoControllers[comment.videoUrl!];
-                            if (controller != null &&
-                                controller.value.isInitialized) {
-                              return Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: AspectRatio(
-                                      aspectRatio: 1,
-                                      child: VideoPlayer(controller),
+                  if (comment.videoUrl != null)
+                    GestureDetector(
+                      onTap: () => _showFullScreenMedia(
+                        context,
+                        comment.videoUrl!,
+                        true,
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        width: 80,
+                        height: 80,
+                        child: FutureBuilder(
+                          future: _initializeVideo(comment.videoUrl!),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              final controller =
+                                  _videoControllers[comment.videoUrl!];
+                              if (controller != null &&
+                                  controller.value.isInitialized) {
+                                return Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: AspectRatio(
+                                        aspectRatio: 1,
+                                        child: VideoPlayer(controller),
+                                      ),
                                     ),
-                                  ),
-                                  // Video Controls
-                                  Positioned(
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.bottomCenter,
-                                          end: Alignment.topCenter,
-                                          colors: [
-                                            Colors.black.withOpacity(0.7),
-                                            Colors.transparent,
+                                    // Video Controls
+                                    Positioned(
+                                      bottom: 0,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.bottomCenter,
+                                            end: Alignment.topCenter,
+                                            colors: [
+                                              Colors.black.withOpacity(0.7),
+                                              Colors.transparent,
+                                            ],
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () => _togglePlay(
+                                                  comment.videoUrl!),
+                                              child: Icon(
+                                                controller.value.isPlaying
+                                                    ? Icons.pause
+                                                    : Icons.play_arrow,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 4),
+                                              child: Text(
+                                                _formatDuration(
+                                                    controller.value.duration),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 9,
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () =>
-                                                _togglePlay(comment.videoUrl!),
-                                            child: Icon(
-                                              controller.value.isPlaying
-                                                  ? Icons.pause
-                                                  : Icons.play_arrow,
-                                              color: Colors.white,
-                                              size: 18,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 4),
-                                            child: Text(
-                                              _formatDuration(
-                                                  controller.value.duration),
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 9,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
                                     ),
-                                  ),
-                                ],
-                              );
+                                  ],
+                                );
+                              }
                             }
-                          }
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        },
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          },
+                        ),
                       ),
                     ),
-                  ),
                   if (comment.images.isNotEmpty)
                     ...comment.images
                         .map((imageUrl) => GestureDetector(

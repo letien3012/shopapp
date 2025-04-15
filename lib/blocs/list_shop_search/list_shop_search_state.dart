@@ -7,8 +7,8 @@ class ListShopSearchInitial extends ListShopSearchState {}
 class ListShopSearchLoading extends ListShopSearchState {}
 
 class ListShopSearchLoaded extends ListShopSearchState {
-  final List<Shop> shops;
-  ListShopSearchLoaded(this.shops);
+  final Shop shop;
+  ListShopSearchLoaded(this.shop);
 }
 
 class ListShopSearchError extends ListShopSearchState {

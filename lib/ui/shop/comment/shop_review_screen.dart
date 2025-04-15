@@ -490,10 +490,12 @@ class _ShopReviewScreenState extends State<ShopReviewScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  product.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Expanded(
+                  child: Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

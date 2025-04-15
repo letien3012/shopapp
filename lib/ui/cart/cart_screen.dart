@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
@@ -191,6 +190,11 @@ class _CartScreenState extends State<CartScreen> {
   double _getProductPrice(dynamic product, CartItem item) {
     if (product.variants.isEmpty) {
       return product.price!;
+    } else if (product.variants.length == 1) {
+      int i = product.variants[0].options
+          .indexWhere((element) => element.id == item.optionId1);
+      if (i == -1) i = 0;
+      return product.optionInfos[i].price;
     } else if (product.variants.length > 1) {
       int i = product.variants[0].options
           .indexWhere((element) => element.id == item.optionId1);

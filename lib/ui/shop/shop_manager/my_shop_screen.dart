@@ -22,7 +22,6 @@ import 'package:luanvan/ui/home/shop_dashboard.dart';
 import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/shop/baner/my_banner_screen.dart';
 import 'package:luanvan/ui/shop/category/my_category_screen.dart';
-import 'package:luanvan/ui/shop/chat/shop_chat_screen.dart';
 import 'package:luanvan/ui/shop/comment/shop_review_screen.dart';
 import 'package:luanvan/ui/shop/order_manager/order_shop_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/my_product_screen.dart';

@@ -4,14 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/import_receipt/import_receipt_bloc.dart';
 import 'package:luanvan/blocs/import_receipt/import_receipt_event.dart';
 import 'package:luanvan/blocs/import_receipt/import_receipt_state.dart';
-import 'package:luanvan/models/import_item.dart';
 import 'package:luanvan/models/import_receipt.dart';
-import 'package:luanvan/models/supplier.dart';
-import 'package:luanvan/ui/helper/icon_helper.dart';
-import 'package:luanvan/ui/shop/product_manager/add_product_screen.dart';
-
-import 'package:luanvan/ui/widgets/alert_diablog.dart';
-import 'package:luanvan/ui/shop/warehouse/edit_stock_detail_screen.dart';
+import 'package:luanvan/ui/shop/warehouse/import_receipt_manager/detail_import_receipt.dart';
 
 class ImportReceiptManagerScreen extends StatefulWidget {
   const ImportReceiptManagerScreen({super.key});
@@ -29,14 +23,6 @@ class _ImportReceiptManagerScreenState extends State<ImportReceiptManagerScreen>
   List<ImportReceipt> pendingImportReceipts = [];
   List<ImportReceipt> completedImportReceipts = [];
   List<ImportReceipt> cancelledImportReceipts = [];
-  Future<void> _showAlertDialog() async {
-    await showAlertDialog(
-      context,
-      message: "Bạn chưa chọn sản phẩm nào để tạo phiếu nhập hàng",
-      iconPath: IconHelper.warning,
-      duration: Duration(seconds: 1),
-    );
-  }
 
   @override
   void initState() {
@@ -201,7 +187,12 @@ class _ImportReceiptManagerScreenState extends State<ImportReceiptManagerScreen>
               borderRadius: BorderRadius.circular(8),
             ),
             child: GestureDetector(
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).pushNamed(
+                  DetailImportReceiptScreen.routeName,
+                  arguments: importReceipt,
+                );
+              },
               child: Row(
                 children: [
                   const SizedBox(width: 10),

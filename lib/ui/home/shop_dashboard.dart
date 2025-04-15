@@ -300,7 +300,10 @@ class _ShopDashboardState extends State<ShopDashboard>
     return BlocBuilder<ListproductinshopBloc, ListproductinshopState>(
       builder: (context, state) {
         if (state is ListProducInShoptLoaded) {
-          var products = state.listProduct;
+          var products = state.listProduct
+              .where((product) => product.isHidden == false)
+              .toList();
+
           final filteredProducts = products.where((product) {
             if (_searchQuery.isEmpty) return true;
             return product.name.toLowerCase().contains(_searchQuery);
@@ -334,7 +337,7 @@ class _ShopDashboardState extends State<ShopDashboard>
               crossAxisCount: 2,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
-              mainAxisExtent: 290,
+              mainAxisExtent: 295,
             ),
             itemCount: sortedProducts.length,
             itemBuilder: (context, index) =>

@@ -243,7 +243,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                                 valueListenable: _nameController,
                                 builder: (context, value, child) {
                                   return Text(
-                                    "${value.text.length}/10",
+                                    "${value.text.length}/100",
                                     style: const TextStyle(
                                         fontSize: 14, color: Colors.grey),
                                   );

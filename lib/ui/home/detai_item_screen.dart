@@ -21,7 +21,9 @@ import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
-import 'package:luanvan/blocs/product/product_state.dart';
+import 'package:luanvan/blocs/productdetail/productdetail_bloc.dart';
+import 'package:luanvan/blocs/productdetail/productdetail_event.dart';
+import 'package:luanvan/blocs/productdetail/productdetail_state.dart';
 import 'package:luanvan/blocs/recommendation/recommendation_bloc.dart';
 import 'package:luanvan/blocs/recommendation/recommendation_even.dart';
 import 'package:luanvan/blocs/recommendation/recommendation_state.dart';
@@ -38,6 +40,7 @@ import 'package:luanvan/models/comment.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/models/user_info_model.dart';
+import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/ui/cart/cart_screen.dart';
 import 'package:luanvan/ui/chat/chat_detail_screen.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
@@ -89,21 +92,21 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       productId = ModalRoute.of(context)!.settings.arguments as String;
+      context.read<RecommendationBloc>().add(LoadRecommendations(productId));
+      // context.read<ProductBloc>().add(FetchProductEventByProductId(productId));
+
+      context.read<CommentBloc>().add(LoadCommentsEvent(productId));
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         context
             .read<UserBloc>()
             .add(AddViewedProductEvent(authState.user.uid, productId));
         context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
-        context
-            .read<RecommendationBloc>()
-            .add(LoadRecommendations(authState.user.uid));
+
         context
             .read<ProductFavoriteBloc>()
             .add(FetchFavoriteProductEvent(authState.user.uid));
       }
-      context.read<ProductBloc>().add(FetchProductEventByProductId(productId));
-      context.read<CommentBloc>().add(LoadCommentsEvent(productId));
 
       final commentState = context.read<CommentBloc>().state;
       if (commentState is CommentLoaded) {
@@ -1058,8 +1061,8 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                   final product = products[index];
                   return GestureDetector(
                     onTap: () {
-                      Navigator.of(context)
-                          .pushNamed(DetaiItemScreen.routeName);
+                      Navigator.of(context).pushNamed(DetaiItemScreen.routeName,
+                          arguments: product.id);
                     },
                     child: Container(
                       color: Colors.white,
@@ -1580,141 +1583,146 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            controller: _appBarScrollController,
-            child: Column(
-              children: [
-                // 1. Image Slider (Tải ngay từ ProductBloc)
-                BlocConsumer<ProductBloc, ProductState>(
-                  listener: (context, state) {
-                    if (state is ProductError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('Lỗi tải sản phẩm: ${state.message}')),
-                      );
-                    }
-                  },
-                  builder: (context, state) {
-                    if (state is ProductLoading) {
-                      return _buildSkeletonImageSlider(); // Skeleton loading
-                    } else if (state is ProductLoaded) {
-                      context.read<ProductBloc>().add(
-                          UpdateProductViewCountEvent(state.product.copyWith(
-                              viewCount: state.product.viewCount + 1)));
-                      return _buildImageSlider(state.product);
-                    }
-                    return _buildSkeletonImageSlider(); // Mặc định hiển thị skeleton
-                  },
-                ),
-                // 2. Product Info (Tải cùng ProductBloc)
-                BlocConsumer<ProductBloc, ProductState>(
-                  listener: (context, state) {},
-                  builder: (context, state) {
-                    if (state is ProductLoaded) {
-                      return _buildProductInfo(state.product);
-                    }
-                    return _buildSkeletonProductInfo(); // Skeleton loading
-                  },
-                ),
-                _buildSepherated(context),
-                // 3. Reviews Section (Tải từ ProductBloc, có thể chậm hơn)
-                BlocConsumer<ProductBloc, ProductState>(
-                  listener: (context, state) {
-                    if (state is ProductLoaded) {
-                      context
-                          .read<ShopBloc>()
-                          .add(FetchShopEventByShopId(state.product.shopId));
-                    }
-                  },
-                  builder: (context, state) {
-                    if (state is ProductLoaded) {
-                      return _buildReviewsSection(state.product);
-                    }
-                    return _buildSkeletonReviews(); // Skeleton loading
-                  },
-                ),
-                _buildSepherated(context),
-                // 4. Shop Info (Tải từ ShopBloc, độc lập)
-                BlocConsumer<ShopBloc, ShopState>(
-                  listener: (context, state) {
-                    if (state is ShopLoaded) {
-                      context.read<ListProductBloc>().add(
-                          FetchListProductEventByShopId(state.shop.shopId!));
-                    }
-                    if (state is ShopError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('Lỗi tải cửa hàng: ${state.message}')),
-                      );
-                    }
-                  },
-                  builder: (context, shopState) {
-                    if (shopState is ShopLoading) {
+    productId = ModalRoute.of(context)!.settings.arguments as String;
+    return BlocProvider(
+      create: (context) => ProductdetailBloc(ProductService())
+        ..add(FetchProductdetailEventByProductId(productId)),
+      child: Scaffold(
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              controller: _appBarScrollController,
+              child: Column(
+                children: [
+                  // 1. Image Slider (Tải ngay từ ProductBloc)
+                  BlocConsumer<ProductdetailBloc, ProductdetailState>(
+                    listener: (context, state) {
+                      if (state is ProductdetailError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text('Lỗi tải sản phẩm: ${state.message}')),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state is ProductdetailLoading) {
+                        return _buildSkeletonImageSlider(); // Skeleton loading
+                      } else if (state is ProductdetailLoaded) {
+                        context.read<ProductBloc>().add(
+                            UpdateProductViewCountEvent(state.product.copyWith(
+                                viewCount: state.product.viewCount + 1)));
+                        return _buildImageSlider(state.product);
+                      }
+                      return _buildSkeletonImageSlider(); // Mặc định hiển thị skeleton
+                    },
+                  ),
+                  // 2. Product Info (Tải cùng ProductBloc)
+                  BlocConsumer<ProductdetailBloc, ProductdetailState>(
+                    listener: (context, state) {},
+                    builder: (context, state) {
+                      if (state is ProductdetailLoaded) {
+                        return _buildProductInfo(state.product);
+                      }
+                      return _buildSkeletonProductInfo(); // Skeleton loading
+                    },
+                  ),
+                  _buildSepherated(context),
+                  // 3. Reviews Section (Tải từ ProductBloc, có thể chậm hơn)
+                  BlocConsumer<ProductdetailBloc, ProductdetailState>(
+                    listener: (context, state) {
+                      if (state is ProductdetailLoaded) {
+                        context
+                            .read<ShopBloc>()
+                            .add(FetchShopEventByShopId(state.product.shopId));
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state is ProductdetailLoaded) {
+                        return _buildReviewsSection(state.product);
+                      }
+                      return _buildSkeletonReviews(); // Skeleton loading
+                    },
+                  ),
+                  _buildSepherated(context),
+                  // 4. Shop Info (Tải từ ShopBloc, độc lập)
+                  BlocConsumer<ShopBloc, ShopState>(
+                    listener: (context, state) {
+                      if (state is ShopLoaded) {
+                        context.read<ListProductBloc>().add(
+                            FetchListProductEventByShopId(state.shop.shopId!));
+                      }
+                      if (state is ShopError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text('Lỗi tải cửa hàng: ${state.message}')),
+                        );
+                      }
+                    },
+                    builder: (context, shopState) {
+                      if (shopState is ShopLoading) {
+                        return _buildSkeletonShopInfo();
+                      } else if (shopState is ShopLoaded) {
+                        return BlocBuilder<ListProductBloc, ListProductState>(
+                          builder: (BuildContext context,
+                              ListProductState listProductState) {
+                            if (listProductState is ListProductLoaded) {
+                              return _buildShopInfo(context, shopState.shop,
+                                  listProductState.listProduct);
+                            }
+                            return _buildSkeletonShopInfo();
+                          },
+                        );
+                      }
                       return _buildSkeletonShopInfo();
-                    } else if (shopState is ShopLoaded) {
-                      return BlocBuilder<ListProductBloc, ListProductState>(
-                        builder: (BuildContext context,
-                            ListProductState listProductState) {
-                          if (listProductState is ListProductLoaded) {
-                            return _buildShopInfo(context, shopState.shop,
-                                listProductState.listProduct);
-                          }
-                          return _buildSkeletonShopInfo();
-                        },
-                      );
-                    }
-                    return _buildSkeletonShopInfo();
-                  },
-                ),
-                _buildSepherated(context),
-                // 5. Product Details (Tải từ ProductBloc)
-                BlocConsumer<ProductBloc, ProductState>(
-                  listener: (context, state) {},
-                  builder: (context, state) {
-                    if (state is ProductLoaded) {
-                      return _buildProductDetails(state.product);
-                    }
-                    return _buildSkeletonProductDetails(); // Skeleton loading
-                  },
-                ),
-                // 6. Similar Products (Tạm giữ nguyên, có thể thêm BLoC riêng)
-                _buildSimilarProducts(),
-              ],
+                    },
+                  ),
+                  _buildSepherated(context),
+                  // 5. Product Details (Tải từ ProductBloc)
+                  BlocConsumer<ProductdetailBloc, ProductdetailState>(
+                    listener: (context, state) {},
+                    builder: (context, state) {
+                      if (state is ProductdetailLoaded) {
+                        return _buildProductDetails(state.product);
+                      }
+                      return _buildSkeletonProductDetails(); // Skeleton loading
+                    },
+                  ),
+                  // 6. Similar Products (Tạm giữ nguyên, có thể thêm BLoC riêng)
+                  _buildSimilarProducts(),
+                ],
+              ),
             ),
-          ),
-          // 7. AppBar (Tải từ CartBloc, luôn hiển thị)
-          BlocConsumer<CartBloc, CartState>(
-            listener: (context, state) {
-              if (state is CartError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Lỗi giỏ hàng: ${state.message}')),
-                );
-              }
-            },
-            builder: (context, state) {
-              if (state is CartLoaded) {
-                return _buildAppBar(state.cart);
-              }
-              return _buildAppBar(Cart.initial());
-            },
-          ),
-          // 8. BottomBar (Tải từ AuthBloc và ProductBloc)
+            // 7. AppBar (Tải từ CartBloc, luôn hiển thị)
+            BlocConsumer<CartBloc, CartState>(
+              listener: (context, state) {
+                if (state is CartError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Lỗi giỏ hàng: ${state.message}')),
+                  );
+                }
+              },
+              builder: (context, state) {
+                if (state is CartLoaded) {
+                  return _buildAppBar(state.cart);
+                }
+                return _buildAppBar(Cart.initial());
+              },
+            ),
+            // 8. BottomBar (Tải từ AuthBloc và ProductBloc)
 
-          BlocConsumer<ProductBloc, ProductState>(
-            listener: (context, state) {},
-            builder: (context, productState) {
-              if (productState is ProductLoaded) {
-                return _buildBottomBar(productState.product);
-              }
-              return _buildSkeletonBottomBar(); // Skeleton loading
-            },
-          ),
-        ],
+            BlocConsumer<ProductdetailBloc, ProductdetailState>(
+              listener: (context, state) {},
+              builder: (context, productState) {
+                if (productState is ProductdetailLoaded) {
+                  return _buildBottomBar(productState.product);
+                }
+                return _buildSkeletonBottomBar(); // Skeleton loading
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

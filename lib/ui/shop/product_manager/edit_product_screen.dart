@@ -9,6 +9,7 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/category/category_event.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
+import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
@@ -24,6 +25,7 @@ import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/product_manager/add_product_category_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/delivery_cost_screen.dart';
 import 'package:luanvan/ui/shop/product_manager/edit_variant_screen.dart';
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class EditProductScreen extends StatefulWidget {
@@ -47,6 +49,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   String _product_variant = "Thiết lập màu sắc kích thước";
   String _category = "Chọn ngành hàng";
   final TextEditingController _shipController = TextEditingController();
+  bool _isEditingProduct = false;
 
   @override
   void initState() {
@@ -154,6 +157,15 @@ class _EditProductScreenState extends State<EditProductScreen> {
     super.dispose();
   }
 
+  Future<void> _showAddSuccessDialog() async {
+    await showAlertDialog(
+      context,
+      message: "Chỉnh sửa sản phẩm thành công",
+      iconPath: IconHelper.check,
+      duration: Duration(seconds: 1),
+    );
+  }
+
   Future<void> _submitForm(String shopId) async {
     if (_imageFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -169,6 +181,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
       return;
     }
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isEditingProduct = true;
+      });
+
       final StorageService _storageService = StorageService();
       product.name = _nameController.text;
       product.category = _category;
@@ -213,6 +229,15 @@ class _EditProductScreenState extends State<EditProductScreen> {
       product.shopId = shopId;
 
       context.read<ProductBloc>().add(UpdateProductEvent(product));
+      await context
+          .read<ProductBloc>()
+          .stream
+          .firstWhere((state) => state is ProductLoaded);
+      await _showAddSuccessDialog();
+      setState(() {
+        _isEditingProduct = false;
+      });
+
       Navigator.of(context).pop();
     }
   }
@@ -220,29 +245,56 @@ class _EditProductScreenState extends State<EditProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<ShopBloc, ShopState>(
-        builder: (context, shopState) {
-          if (shopState is ShopLoading) {
-            return _buildLoading();
-          } else if (shopState is ShopLoaded) {
-            return BlocBuilder<CategoryBloc, CategoryState>(
-              builder: (context, categoryState) {
-                if (categoryState is CategoryLoading) {
-                  return _buildLoading();
-                } else if (categoryState is CategoryLoaded) {
-                  return _buildShopContent(
-                      context, shopState.shop, categoryState.categories);
-                } else if (categoryState is CategoryError) {
-                  return _buildError(categoryState.message);
-                }
-                return _buildInitializing();
-              },
-            );
-          } else if (shopState is ShopError) {
-            return _buildError(shopState.message);
-          }
-          return _buildInitializing();
-        },
+      body: Stack(
+        children: [
+          BlocBuilder<ShopBloc, ShopState>(
+            builder: (context, shopState) {
+              if (shopState is ShopLoading) {
+                return _buildLoading();
+              } else if (shopState is ShopLoaded) {
+                return BlocBuilder<CategoryBloc, CategoryState>(
+                  builder: (context, categoryState) {
+                    if (categoryState is CategoryLoading) {
+                      return _buildLoading();
+                    } else if (categoryState is CategoryLoaded) {
+                      return _buildShopContent(
+                          context, shopState.shop, categoryState.categories);
+                    } else if (categoryState is CategoryError) {
+                      return _buildError(categoryState.message);
+                    }
+                    return _buildInitializing();
+                  },
+                );
+              } else if (shopState is ShopError) {
+                return _buildError(shopState.message);
+              }
+              return _buildInitializing();
+            },
+          ),
+          if (_isEditingProduct)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.brown),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      "Đang chỉnh sửa sản phẩm...",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

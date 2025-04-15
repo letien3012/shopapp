@@ -325,13 +325,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () {},
-            child: const Icon(
-              HeroIcons.plus_circle,
-              size: 30,
-            ),
-          ),
+          // GestureDetector(
+          //   onTap: () {},
+          //   child: const Icon(
+          //     HeroIcons.plus_circle,
+          //     size: 30,
+          //   ),
+          // ),
           const SizedBox(width: 5),
           Expanded(
             child: Container(

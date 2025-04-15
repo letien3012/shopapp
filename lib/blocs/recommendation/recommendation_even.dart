@@ -1,6 +1,6 @@
 abstract class RecommendationEvent {}
 
 class LoadRecommendations extends RecommendationEvent {
-  final String userId;
-  LoadRecommendations(this.userId);
+  final String productId;
+  LoadRecommendations(this.productId);
 }

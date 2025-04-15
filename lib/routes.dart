@@ -80,6 +80,7 @@ import 'package:luanvan/ui/shop/user/user_detail_screen.dart';
 import 'package:luanvan/ui/shop/warehouse/add%20_import_receipt.dart';
 import 'package:luanvan/ui/shop/warehouse/add_import_receipt_supplier.dart';
 import 'package:luanvan/ui/shop/warehouse/edit_stock_detail_screen.dart';
+import 'package:luanvan/ui/shop/warehouse/import_receipt_manager/detail_import_receipt.dart';
 import 'package:luanvan/ui/shop/warehouse/import_receipt_manager/import_receipt_manager_screen.dart';
 import 'package:luanvan/ui/shop/warehouse/my_watehouse_screen.dart';
 import 'package:luanvan/ui/splashscreen.dart';
@@ -195,4 +196,5 @@ final Map<String, WidgetBuilder> routes = {
   EditStockDetailScreen.routeName: (context) => EditStockDetailScreen(),
   ImportReceiptManagerScreen.routeName: (context) =>
       ImportReceiptManagerScreen(),
+  DetailImportReceiptScreen.routeName: (context) => DetailImportReceiptScreen(),
 };

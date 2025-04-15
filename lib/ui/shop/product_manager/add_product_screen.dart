@@ -9,6 +9,7 @@ import 'package:luanvan/blocs/category/category_bloc.dart';
 import 'package:luanvan/blocs/category/category_event.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
+import 'package:luanvan/blocs/listproductbloc/listproduct_state.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
@@ -49,6 +50,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   List<XFile> _imageFiles = [];
   String _productVariant = "Thiết lập màu sắc kích thước";
   String _category = "Chọn danh mục";
+  bool _isAddingProduct = false;
 
   @override
   void initState() {
@@ -173,24 +175,37 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isAddingProduct = true;
+      });
+
       final StorageService _storageService = StorageService();
       product.name = _nameController.text;
       product.category = _category;
       product.description = _descriptionController.text;
       List<String> _listImageUrl = [];
+      List<String> _listImageUrlFeature = [];
+      List<String> _listImageFeature = [];
       for (int i = 0; i < _imageFiles.length; i++) {
+        _listImageFeature.add(_imageFiles[i].path);
         String? downloadUrl = await _storageService.uploadFile(
             File(_imageFiles[i].path), 'image', '', '');
         if (downloadUrl != null) {
           _listImageUrl.add(downloadUrl);
+          _listImageUrlFeature.add(downloadUrl);
         }
       }
+
+      product.imageUrl = _listImageUrl;
       if (product.hasVariantImages) {
         for (int i = 0; i < product.variants[0].options.length; i++) {
+          _listImageFeature.add(product.variants[0].options[i].imageUrl!);
           String? downloadUrl = await _storageService.uploadFile(
               File(product.variants[0].options[i].imageUrl!), 'image', '', '');
           if (downloadUrl != null) {
             product.variants[0].options[i].imageUrl = downloadUrl;
+
+            _listImageUrlFeature.add(downloadUrl);
           }
         }
       }
@@ -200,8 +215,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         product.price = price;
         product.quantity = stock;
       }
-      product.imageUrl = _listImageUrl;
+
       product.shopId = shopId;
+      print(product.imageUrl.length);
       context.read<ProductBloc>().add(AddProductEvent(product));
       await context
           .read<ProductBloc>()
@@ -210,14 +226,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
       final productId =
           (context.read<ProductBloc>().state as ProductCreated).productId;
       await ImageFeatureService().uploadImageFeature(
-          _imageFiles.map((e) => e.path).toList(), productId, _listImageUrl);
-      _showAddSuccessDialog();
+          _listImageFeature, productId, _listImageUrlFeature);
 
       context
           .read<ListProductBloc>()
           .add(FetchListProductEventByShopId(shopId));
+      await context
+          .read<ListProductBloc>()
+          .stream
+          .firstWhere((state) => state is ListProductLoaded);
+      await _showAddSuccessDialog();
+      setState(() {
+        _isAddingProduct = false;
+      });
 
-      Future.delayed(Duration(seconds: 1), () {
+      Future.delayed(Duration(milliseconds: 100), () {
         Navigator.of(context).pop();
       });
     }
@@ -230,29 +253,56 @@ class _AddProductScreenState extends State<AddProductScreen> {
     context.read<CategoryBloc>().add(FetchCategoriesEvent());
 
     return Scaffold(
-      body: BlocBuilder<ShopBloc, ShopState>(
-        builder: (context, shopState) {
-          if (shopState is ShopLoading) {
-            return _buildLoading();
-          } else if (shopState is ShopLoaded) {
-            return BlocBuilder<CategoryBloc, CategoryState>(
-              builder: (context, categoryState) {
-                if (categoryState is CategoryLoading) {
-                  return _buildLoading();
-                } else if (categoryState is CategoryLoaded) {
-                  return _buildShopContent(
-                      context, shopState.shop, categoryState.categories);
-                } else if (categoryState is CategoryError) {
-                  return _buildError(categoryState.message);
-                }
-                return _buildInitializing();
-              },
-            );
-          } else if (shopState is ShopError) {
-            return _buildError(shopState.message);
-          }
-          return _buildInitializing();
-        },
+      body: Stack(
+        children: [
+          BlocBuilder<ShopBloc, ShopState>(
+            builder: (context, shopState) {
+              if (shopState is ShopLoading) {
+                return _buildLoading();
+              } else if (shopState is ShopLoaded) {
+                return BlocBuilder<CategoryBloc, CategoryState>(
+                  builder: (context, categoryState) {
+                    if (categoryState is CategoryLoading) {
+                      return _buildLoading();
+                    } else if (categoryState is CategoryLoaded) {
+                      return _buildShopContent(
+                          context, shopState.shop, categoryState.categories);
+                    } else if (categoryState is CategoryError) {
+                      return _buildError(categoryState.message);
+                    }
+                    return _buildInitializing();
+                  },
+                );
+              } else if (shopState is ShopError) {
+                return _buildError(shopState.message);
+              }
+              return _buildInitializing();
+            },
+          ),
+          if (_isAddingProduct)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.brown),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      "Đang thêm sản phẩm...",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

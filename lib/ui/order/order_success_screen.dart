@@ -41,7 +41,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
             const SizedBox(height: 20),
             _buildActionButtons(),
             const SizedBox(height: 20),
-            _buildRecommendedSection(),
+            // _buildRecommendedSection(),
           ],
         ),
       ),

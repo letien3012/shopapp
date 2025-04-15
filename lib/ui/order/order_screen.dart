@@ -69,10 +69,11 @@ class _OrderScreenState extends State<OrderScreen>
     // Set initial tab after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)!.settings.arguments;
-      initialTab = args as int;
-      if (initialTab != null) {
-        _tabController.animateTo(initialTab);
+      if (args != null) {
+        initialTab = args as int;
       }
+
+      _tabController.animateTo(initialTab);
     });
   }
 

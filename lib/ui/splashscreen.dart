@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:luanvan/ui/login/signin_screen.dart';
 import 'package:luanvan/ui/mainscreen.dart';
 
 class SplashScreen extends StatefulWidget {

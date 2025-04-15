@@ -17,8 +17,6 @@ import 'package:luanvan/blocs/user/user_event.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/address.dart';
 import 'package:luanvan/models/cart.dart';
-import 'package:luanvan/models/cart_item.dart';
-import 'package:luanvan/models/cart_shop.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/order_item.dart';
 import 'package:luanvan/models/product.dart';
@@ -212,16 +210,23 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
 
           if (product.id.isNotEmpty) {
             if (product.hasWeightVariant) {
-              int i = product.variants[0].options
-                  .indexWhere((opt) => opt.id == item.optionId1);
-              int j = product.variants[1].options
-                  .indexWhere((opt) => opt.id == item.optionId2);
-              if (i == -1) i = 0;
-              if (j == -1) j = 0;
-              totalWeight += product
-                      .optionInfos[i * product.variants[1].options.length + j]
-                      .weight! *
-                  item.quantity;
+              if (product.variants.length == 1) {
+                int i = product.variants[0].options
+                    .indexWhere((element) => element.id == item.optionId1);
+                if (i == -1) i = 0;
+                totalWeight += product.optionInfos[i].weight! * item.quantity;
+              } else {
+                int i = product.variants[0].options
+                    .indexWhere((opt) => opt.id == item.optionId1);
+                int j = product.variants[1].options
+                    .indexWhere((opt) => opt.id == item.optionId2);
+                if (i == -1) i = 0;
+                if (j == -1) j = 0;
+                totalWeight += product
+                        .optionInfos[i * product.variants[1].options.length + j]
+                        .weight! *
+                    item.quantity;
+              }
             } else {
               totalWeight += product.weight! * item.quantity;
             }
@@ -271,6 +276,11 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                       element.name == shipMethod[shopId]!.name),
                 ))) {
               calculatedTotal += product.price! * item.quantity;
+            } else if (product.variants.length == 1) {
+              int i = product.variants[0].options
+                  .indexWhere((element) => element.id == item.optionId1);
+              if (i == -1) i = 0;
+              calculatedTotal += product.optionInfos[i].price * item.quantity;
             } else if (product.variants.length > 1) {
               int i = product.variants[0].options
                   .indexWhere((opt) => opt.id == item.optionId1);
@@ -809,6 +819,11 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                             //   quantitySold:
                             //       product.quantitySold + cartItem.quantity,
                             // );
+                          } else if (product.variants.length == 1) {
+                            int i = product.variants[0].options.indexWhere(
+                                (element) => element.id == cartItem.optionId1);
+                            if (i == -1) i = 0;
+                            productPrice = product.optionInfos[i].price;
                           } else if (product.variants.length > 1) {
                             int i = product.variants[0].options.indexWhere(
                                 (opt) => opt.id == cartItem.optionId1);

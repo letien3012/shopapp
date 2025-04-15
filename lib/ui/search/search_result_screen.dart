@@ -88,20 +88,31 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       );
     }
     _placeSelling.sort((a, b) => a.compareTo(b));
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args != null && args is String) {
         context.read<SearchBloc>().add(SearchProducts(args));
+
         final searchState = context.read<SearchBloc>().state;
         setState(() {
           _searchKeyword = args;
           _searchController.text = args;
         });
+        await context
+            .read<SearchBloc>()
+            .stream
+            .firstWhere((state) => state is SearchLoaded);
         if (searchState is SearchLoaded) {
-          final shopId = searchState.products.first.shopId;
-          context
-              .read<ListShopSearchBloc>()
-              .add(FetchListShopSearchEventByShopId([shopId]));
+          if (searchState.products.isNotEmpty) {
+            final shopId = searchState.products.first.shopId;
+            context
+                .read<ListShopSearchBloc>()
+                .add(FetchListShopSearchEventByShopId([shopId]));
+            await context
+                .read<ListShopSearchBloc>()
+                .stream
+                .firstWhere((state) => state is ListShopSearchLoaded);
+          }
         }
       }
     });
@@ -343,7 +354,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     final state = context.read<ListShopSearchBloc>().state;
     if (state is ListShopSearchLoaded) {
       try {
-        return state.shops.firstWhere((shop) => shop.shopId == product.shopId);
+        return state.shop;
       } catch (e) {
         return null;
       }

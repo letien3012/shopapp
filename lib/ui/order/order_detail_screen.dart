@@ -437,6 +437,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ),
             builder: (context) => StatefulBuilder(
               builder: (context, setState) => Container(
+                color: Colors.white,
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

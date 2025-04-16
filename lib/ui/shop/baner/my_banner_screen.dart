@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:luanvan/blocs/banner/banner_bloc.dart';
 import 'package:luanvan/blocs/banner/banner_event.dart';
 import 'package:luanvan/blocs/banner/banner_state.dart';

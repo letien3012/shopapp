@@ -1,9 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:luanvan/blocs/chat/chat_event.dart';
-import 'package:luanvan/blocs/chat/chat_state.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_event.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_state.dart';
-import 'package:luanvan/models/message.dart';
 import 'package:luanvan/services/chat_service.dart';
 
 class ChatRoomBloc extends Bloc<ChatRoomEvent, ChatRoomState> {

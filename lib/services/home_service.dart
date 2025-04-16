@@ -1,10 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/services/cart_service.dart';
-
 import 'package:luanvan/services/product_service.dart';
 import 'package:luanvan/services/user_service.dart';
-import 'package:printing/printing.dart';
 
 class HomeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

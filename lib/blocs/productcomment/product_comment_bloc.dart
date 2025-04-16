@@ -1,8 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/productcomment/product_comment_event.dart';
 import 'package:luanvan/blocs/productcomment/product_comment_state.dart';
-import 'package:luanvan/blocs/productorder/product_order_event.dart';
-import 'package:luanvan/blocs/productorder/product_order_state.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/services/product_service.dart';
 

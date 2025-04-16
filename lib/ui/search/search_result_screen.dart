@@ -93,7 +93,6 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       if (args != null && args is String) {
         context.read<SearchBloc>().add(SearchProducts(args));
 
-        final searchState = context.read<SearchBloc>().state;
         setState(() {
           _searchKeyword = args;
           _searchController.text = args;
@@ -102,6 +101,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
             .read<SearchBloc>()
             .stream
             .firstWhere((state) => state is SearchLoaded);
+        final searchState = context.read<SearchBloc>().state;
         if (searchState is SearchLoaded) {
           if (searchState.products.isNotEmpty) {
             final shopId = searchState.products.first.shopId;

@@ -1,6 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
-import 'package:luanvan/blocs/listproductbloc/listproduct_event.dart';
 import 'package:luanvan/blocs/product/product_event.dart';
 import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/productdetail/productdetail_event.dart';

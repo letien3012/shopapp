@@ -4,12 +4,7 @@ import 'dart:async';
 import 'package:luanvan/blocs/search/search_bloc.dart';
 import 'package:luanvan/blocs/search/search_event.dart';
 import 'package:luanvan/blocs/search/search_state.dart';
-import 'package:luanvan/blocs/searchbyimage/search_image_bloc.dart';
-import 'package:luanvan/blocs/searchbyimage/search_image_event.dart';
-import 'package:luanvan/ui/search/search_image_result.dart';
 import 'package:luanvan/ui/search/search_result_screen.dart';
-
-import 'package:image_picker/image_picker.dart';
 
 class SearchInCategoryScreen extends StatefulWidget {
   const SearchInCategoryScreen({super.key});

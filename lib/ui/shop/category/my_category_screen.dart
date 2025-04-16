@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:luanvan/blocs/category/category_bloc.dart';
 import 'package:luanvan/blocs/category/category_event.dart';
 import 'package:luanvan/blocs/category/category_state.dart';
@@ -10,7 +9,6 @@ import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/shop/category/add_category_screen.dart';
 import 'package:luanvan/ui/shop/category/edit_category_screen.dart';
-import 'package:luanvan/ui/shop/product_manager/details_product_shop_screen.dart';
 import 'package:luanvan/ui/widgets/alert_diablog.dart';
 import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 

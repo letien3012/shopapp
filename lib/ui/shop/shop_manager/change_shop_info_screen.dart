@@ -1,20 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:luanvan/blocs/auth/auth_bloc.dart';
-import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/blocs/user/user_bloc.dart';
-import 'package:luanvan/blocs/user/user_event.dart';
-import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/shop.dart';
-import 'package:luanvan/models/user_info_model.dart';
 import 'package:luanvan/services/storage_service.dart';
-import 'package:luanvan/ui/user/change_info/change_name.dart';
 
 class ChangeShopInfoScreen extends StatefulWidget {
   const ChangeShopInfoScreen({super.key});

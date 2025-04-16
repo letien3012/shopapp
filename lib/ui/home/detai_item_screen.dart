@@ -414,8 +414,9 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            Navigator.of(context)
-                                .pushNamed(ReviewScreen.routeName);
+                            Navigator.of(context).pushNamed(
+                                ReviewScreen.routeName,
+                                arguments: product);
                           },
                           child: Container(
                             padding: const EdgeInsets.all(10),
@@ -554,7 +555,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                 ),
                 Text(
                   textAlign: TextAlign.start,
-                  comment.content ?? '',
+                  comment.content,
                 ),
                 const SizedBox(height: 10),
                 Row(

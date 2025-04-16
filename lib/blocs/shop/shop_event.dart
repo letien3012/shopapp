@@ -1,5 +1,4 @@
 import 'package:luanvan/models/shop.dart';
-import 'package:luanvan/models/user_info_model.dart';
 
 abstract class ShopEvent {}
 

@@ -8,7 +8,6 @@ import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
 import 'package:luanvan/models/address.dart';
-import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/comment.dart';
 import 'package:luanvan/models/order.dart';
 import 'package:luanvan/models/order_item.dart';

@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/cart/cart_event.dart';
 import 'package:luanvan/blocs/cart/cart_state.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/models/cart.dart';
 import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/cart_shop.dart';

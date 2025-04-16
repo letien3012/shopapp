@@ -8,7 +8,6 @@ import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/chat/chat_bloc.dart';
 import 'package:luanvan/blocs/chat/chat_event.dart';
-import 'package:luanvan/blocs/chat/chat_state.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_bloc.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_event.dart';
 import 'package:luanvan/blocs/chat_room/chat_room_state.dart';

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/banner.dart';
-import 'package:luanvan/models/category.dart';
 
 class BannerService {
   final FirebaseFirestore _firestore;

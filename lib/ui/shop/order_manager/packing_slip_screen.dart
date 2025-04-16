@@ -9,7 +9,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_selector/file_selector.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:luanvan/models/order.dart';
 
 class PackingSlipScreen extends StatefulWidget {

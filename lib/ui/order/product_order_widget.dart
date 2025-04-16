@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:luanvan/blocs/product_in_cart/product_cart_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
-import 'package:luanvan/models/cart_item.dart';
 import 'package:luanvan/models/order_item.dart';
-import 'package:luanvan/models/shipping_method.dart';
 
 class ProductOrderWidget extends StatefulWidget {
   final String shopId;

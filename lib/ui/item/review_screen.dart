@@ -4,12 +4,10 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:luanvan/blocs/comment/comment_bloc.dart';
 import 'package:luanvan/blocs/comment/comment_state.dart';
-import 'package:luanvan/blocs/product/product_bloc.dart';
-import 'package:luanvan/blocs/product/product_state.dart';
 import 'package:luanvan/blocs/usercomment/list_user_comment_bloc.dart';
-import 'package:luanvan/blocs/usercomment/list_user_comment_event.dart';
 import 'package:luanvan/blocs/usercomment/list_user_comment_state.dart';
 import 'package:luanvan/models/comment.dart';
+import 'package:luanvan/models/product.dart';
 import 'package:video_player/video_player.dart';
 import 'package:photo_view/photo_view.dart';
 
@@ -340,6 +338,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final product = ModalRoute.of(context)?.settings.arguments as Product;
     return Scaffold(
       body: Stack(
         children: [
@@ -352,9 +351,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   builder: (context, state) {
                     if (state is ListUserCommentLoaded) {
                       final userComments = state.users;
-                      final product =
-                          (context.read<ProductBloc>().state as ProductLoaded)
-                              .product;
 
                       // Lọc comments nếu đang ở tab "Có hình ảnh/video"
                       final filteredComments = _showMediaOnly

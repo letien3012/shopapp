@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:luanvan/models/shop.dart';
-import 'package:printing/printing.dart';
 import '../models/user_info_model.dart';
 import '../models/cart.dart';
 

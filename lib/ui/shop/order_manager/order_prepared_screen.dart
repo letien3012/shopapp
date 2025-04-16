@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
-import 'package:luanvan/models/order.dart';
 import 'package:luanvan/ui/shop/order_manager/packing_slip_screen.dart';
 
 class OrderPreparedScreen extends StatefulWidget {

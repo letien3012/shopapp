@@ -9,7 +9,6 @@ import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
-import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/order.dart';

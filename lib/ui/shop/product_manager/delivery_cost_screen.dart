@@ -6,7 +6,6 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
-import 'package:luanvan/models/option_info.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/models/shipping_calculator.dart';
 import 'package:luanvan/models/shop.dart';

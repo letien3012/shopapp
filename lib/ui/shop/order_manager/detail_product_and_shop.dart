@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
-import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
 import 'package:luanvan/blocs/productorder/product_order_bloc.dart';
 import 'package:luanvan/blocs/productorder/product_order_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/order.dart';
-import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/order/product_order_widget.dart';
 
 class DetailProductAndShop extends StatefulWidget {

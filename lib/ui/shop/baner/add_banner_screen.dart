@@ -4,9 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:luanvan/blocs/banner/banner_bloc.dart';
 import 'package:luanvan/blocs/banner/banner_event.dart';
-import 'package:luanvan/blocs/category/category_bloc.dart';
-import 'package:luanvan/blocs/category/category_event.dart';
-import 'package:luanvan/models/category.dart';
 import 'package:luanvan/services/storage_service.dart';
 import 'package:luanvan/models/banner.dart' as model;
 

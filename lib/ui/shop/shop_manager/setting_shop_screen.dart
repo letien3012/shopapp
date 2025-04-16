@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
-import 'package:luanvan/blocs/shop/shop_event.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/shop/shop_manager/change_shop_info_screen.dart';

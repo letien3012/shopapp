@@ -176,25 +176,32 @@ class AuthService {
     return userCredential;
   }
 
-  Future<UserCredential> signInWithFacebook() async {
+  Future<UserCredential?> signInWithFacebook() async {
     final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
     try {
       final LoginResult loginResult = await FacebookAuth.instance.login(
-        permissions: ['public_profile'],
+        permissions: ['public_profile', 'email'],
       );
-      if (loginResult.status != LoginStatus.success) {
+
+      // Kiểm tra xem accessToken có null không
+      if (loginResult.status != LoginStatus.success ||
+          loginResult.accessToken == null) {
         throw Exception('Đăng nhập thất bại: ${loginResult.message}');
       }
 
+      // Lấy accessToken từ loginResult nếu không null
+      final String accessToken = loginResult.accessToken!.tokenString;
       final OAuthCredential facebookAuthCredential =
-          FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+          FacebookAuthProvider.credential(accessToken);
 
-      late UserCredential userCredential;
+      UserCredential? userCredential;
+
       try {
         userCredential =
             await _firebaseAuth.signInWithCredential(facebookAuthCredential);
         User? user = userCredential.user;
+
         if (user != null) {
           QuerySnapshot querySnapshot = await _firestore
               .collection('users')
@@ -211,6 +218,7 @@ class AuthService {
               username = generateRandomUsername();
               isUsernameTaken = await checkUSerNameExits(username);
             }
+
             userInfo = UserInfoModel(
               id: user.uid,
               name: user.displayName ?? "Người dùng Facebook",
@@ -222,6 +230,7 @@ class AuthService {
               userName: username,
               role: 0,
             );
+
             await _firestore
                 .collection('users')
                 .doc(userInfo.id)
@@ -233,15 +242,121 @@ class AuthService {
 
           await createCartForUser(user.uid);
         }
+
+        return userCredential;
       } on FirebaseAuthException catch (e) {
-        if (e.code == 'account-exists-with-different-credential') {}
+        if (e.code == 'account-exists-with-different-credential') {
+          // Lấy địa chỉ email từ tài khoản Facebook
+          final userData = await FacebookAuth.instance.getUserData();
+          final userEmail = userData['email'] as String?;
+
+          if (userEmail != null) {
+            final methods =
+                await _firebaseAuth.fetchSignInMethodsForEmail(userEmail);
+
+            if (methods.isNotEmpty) {
+              print('Email này đã được đăng ký với: $methods');
+              if (_firebaseAuth.currentUser != null) {
+                try {
+                  await _firebaseAuth.currentUser!
+                      .linkWithCredential(facebookAuthCredential);
+                  print('Đã liên kết tài khoản hiện tại với Facebook');
+                  final user = _firebaseAuth.currentUser;
+                  return FirebaseAuth.instance
+                      .signInWithCredential(facebookAuthCredential);
+                } catch (linkError) {
+                  print('Lỗi khi liên kết tài khoản: $linkError');
+                  throw Exception(
+                      'Không thể liên kết với tài khoản Facebook: $linkError');
+                }
+              } else {
+                throw Exception(
+                    'Email này đã được liên kết với tài khoản khác. Vui lòng đăng nhập bằng: ${methods.join(", ")} trước, sau đó liên kết với Facebook');
+              }
+            }
+          } else {
+            throw Exception(
+                'Không thể đăng nhập vì tài khoản Facebook không cung cấp email. Vui lòng sử dụng phương thức đăng nhập khác.');
+          }
+        } else {
+          print('Lỗi FirebaseAuthException: ${e.message}');
+          throw Exception('Đăng nhập thất bại: ${e.message}');
+        }
       }
-      return userCredential;
     } catch (e) {
       print('Lỗi: $e');
       rethrow;
     }
+
+    return null;
   }
+
+  // Future<UserCredential?> signInWithFacebook() async {
+  //   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+
+  //   try {
+  //     final LoginResult loginResult = await FacebookAuth.instance.login(
+  //       permissions: ['public_profile'],
+  //     );
+  //     if (loginResult.status != LoginStatus.success) {
+  //       throw Exception('Đăng nhập thất bại: ${loginResult.message}');
+  //     }
+
+  //     final OAuthCredential facebookAuthCredential =
+  //         FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+  //     UserCredential? userCredential;
+  //     try {
+  //       userCredential =
+  //           await _firebaseAuth.signInWithCredential(facebookAuthCredential);
+  //       User? user = userCredential.user;
+  //       print(user);
+  //       if (user != null) {
+  //         QuerySnapshot querySnapshot = await _firestore
+  //             .collection('users')
+  //             .where('id', isEqualTo: user.uid)
+  //             .limit(1)
+  //             .get();
+
+  //         late UserInfoModel userInfo;
+  //         if (querySnapshot.docs.isEmpty) {
+  //           String username = generateRandomUsername();
+  //           bool isUsernameTaken = await checkUSerNameExits(username);
+
+  //           while (isUsernameTaken) {
+  //             username = generateRandomUsername();
+  //             isUsernameTaken = await checkUSerNameExits(username);
+  //           }
+  //           userInfo = UserInfoModel(
+  //             id: user.uid,
+  //             name: user.displayName ?? "Người dùng Facebook",
+  //             email: user.email,
+  //             phone: user.phoneNumber,
+  //             avataUrl: user.photoURL,
+  //             gender: null,
+  //             date: null,
+  //             userName: username,
+  //             role: 0,
+  //           );
+  //           await _firestore
+  //               .collection('users')
+  //               .doc(userInfo.id)
+  //               .set(userInfo.toMap(), SetOptions(merge: true));
+  //         } else {
+  //           userInfo = UserInfoModel.fromFirestore(
+  //               querySnapshot.docs.first.data() as Map<String, dynamic>);
+  //         }
+
+  //         await createCartForUser(user.uid);
+  //       }
+  //     } on FirebaseAuthException catch (e) {
+  //       if (e.code == 'account-exists-with-different-credential') {}
+  //     }
+  //     return userCredential;
+  //   } catch (e) {
+  //     print('Lỗi: $e');
+  //     rethrow;
+  //   }
+  // }
 
   Future<UserCredential> signInWithGoogle() async {
     try {

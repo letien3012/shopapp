@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/product.dart';
 import 'package:luanvan/services/cart_service.dart';
@@ -12,25 +14,71 @@ class RecommendationService {
   final CartService _cartService = CartService();
   final ProductService _productService = ProductService();
 
-  Future<List<String>> fetchRecommendedProducts(String productId) async {
-    final url = Uri.parse(
-        'http://192.168.33.8:5000/api/product-recommendations?id=$productId');
+  // Future<List<String>> fetchRecommendedProducts(String productId) async {
+  //   final url = Uri.parse(
+  //       'http://192.168.33.8:5000/api/product-recommendations?id=$productId');
 
-    try {
-      final response = await http.get(url);
+  //   try {
+  //     final response = await http.get(url);
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return List<String>.from(data['related_products']);
-      } else {
-        print('Lỗi status: ${response.statusCode}');
-        print(response.body);
-        return [];
-      }
-    } catch (e) {
-      print('Lỗi khi gọi API: $e');
-      return [];
+  //     if (response.statusCode == 200) {
+  //       final data = json.decode(response.body);
+  //       return List<String>.from(data['related_products']);
+  //     } else {
+  //       print('Lỗi status: ${response.statusCode}');
+  //       print(response.body);
+  //       return [];
+  //     }
+  //   } catch (e) {
+  //     print('Lỗi khi gọi API: $e');
+  //     return [];
+  //   }
+  // }
+  double cosineSimilarity(List<double> a, List<double> b) {
+    double dot = 0.0, normA = 0.0, normB = 0.0;
+    for (int i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
     }
+    return dot / (sqrt(normA) * sqrt(normB));
+  }
+
+  Future<List<String>> fetchRecommendedProducts(String productId) async {
+    final productEmbeddingSnapshot = await _firestore
+        .collection('product_embedding')
+        .where('productId', isEqualTo: productId)
+        .get();
+    final allProductEmbedding = await _firestore
+        .collection('product_embedding')
+        .where('isHidden', isEqualTo: false)
+        .where('isDeleted', isEqualTo: false)
+        .get();
+    final productEmbedding =
+        List<double>.from(productEmbeddingSnapshot.docs.first['embeddings']);
+    final results = allProductEmbedding.docs
+        .map((e) {
+          if (e['productId'] != productId) {
+            final dbEmbeddings = List<double>.from(e['embeddings']);
+            final similarity = cosineSimilarity(productEmbedding, dbEmbeddings);
+            if (similarity > 0.7) {
+              return {
+                'productId': e['productId'],
+                'score': similarity,
+                'embeddings': dbEmbeddings,
+              };
+            }
+          }
+        })
+        .where((e) => e != null)
+        .toList();
+    if (results.isNotEmpty) {
+      results.sort((a, b) => b!['score'].compareTo(a!['score']));
+      final List<String> productIds =
+          results.map((e) => e!['productId'] as String).toList();
+      return productIds;
+    }
+    return [];
   }
 
   Future<List<Product>> getRecommendations(String productId) async {
@@ -51,9 +99,12 @@ class RecommendationService {
     //     }
     //   }
     // }
-    final products =
-        await _productService.fetchProductsByListProductId(productsIds);
-
+    if (productsIds.isNotEmpty) {
+      final products =
+          await _productService.fetchProductsByListProductId(productsIds);
+      return products;
+    }
+    return [];
     // final recommendations = <Product>[];
     // for (var p in products) {
     //   final similarSnapshot = await _firestore
@@ -72,6 +123,5 @@ class RecommendationService {
     // }
 
     // return recommendations.where((e) => e.getMaxOptionStock() > 0).toList();
-    return products;
   }
 }

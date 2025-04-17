@@ -11,6 +11,8 @@ import 'package:luanvan/blocs/order/order_bloc.dart';
 import 'package:luanvan/blocs/order/order_event.dart';
 import 'package:luanvan/blocs/order/order_state.dart';
 import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/product.dart';
+import 'package:luanvan/services/product_service.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -257,14 +259,21 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     minHeight: MediaQuery.of(context).size.height),
                 child: Column(
                   children: [
-                    const SizedBox(height: 90),
-                    Container(
-                      height: 10,
-                      width: double.infinity,
-                      color: Colors.grey[300],
-                    ),
-                    const SizedBox(height: 10),
-
+                    const SizedBox(height: 100),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     final ProductService productService = ProductService();
+                    //     productService.allEmbedding();
+                    //   },
+                    //   child: Container(
+                    //     padding: const EdgeInsets.all(16),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.white,
+                    //       borderRadius: BorderRadius.circular(12),
+                    //     ),
+                    //     child: const Text('Tạo embedding'),
+                    //   ),
+                    // ),
                     // Bảng thống kê tổng quan
                     _buildStatisticsTable(userState, orderState),
 

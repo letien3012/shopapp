@@ -11,9 +11,20 @@ import 'package:luanvan/rag/product_chunk.dart';
 
 class ProductService {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  Future<void> allEmbedding() async {
+    final products = await firebaseFirestore
+        .collection('products')
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .get();
+    for (var product in products.docs) {
+      await createEmbedding(product.id);
+    }
+  }
 
-  Future<void> createEmbedding(Product product) async {
-    final chunks = await generateProductChunk(product);
+  Future<void> createEmbedding(String productId) async {
+    final product = await fetchProductByProductId(productId);
+    final chunks = await generateProductChunkWithoutPrice(product);
     final embeddings = await generateEmbedding(chunks);
     await firebaseFirestore.collection('product_embedding').add({
       'productId': product.id,
@@ -24,24 +35,34 @@ class ProductService {
   }
 
   Future<List<double>> generateEmbedding(String text) async {
-    final apiKey = dotenv.env['API_KEY'];
-    const url =
-        'https://router.huggingface.co/hf-inference/pipeline/feature-extraction/intfloat/multilingual-e5-large-instruct';
+    final url = Uri.parse('http://192.168.33.8:5000/api/embedding');
     final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $apiKey',
-      },
-      body: json.encode({'inputs': text}),
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'text': text}),
     );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return List<double>.from(data);
-    } else {
-      throw Exception('Failed to generate embedding');
-    }
+    final data = json.decode(response.body);
+    return List<double>.from(data['embedding']);
   }
+  // Future<List<double>> generateEmbedding(String text) async {
+  //   final apiKey = dotenv.env['API_KEY'];
+  //   const url =
+  //       'https://router.huggingface.co/hf-inference/pipeline/feature-extraction/intfloat/multilingual-e5-large-instruct';
+  //   final response = await http.post(
+  //     Uri.parse(url),
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'Authorization': 'Bearer $apiKey',
+  //     },
+  //     body: json.encode({'inputs': text}),
+  //   );
+  //   if (response.statusCode == 200) {
+  //     final data = json.decode(response.body);
+  //     return List<double>.from(data);
+  //   } else {
+  //     throw Exception('Failed to generate embedding');
+  //   }
+  // }
 
   Future<bool> checkProductCheckout(
       String userId, Map<String, List<String>> productCheckout) async {
@@ -171,7 +192,7 @@ class ProductService {
     await docRef.update({
       'optionInfos': updatedOptionInfos.map((info) => info.toMap()).toList(),
     });
-    createEmbedding(product.copyWith(id: productId));
+    createEmbedding(productId);
     return productId;
   }
 

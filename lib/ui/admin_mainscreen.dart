@@ -25,7 +25,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AdminAuthenticated) {
-        _currentIndex = 1;
+        _currentIndex = 0;
         context
             .read<ShopBloc>()
             .add(FetchShopEventByShopId(authState.shop.shopId!));

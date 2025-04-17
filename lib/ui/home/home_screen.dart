@@ -31,6 +31,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int bannerCurrentPage = 0;
   final CarouselSliderController _bannercontroller = CarouselSliderController();
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoading = false;
+  List<Product> _products = [];
+  bool _hasMore = true;
   @override
   void initState() {
     super.initState();
@@ -38,15 +42,55 @@ class _HomeScreenState extends State<HomeScreen> {
       _loadProduct();
       context.read<BannerBloc>().add(FetchBannersEvent());
     });
+    _scrollController.addListener(() async {
+      if (_scrollController.position.pixels ==
+              _scrollController.position.maxScrollExtent &&
+          !_isLoading) {
+        final authState = context.read<AuthBloc>().state;
+        if (authState is! AuthAuthenticated) {
+          _loadMore();
+        }
+      }
+    });
   }
 
-  void _loadProduct() {
+  void _loadMore() async {
+    if (!_hasMore) return;
+    setState(() => _isLoading = true);
+    context.read<HomeBloc>().add(LoadMoreProduct());
+    await context
+        .read<HomeBloc>()
+        .stream
+        .firstWhere((state) => state is MoreProductLoaded);
+    setState(() {
+      _products.addAll(
+          (context.read<HomeBloc>().state as MoreProductLoaded).newProduct);
+      _isLoading = false;
+      _hasMore = (context.read<HomeBloc>().state as MoreProductLoaded).hasMore;
+    });
+  }
+
+  void _loadProduct() async {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
       context.read<CartBloc>().add(FetchCartEventUserId(authState.user.uid));
-      context.read<HomeBloc>().add(FetchProductWithUserId(authState.user.uid));
+      context.read<HomeBloc>().add(InitializeHome(userId: authState.user.uid));
+      await context
+          .read<HomeBloc>()
+          .stream
+          .firstWhere((state) => state is HomeLoaded);
+      setState(() {
+        _products = (context.read<HomeBloc>().state as HomeLoaded).products;
+      });
     } else {
-      context.read<HomeBloc>().add(FetchProductWithoutUserId());
+      context.read<HomeBloc>().add(InitializeHome());
+      await context
+          .read<HomeBloc>()
+          .stream
+          .firstWhere((state) => state is HomeLoaded);
+      setState(() {
+        _products = (context.read<HomeBloc>().state as HomeLoaded).products;
+      });
     }
   }
 
@@ -69,8 +113,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(body: BlocBuilder<HomeBloc, HomeState>(
       builder: (context, homeState) {
         if (homeState is HomeLoading) return _buildLoading();
-        if (homeState is HomeLoaded) {
-          return _buildHomeScreen(context, homeState.products);
+        if (homeState is HomeLoaded || homeState is MoreProductLoaded) {
+          return _buildHomeScreen(context, _products);
         } else if (homeState is HomeError) {
           return _buildError(homeState.message);
         }
@@ -103,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _loadProduct();
             },
             child: SingleChildScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               child: Container(
                 padding: EdgeInsets.only(bottom: 10),
@@ -236,82 +281,103 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 10,
                     ),
                     GridView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: 7),
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 5,
-                                crossAxisSpacing: 5,
-                                mainAxisExtent: 280
-                                // childAspectRatio: 0.8,
-                                ),
-                        itemCount: listProduct.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).pushNamed(
-                                  DetaiItemScreen.routeName,
-                                  arguments: listProduct[index].id);
-                            },
-                            child: Container(
-                              color: Colors.white,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Image.network(
-                                    width: double.infinity,
-                                    height: 200,
-                                    fit: BoxFit.cover,
-                                    listProduct[index].imageUrl[0],
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          height: 42,
-                                          child: Text(
-                                            listProduct[index].name,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              "đ${formatPrice(listProduct[index].getMinOptionPrice())}",
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Color.fromARGB(
-                                                      255, 151, 14, 4)),
-                                              maxLines: 1,
-                                            ),
-                                            Text(
-                                              'Đã bán ${listProduct[index].quantitySold.toString()}',
-                                              style: TextStyle(fontSize: 12),
-                                              maxLines: 1,
-                                            )
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                      padding: EdgeInsets.symmetric(horizontal: 7),
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 5,
+                              crossAxisSpacing: 5,
+                              mainAxisExtent: 280
+                              // childAspectRatio: 0.8,
                               ),
+                      itemCount: listProduct.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pushNamed(
+                                DetaiItemScreen.routeName,
+                                arguments: listProduct[index].id);
+                          },
+                          child: Container(
+                            color: Colors.white,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Image.network(
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                  listProduct[index].imageUrl[0],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        height: 42,
+                                        child: Text(
+                                          listProduct[index].name,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "đ${formatPrice(listProduct[index].getMinOptionPrice())}",
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                color: Color.fromARGB(
+                                                    255, 151, 14, 4)),
+                                            maxLines: 1,
+                                          ),
+                                          Text(
+                                            'Đã bán ${listProduct[index].quantitySold.toString()}',
+                                            style: TextStyle(fontSize: 12),
+                                            maxLines: 1,
+                                          )
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          );
-                        })
+                          ),
+                        );
+                      },
+                    ),
+                    if (_isLoading)
+                      Container(
+                        margin: EdgeInsets.only(top: 10),
+                        height: 40,
+                        width: double.infinity,
+                        color: Colors.white,
+                        child: Center(
+                          child: Text('Đang tải...'),
+                        ),
+                      )
+                    else if (!_hasMore)
+                      Container(
+                        margin: EdgeInsets.only(top: 10),
+                        height: 40,
+                        width: double.infinity,
+                        color: Colors.white,
+                        child: Center(child: Text('Đã hết sản phẩm')),
+                      )
+                    else
+                      SizedBox.shrink(),
                   ],
                 ),
               ),

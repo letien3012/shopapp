@@ -122,26 +122,64 @@ class UserService {
     return favorites.map((item) => item.toString()).toList();
   }
 
+  // Future<UserInfoModel> addViewedProduct(
+  //     String userId, String productId) async {
+  //   final user = await fetchUserInfo(userId);
+  //   final existingViewed = user.viewedProducts;
+
+  //   // Kiểm tra nếu productId đã tồn tại
+  //   final alreadyViewed = existingViewed.any((vp) => vp.productId == productId);
+  //   if (alreadyViewed) {
+  //     existingViewed.removeWhere((vp) => vp.productId == productId);
+  //     existingViewed.add(ViewedProduct(
+  //       productId: productId,
+  //       viewedAt: Timestamp.now(),
+  //     ));
+  //     await firebaseFirestore
+  //         .collection('users')
+  //         .doc(userId)
+  //         .update({'viewedProducts': });
+  //     return user;
+  //   }
+
+  //   final viewedProduct = ViewedProduct(
+  //     productId: productId,
+  //     viewedAt: Timestamp.now(),
+  //   );
+  //   existingViewed.add(viewedProduct);
+  //   existingViewed.sort((a, b) => b.viewedAt!.compareTo(a.viewedAt!));
+  //   if (existingViewed.length > 10) {
+  //     existingViewed.removeAt(0);
+  //   }
+  //   final updatedUser = user.copyWith(
+  //     viewedProducts: existingViewed,
+  //   );
+
+  //   await firebaseFirestore
+  //       .collection('users')
+  //       .doc(userId)
+  //       .update(updatedUser.toMap());
+
+  //   return updatedUser;
+  // }
   Future<UserInfoModel> addViewedProduct(
       String userId, String productId) async {
     final user = await fetchUserInfo(userId);
-    final existingViewed = user.viewedProducts;
+    final existingViewed = List<ViewedProduct>.from(user.viewedProducts);
 
-    // Kiểm tra nếu productId đã tồn tại
-    final alreadyViewed = existingViewed.any((vp) => vp.productId == productId);
-    if (alreadyViewed) {
-      return user;
-    }
+    existingViewed.removeWhere((vp) => vp.productId == productId);
 
-    final viewedProduct = ViewedProduct(
+    existingViewed.add(ViewedProduct(
       productId: productId,
       viewedAt: Timestamp.now(),
-    );
-    existingViewed.add(viewedProduct);
+    ));
+
     existingViewed.sort((a, b) => b.viewedAt!.compareTo(a.viewedAt!));
-    if (existingViewed.length > 20) {
-      existingViewed.removeAt(0);
+
+    if (existingViewed.length > 10) {
+      existingViewed.removeRange(11, existingViewed.length);
     }
+
     final updatedUser = user.copyWith(
       viewedProducts: existingViewed,
     );

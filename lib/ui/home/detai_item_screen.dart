@@ -1024,97 +1024,101 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
       }
       if (state is RecommendationLoaded) {
         final products = state.recommendedProducts;
-        return Column(
-          children: [
-            Container(
-              height: 50,
-              width: double.infinity,
-              color: Colors.grey[200],
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(height: 1, width: 50, color: Colors.black45),
-                  const SizedBox(width: 10),
-                  const Text("Các sản phẩm tương tự",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                  const SizedBox(width: 10),
-                  Container(height: 1, width: 50, color: Colors.black45),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.only(bottom: 60),
-              color: Colors.grey[200],
-              child: GridView.builder(
-                padding: const EdgeInsets.only(top: 0, left: 10, right: 10),
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 7,
-                  crossAxisSpacing: 7,
-                  mainAxisExtent: 280,
+        if (products.isNotEmpty) {
+          return Column(
+            children: [
+              Container(
+                height: 50,
+                width: double.infinity,
+                color: Colors.grey[200],
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(height: 1, width: 50, color: Colors.black45),
+                    const SizedBox(width: 10),
+                    const Text("Các sản phẩm tương tự",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500)),
+                    const SizedBox(width: 10),
+                    Container(height: 1, width: 50, color: Colors.black45),
+                  ],
                 ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pushNamed(DetaiItemScreen.routeName,
-                          arguments: product.id);
-                    },
-                    child: Container(
-                      color: Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.network(
-                            width: double.infinity,
-                            height: 200,
-                            fit: BoxFit.contain,
-                            product.imageUrl.isNotEmpty
-                                ? product.imageUrl[0]
-                                : '',
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            child: Column(
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: TextStyle(fontSize: 14),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                        "đ${formatPrice(product.getMinOptionPrice())}",
-                                        style: TextStyle(
-                                            fontSize: 16, color: Colors.red),
-                                        maxLines: 1),
-                                    Text('Đã bán ${product.quantitySold}',
-                                        style: TextStyle(fontSize: 12),
-                                        maxLines: 1),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
               ),
-            ),
-          ],
-        );
+              Container(
+                padding: const EdgeInsets.only(bottom: 60),
+                color: Colors.grey[200],
+                child: GridView.builder(
+                  padding: const EdgeInsets.only(top: 0, left: 10, right: 10),
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 7,
+                    crossAxisSpacing: 7,
+                    mainAxisExtent: 280,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pushNamed(
+                            DetaiItemScreen.routeName,
+                            arguments: product.id);
+                      },
+                      child: Container(
+                        color: Colors.white,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Image.network(
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.contain,
+                              product.imageUrl.isNotEmpty
+                                  ? product.imageUrl[0]
+                                  : '',
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    product.name,
+                                    style: TextStyle(fontSize: 14),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                          "đ${formatPrice(product.getMinOptionPrice())}",
+                                          style: TextStyle(
+                                              fontSize: 16, color: Colors.red),
+                                          maxLines: 1),
+                                      Text('Đã bán ${product.quantitySold}',
+                                          style: TextStyle(fontSize: 12),
+                                          maxLines: 1),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        }
       }
       return const Center(child: CircularProgressIndicator());
     });

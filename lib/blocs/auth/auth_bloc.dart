@@ -217,9 +217,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final UserCredential userCredential =
+      final UserCredential? userCredential =
           await _authService.signInWithFacebook();
-      emit(AuthAuthenticated(userCredential.user!));
+      if (userCredential != null) {
+        emit(AuthAuthenticated(userCredential.user!));
+      } else {
+        emit(AuthError('Đăng nhập thất bại'));
+      }
     } catch (e) {
       emit(AuthError('Lỗi đăng nhập Facebook: ${e.toString()}'));
     }

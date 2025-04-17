@@ -89,3 +89,21 @@ Future<String> generateProductChunk(Product product) async {
 
   return buffer.toString();
 }
+
+Future<String> generateProductChunkWithoutPrice(Product product) async {
+  if (product.isDeleted ||
+      product.isHidden ||
+      product.getMaxOptionStock() == 0) {
+    return '';
+  }
+
+  final categories = await getCategories();
+
+  final buffer = StringBuffer();
+
+  buffer.write("Tên sản phẩm '${product.name}'");
+  buffer.write(
+      "thuộc danh mục '${categories.firstWhere((c) => c.id == product.category).name}', ");
+  buffer.write("được mô tả: ${product.description}. ");
+  return buffer.toString();
+}

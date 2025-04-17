@@ -837,7 +837,7 @@ class _MyShopScreenState extends State<MyShopScreen> {
                 Expanded(
                     child: Container(
                   color: Colors.grey[200],
-                ))
+                )),
               ],
             ),
           ),

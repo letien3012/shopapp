@@ -42,7 +42,12 @@ class _SearchImageResultScreenState extends State<SearchImageResultScreen> {
           if (state is SearchImageLoaded) {
             final listImageFeature = state.imageFeature;
             if (listImageFeature.isEmpty) {
-              return const Center(child: Text('Không tìm thấy sản phẩm'));
+              return Container(
+                color: Colors.grey[200],
+                constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height),
+                child: const Center(child: Text('Không tìm thấy sản phẩm')),
+              );
             }
             final productIds =
                 listImageFeature.map((e) => e.productId).toList();
@@ -61,6 +66,8 @@ class _SearchImageResultScreenState extends State<SearchImageResultScreen> {
                   final products = state.products;
                   return Container(
                     color: Colors.grey[200],
+                    constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height),
                     child: Column(
                       children: [
                         Container(

@@ -24,7 +24,11 @@ class CartService {
                 .fetchProductByProductId(cartItem.productId);
             if (product.variants.isEmpty) {
               if (product.quantity! - cartItem.quantity < 0) {
-                cartItem.quantity = product.quantity!;
+                if (product.quantity! > 0) {
+                  cartItem.quantity = product.quantity!;
+                } else {
+                  cartItem.quantity = 1;
+                }
               }
             } else if (product.variants.length > 1) {
               int i = product.variants[0].options
@@ -38,8 +42,12 @@ class CartService {
                 if (product.optionInfos[optionInfoIndex].stock -
                         cartItem.quantity <
                     0) {
-                  cartItem.quantity =
-                      product.optionInfos[optionInfoIndex].stock;
+                  if (product.optionInfos[optionInfoIndex].stock > 0) {
+                    cartItem.quantity =
+                        product.optionInfos[optionInfoIndex].stock;
+                  } else {
+                    cartItem.quantity = 1;
+                  }
                 }
               }
             }

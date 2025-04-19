@@ -13,8 +13,8 @@ class UpdateProductEvent extends ProductEvent {
 }
 
 class UpdateProductViewCountEvent extends ProductEvent {
-  final Product product;
-  UpdateProductViewCountEvent(this.product);
+  final String productId;
+  UpdateProductViewCountEvent(this.productId);
 }
 
 class IncrementProductFavoriteCountEvent extends ProductEvent {

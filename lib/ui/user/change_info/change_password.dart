@@ -6,6 +6,8 @@ import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 
+import 'package:luanvan/ui/widgets/alert_diablog.dart';
+
 class ChangePassword extends StatefulWidget {
   const ChangePassword({super.key});
   static String routeName = "change_password";
@@ -58,6 +60,10 @@ class _ChangePasswordState extends State<ChangePassword> {
         );
       }
     }
+  }
+
+  Future<void> _showChangePasswordSuccessDialog() async {
+    return showAlertDialog(context, message: "Thay đổi mật khẩu thành công");
   }
 
   void startEmailVerificationCheck() {
@@ -510,7 +516,7 @@ class _ChangePasswordState extends State<ChangePassword> {
                             ),
                           ),
                         ),
-                        onTap: () {
+                        onTap: () async {
                           if (_formKey.currentState!.validate()) {
                             context.read<AuthBloc>().add(
                                   ChangePasswordEvent(
@@ -520,6 +526,10 @@ class _ChangePasswordState extends State<ChangePassword> {
                                     newPassword: _newPasswordController.text,
                                   ),
                                 );
+                            await context.read<AuthBloc>().stream.firstWhere(
+                                (element) => element is AuthAuthenticated);
+                            await _showChangePasswordSuccessDialog();
+                            Navigator.of(context).pop();
                           }
                         },
                       ),

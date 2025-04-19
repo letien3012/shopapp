@@ -868,6 +868,8 @@ class _CheckOutScreenState extends State<CheckOutScreen> {
                                           .imageUrl ??
                                       product.imageUrl[0])
                                   : product.imageUrl[0],
+                              optionId1: cartItem.optionId1,
+                              optionId2: cartItem.optionId2,
                               createdAt: now,
                               productVariation: cartItem.optionId1 != null &&
                                       cartItem.optionId2 != null

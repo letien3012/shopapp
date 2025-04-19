@@ -228,15 +228,14 @@ class ProductService {
     final response = await firebaseFirestore
         .collection('products')
         .where('id', whereIn: productIds)
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
         .get();
 
     final listProduct = await Future.wait(
         response.docs.map((doc) => _fetchProductWithSubcollections(doc)));
     return listProduct
-        .where((product) =>
-            !product.isDeleted &&
-            !product.isHidden &&
-            product.getMaxOptionStock() > 0)
+        .where((product) => product.getMaxOptionStock() > 0)
         .toList();
   }
 
@@ -257,7 +256,10 @@ class ProductService {
     final listProduct = await Future.wait(
         response.docs.map((doc) => _fetchProductWithSubcollections(doc)));
     return listProduct
-        .where((product) => !product.isDeleted && !product.isHidden)
+        .where((product) =>
+            !product.isDeleted &&
+            !product.isHidden &&
+            product.getMaxOptionStock() > 0)
         .toList();
   }
 
@@ -444,9 +446,10 @@ class ProductService {
 
   Future<void> fetchProductById(String productId) async {}
 
-  Future<void> updateProductViewCount(Product product) async {
-    final docRef = firebaseFirestore.collection('products').doc(product.id);
-    await docRef.set(product.toMap(), SetOptions(merge: true));
+  Future<void> updateProductViewCount(String productId) async {
+    final docRef = firebaseFirestore.collection('products').doc(productId);
+    await docRef
+        .set({'viewCount': FieldValue.increment(1)}, SetOptions(merge: true));
   }
 
   Future<void> incrementProductFavoriteCount(String productId) async {

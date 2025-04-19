@@ -80,7 +80,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   void _onUpdateProductViewCount(
       UpdateProductViewCountEvent event, Emitter<ProductState> emit) async {
     try {
-      await _productService.updateProductViewCount(event.product);
+      await _productService.updateProductViewCount(event.productId);
     } catch (e) {
       emit(ProductError(e.toString()));
     }

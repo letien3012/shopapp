@@ -12,6 +12,7 @@ class CategoryService {
   Future<List<Category>> getAllCategories() async {
     try {
       final snapshot = await _firestore.collection(_collection).get();
+
       return snapshot.docs
           .map((doc) => Category.fromJson({
                 'id': doc.id,

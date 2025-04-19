@@ -9,6 +9,8 @@ class OrderItem {
   String productImage;
   String? productVariation;
   String? productCategory;
+  String? optionId1;
+  String? optionId2;
   DateTime createdAt;
 
   OrderItem({
@@ -19,6 +21,8 @@ class OrderItem {
     required this.productImage,
     this.productVariation,
     this.productCategory,
+    this.optionId1,
+    this.optionId2,
     required this.createdAt,
   });
 
@@ -30,6 +34,8 @@ class OrderItem {
     String? productImage,
     String? productVariation,
     String? productCategory,
+    String? optionId1,
+    String? optionId2,
     DateTime? createdAt,
   }) {
     return OrderItem(
@@ -40,6 +46,8 @@ class OrderItem {
       productImage: productImage ?? this.productImage,
       productVariation: productVariation ?? this.productVariation,
       productCategory: productCategory ?? this.productCategory,
+      optionId1: optionId1 ?? this.optionId1,
+      optionId2: optionId2 ?? this.optionId2,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -53,6 +61,8 @@ class OrderItem {
       'productImage': productImage,
       'productVariation': productVariation,
       'productCategory': productCategory,
+      'optionId1': optionId1,
+      'optionId2': optionId2,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -66,6 +76,8 @@ class OrderItem {
       productImage: map['productImage'] as String,
       productVariation: map['productVariation'] as String?,
       productCategory: map['productCategory'] as String?,
+      optionId1: map['optionId1'] as String?,
+      optionId2: map['optionId2'] as String?,
       createdAt: map['createdAt'] != null
           ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -81,6 +93,8 @@ class OrderItem {
       productImage: data['productImage'] as String? ?? '',
       productVariation: data['productVariation'] as String?,
       productCategory: data['productCategory'] as String? ?? '',
+      optionId1: data['optionId1'] as String?,
+      optionId2: data['optionId2'] as String?,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -94,6 +108,6 @@ class OrderItem {
 
   @override
   String toString() {
-    return 'OrderItem(productId: $productId, quantity: $quantity, price: $price, productName: $productName, productImage: $productImage, productVariation: $productVariation, productCategory: $productCategory, createdAt: $createdAt)';
+    return 'OrderItem(productId: $productId, quantity: $quantity, price: $price, productName: $productName, productImage: $productImage, productVariation: $productVariation, productCategory: $productCategory, optionId1: $optionId1, optionId2: $optionId2, createdAt: $createdAt)';
   }
 }

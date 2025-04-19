@@ -78,7 +78,10 @@ class _DemoScreenState extends State<DemoScreen> {
 
   // Trạng thái lỗi
   Widget _buildError(String message) {
-    return Center(child: Text('Error: $message'));
+    return Center(
+        child: Text(
+      'Error: $message',
+    ));
   }
 
   // Trạng thái khởi tạo

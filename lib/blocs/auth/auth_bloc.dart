@@ -335,7 +335,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // Đổi mật khẩu mới
       await user.updatePassword(event.newPassword);
-      emit(AuthPasswordChanged());
+      emit(AuthAuthenticated(user));
+      // emit(AuthPasswordChanged());
     } on FirebaseAuthException catch (e) {
       String message = 'Đã xảy ra lỗi';
       if (e.code == 'wrong-password') {

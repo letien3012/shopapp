@@ -195,6 +195,20 @@ class OrderService {
               quantitySold: product.quantitySold + cartItem.quantity,
             );
             listProductUpdate.add(product);
+          } else if (product.variants.length == 1) {
+            int i = product.variants[0].options
+                .indexWhere((element) => element.id == cartItem.optionId1);
+            if (i == -1) i = 0;
+            if (product.optionInfos[i].stock - cartItem.quantity < 0) {
+              throw Exception('Sản phẩm ${product.name} không còn hàng');
+            }
+            OptionInfo optionInfo = product.optionInfos[i].copyWith(
+              stock: product.optionInfos[i].stock - cartItem.quantity,
+            );
+            product = product.copyWith(
+                optionInfos: [...product.optionInfos]..[i] = optionInfo,
+                quantitySold: product.quantitySold + cartItem.quantity);
+            listProductUpdate.add(product);
           } else if (product.variants.length > 1) {
             int i = product.variants[0].options
                 .indexWhere((opt) => opt.id == cartItem.optionId1);
@@ -244,7 +258,6 @@ class OrderService {
             cart = cart.copyWith(shops: updatedShops);
           }
         }
-
         transaction.set(orderRef, updatedOrderWithId.toMap());
         for (var product in listProductUpdate) {
           final productRef = _firestore.collection('products').doc(product.id);
@@ -340,7 +353,66 @@ class OrderService {
       if (!doc.exists) {
         throw Exception('Order not found');
       }
+      final order = Order.fromMap(doc.data()!);
+      final productIds = order.item.map((e) => e.productId).toList();
+      final productSnapshot = await _firestore
+          .collection('products')
+          .where('id', whereIn: productIds)
+          .get();
+      final productList = await Future.wait(productSnapshot.docs
+          .map((doc) => _fetchProductWithSubcollections(doc)));
+      final listProductUpdate = [];
 
+      for (var item in order.item) {
+        var product = productList.firstWhere(
+          (p) => p.id == item.productId,
+        );
+
+        if (product.variants.isEmpty) {
+          product = product.copyWith(
+            quantity: product.quantity! + item.quantity,
+            quantitySold: product.quantitySold - item.quantity,
+          );
+          listProductUpdate.add(product);
+        } else if (product.variants.length == 1) {
+          int i = product.variants[0].options
+              .indexWhere((element) => element.id == item.optionId1);
+          if (i == -1) i = 0;
+          if (product.optionInfos[i].stock - item.quantity < 0) {
+            throw Exception('Sản phẩm ${product.name} không còn hàng');
+          }
+          OptionInfo optionInfo = product.optionInfos[i].copyWith(
+            stock: product.optionInfos[i].stock + item.quantity,
+          );
+          product = product.copyWith(
+              optionInfos: [...product.optionInfos]..[i] = optionInfo,
+              quantitySold: product.quantitySold - item.quantity);
+          listProductUpdate.add(product);
+        } else if (product.variants.length > 1) {
+          int i = product.variants[0].options
+              .indexWhere((opt) => opt.id == item.optionId1);
+          int j = product.variants[1].options
+              .indexWhere((opt) => opt.id == item.optionId2);
+          if (i == -1) i = 0;
+          if (j == -1) j = 0;
+          int optionInfoIndex = i * product.variants[1].options.length + j;
+          if (optionInfoIndex < product.optionInfos.length) {
+            OptionInfo optionInfo =
+                product.optionInfos[optionInfoIndex].copyWith(
+              stock: product.optionInfos[optionInfoIndex].stock + item.quantity,
+            );
+            product = product.copyWith(
+                optionInfos: [...product.optionInfos]..[optionInfoIndex] =
+                    optionInfo,
+                quantitySold: product.quantitySold - item.quantity);
+            listProductUpdate.add(product);
+          }
+        }
+      }
+      for (var product in listProductUpdate) {
+        final productRef = _firestore.collection('products').doc(product.id);
+        await productRef.update(product.toMap());
+      }
       final currentOrder = Order.fromMap(
         doc.data()!,
       );

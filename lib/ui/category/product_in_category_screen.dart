@@ -93,6 +93,7 @@ class _ProductInCategoryScreenState extends State<ProductInCategoryScreen> {
         setState(() {
           _categoryLabel = categoryLabel!;
         });
+
         if (listProductState is ListProductByCategoryLoaded) {
           final shopId = listProductState.listProduct.first.shopId;
           context

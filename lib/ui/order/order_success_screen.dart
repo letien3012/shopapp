@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/ui/mainscreen.dart';
 import 'package:luanvan/ui/order/order_screen.dart';
 
 class OrderSuccessScreen extends StatefulWidget {
@@ -97,7 +98,10 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
               'Trang chủ',
               Colors.white,
               Colors.brown,
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                Navigator.of(context)
+                    .pushReplacementNamed(MainScreen.routeName);
+              },
             ),
           ),
           const SizedBox(width: 16),
@@ -108,7 +112,8 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
               Colors.white,
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(OrderScreen.routeName);
+                Navigator.of(context)
+                    .pushReplacementNamed(OrderScreen.routeName);
               },
             ),
           ),

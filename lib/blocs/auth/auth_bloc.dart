@@ -28,6 +28,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // on<CheckEmailEvent>(_onCheckEmail);
     on<ChangePasswordEvent>(_onChangePassword);
     on<VerifyPasswordEvent>(_onVerifyPassword);
+    on<CheckLoginStatus>(_onCheckLoginStaus);
   }
 
   Future<void> _onSignUpWithEmailAndPassword(
@@ -382,6 +383,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(message));
     } catch (e) {
       emit(AuthError('Xác thực mật khẩu thất bại: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onCheckLoginStaus(
+      CheckLoginStatus event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user == null) {
+        emit(AuthUnauthenticated());
+      } else {
+        final shop = await _authService.checkAdmin(user.email!);
+        if (shop != null) {
+          emit(AdminAuthenticated(shop));
+        } else {
+          emit(AuthAuthenticated(user));
+        }
+      }
+    } catch (e) {
+      emit(
+          AuthError('Kiểm tra trạng thái đăng nhập thất bại: ${e.toString()}'));
     }
   }
 }

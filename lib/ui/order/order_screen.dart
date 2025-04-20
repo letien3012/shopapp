@@ -211,7 +211,6 @@ class _OrderScreenState extends State<OrderScreen>
   Widget _buildOrderList(String status) {
     return BlocBuilder<OrderBloc, OrderState>(
       builder: (context, state) {
-        print('state: $state');
         if (state is OrderLoading) {
           return const Center(child: CircularProgressIndicator());
         }

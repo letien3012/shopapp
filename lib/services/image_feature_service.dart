@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luanvan/models/image_feature.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
-
+import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
 class ImageFeatureService {
@@ -83,7 +84,28 @@ class ImageFeatureService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> detectObjects(File imageFile) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('http://192.168.33.8:5000/api/detect'),
+    );
+    request.files
+        .add(await http.MultipartFile.fromPath('image', imageFile.path));
+
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      final responseData = await http.Response.fromStream(response);
+      final data = json.decode(responseData.body);
+      print(data);
+      return List<Map<String, dynamic>>.from(data['detections']);
+    } else {
+      throw Exception('Failed to detect objects');
+    }
+  }
+
   Future<List<ImageFeature>> searchSimilarImages(String queryImagePath) async {
+    List<Map<String, dynamic>> objects =
+        await detectObjects(File(queryImagePath));
     final queryFeatures = await extractImageFeatures(queryImagePath);
     final allDocs =
         await FirebaseFirestore.instance.collection('imageFeatures').get();
@@ -100,6 +122,62 @@ class ImageFeatureService {
               'score': similarity,
               'features': dbFeatures,
             };
+          }
+        })
+        .where((element) => element != null)
+        .toList();
+
+    if (results.isNotEmpty) {
+      // Sắp xếp kết quả theo score giảm dần
+      results.sort((a, b) => b!['score'].compareTo(a!['score']));
+      // Lọc các productId trùng nhau, giữ lại score cao nhất
+      final Map<String, Map<String, dynamic>> uniqueProducts = {};
+      for (var result in results) {
+        final productId = result!['productId'] as String;
+        final score = result['score'] as double;
+        if (!uniqueProducts.containsKey(productId) ||
+            score > (uniqueProducts[productId]!['score'] as double)) {
+          uniqueProducts[productId] = result;
+        }
+      }
+      final listImageFeature = uniqueProducts.values
+          .map((result) => ImageFeature(
+                productId: result['productId'] as String,
+                imageUrl: result['imageUrl'] as String,
+                features: List<double>.from(result['features']),
+              ))
+          .toList();
+      return listImageFeature;
+    }
+    return [];
+  }
+
+  Future<List<ImageFeature>> findRelatedProductsByImageUrl(
+      String imageUrl) async {
+    final doc = await firebaseFirestore
+        .collection('imageFeatures')
+        .where('imageUrl', isEqualTo: imageUrl)
+        .limit(1)
+        .get();
+    final productId = doc.docs.first['productId'];
+    final queryFeatures = List<double>.from(doc.docs.first['features']);
+    final allDocs =
+        await FirebaseFirestore.instance.collection('imageFeatures').get();
+    // Tính cosine similarity giữa queryFeatures và các ảnh trong DB
+    final results = allDocs.docs
+        .map((doc) {
+          if (doc['productId'] != productId) {
+            final dbFeatures = List<double>.from(doc['features']);
+            final similarity = cosineSimilarity(queryFeatures, dbFeatures);
+
+            if (similarity > 0.7) {
+              return {
+                'productId': doc['productId'],
+                'imageUrl': doc['imageUrl'],
+                'score': similarity,
+                'features': dbFeatures,
+              };
+            }
           }
         })
         .where((element) => element != null)

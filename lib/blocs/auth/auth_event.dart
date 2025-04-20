@@ -80,3 +80,5 @@ class SignOutEvent extends AuthEvent {}
 //   final String email;
 //   CheckEmailEvent(this.email);
 // }
+
+class CheckLoginStatus extends AuthEvent {}

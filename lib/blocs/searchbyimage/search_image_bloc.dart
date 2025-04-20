@@ -14,6 +14,7 @@ class SearchImageBloc extends Bloc<SearchImageEvent, SearchImageState> {
 
   SearchImageBloc(this._imageFeatureService) : super(SearchImageInitial()) {
     on<SearchProductsByImage>(_onSearchProductsByImage);
+    on<SearchProductRelated>(_onSearchProductRelated);
     // on<LoadMoreSearchResults>(_onLoadMoreSearchResults);
   }
   Future<void> _onSearchProductsByImage(
@@ -30,6 +31,19 @@ class SearchImageBloc extends Bloc<SearchImageEvent, SearchImageState> {
     }
   }
 
+  Future<void> _onSearchProductRelated(
+    SearchProductRelated event,
+    Emitter<SearchImageState> emit,
+  ) async {
+    try {
+      emit(SearchImageLoading());
+      final listImageFeature = await _imageFeatureService
+          .findRelatedProductsByImageUrl(event.imageUrl);
+      emit(SearchImageLoaded(listImageFeature));
+    } catch (e) {
+      emit(SearchImageError(e.toString()));
+    }
+  }
   // Future<void> _onLoadMoreSearchResults(
   //   search_event.LoadMoreSearchResults event,
   //   Emitter<search_state.SearchState> emit,

@@ -248,6 +248,11 @@ class _ShopItemWidgetState extends State<ShopItemWidget> {
                               return const SizedBox
                                   .shrink(); // Không hiển thị nếu không có sản phẩm
                             }
+                            final sortedEntries = items.entries.toList()
+                              ..sort((a, b) => b.value.updatedAt
+                                  .compareTo(a.value.updatedAt));
+                            cartShop.items = Map<String, CartItem>.fromEntries(
+                                sortedEntries);
                             return ListView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
@@ -257,6 +262,7 @@ class _ShopItemWidgetState extends State<ShopItemWidget> {
                                 final itemId =
                                     cartShop.items.keys.elementAt(productIndex);
                                 final item = cartShop.items[itemId]!;
+
                                 final controllerKey =
                                     '${widget.shopId}_${itemId}';
                                 final controller =

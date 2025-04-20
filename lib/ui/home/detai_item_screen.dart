@@ -140,6 +140,11 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     super.dispose();
   }
 
+  Future<void> _showProductNotExistDialog() async {
+    await showAlertDialog(context,
+        message: 'Sản phẩm không tồn tại', iconPath: IconHelper.warning);
+  }
+
   void onAppBarScroll() {
     if (_appBarScrollController.offset >= 300.0) {
       setState(() {
@@ -1484,7 +1489,8 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       builder: (context) => AddToCartBottomSheet(
-        product: product,
+        productId: product.id,
+        // product: product,
         parentContext: context,
       ),
     );
@@ -1587,6 +1593,18 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     );
   }
 
+  bool _isOutOfStock(Product product) {
+    int currentStock = 0;
+    if (product.variants.isEmpty) {
+      return true;
+    } else if (product.variants.length == 1) {
+      for (var optionInfo in product.optionInfos) {
+        currentStock += optionInfo.stock;
+      }
+    }
+    return currentStock == 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     productId = ModalRoute.of(context)!.settings.arguments as String;
@@ -1608,13 +1626,23 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                   children: [
                     // 1. Image Slider (Tải ngay từ ProductBloc)
                     BlocConsumer<ProductdetailBloc, ProductdetailState>(
-                      listener: (context, state) {
+                      listener: (context, state) async {
                         if (state is ProductdetailError) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                                 content:
                                     Text('Lỗi tải sản phẩm: ${state.message}')),
                           );
+                        }
+                        if (state is ProductdetailLoaded) {
+                          final product = state.product;
+
+                          if (product.isDeleted ||
+                              product.isHidden ||
+                              _isOutOfStock(product)) {
+                            await _showProductNotExistDialog();
+                            Navigator.of(context).pop();
+                          }
                         }
                       },
                       builder: (context, state) {

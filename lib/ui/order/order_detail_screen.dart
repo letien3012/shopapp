@@ -299,7 +299,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ? 85
                             : (order.status == OrderStatus.cancelled)
                                 ? 105
-                                : 45))
+                                : 65))
                 : 0,
             child: SingleChildScrollView(
               child: Column(

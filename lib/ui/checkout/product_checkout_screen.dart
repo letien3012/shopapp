@@ -43,7 +43,8 @@ class _ProductItemWidgetState extends State<ProductCheckoutWidget> {
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       builder: (context) => AddToCartBottomSheet(
-        product: product,
+        productId: product.id,
+        // product: product,
         parentContext: context,
         optionId1: optionId1,
         optionId2: optionId2,

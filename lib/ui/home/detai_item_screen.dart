@@ -1596,7 +1596,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   bool _isOutOfStock(Product product) {
     int currentStock = 0;
     if (product.variants.isEmpty) {
-      return true;
+      return product.quantity == 0;
     } else if (product.variants.length == 1) {
       for (var optionInfo in product.optionInfos) {
         currentStock += optionInfo.stock;

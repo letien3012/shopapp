@@ -1597,7 +1597,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     int currentStock = 0;
     if (product.variants.isEmpty) {
       return product.quantity == 0;
-    } else if (product.variants.length == 1) {
+    } else {
       for (var optionInfo in product.optionInfos) {
         currentStock += optionInfo.stock;
       }
@@ -1608,6 +1608,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
   @override
   Widget build(BuildContext context) {
     productId = ModalRoute.of(context)!.settings.arguments as String;
+    print(MediaQuery.viewInsetsOf(context).bottom);
     return BlocProvider(
       create: (context) => ProductdetailBloc(ProductService())
         ..add(FetchProductdetailEventByProductId(productId)),

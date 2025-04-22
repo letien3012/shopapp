@@ -92,6 +92,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       productId = ModalRoute.of(context)!.settings.arguments as String;
+      context.read<ShopBloc>().add(GetShopEvent());
       context.read<ProductBloc>().add(UpdateProductViewCountEvent(productId));
       context.read<RecommendationBloc>().add(LoadRecommendations(productId));
       // context.read<ProductBloc>().add(FetchProductEventByProductId(productId));
@@ -1667,13 +1668,7 @@ class _DetaiItemScreenState extends State<DetaiItemScreen> {
                     ),
                     _buildSepherated(context),
                     // 3. Reviews Section (Tải từ ProductBloc, có thể chậm hơn)
-                    BlocConsumer<ProductdetailBloc, ProductdetailState>(
-                      listener: (context, state) {
-                        if (state is ProductdetailLoaded) {
-                          context.read<ShopBloc>().add(
-                              FetchShopEventByShopId(state.product.shopId));
-                        }
-                      },
+                    BlocBuilder<ProductdetailBloc, ProductdetailState>(
                       builder: (context, state) {
                         if (state is ProductdetailLoaded) {
                           return _buildReviewsSection(state.product);

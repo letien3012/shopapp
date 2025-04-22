@@ -15,9 +15,9 @@
         <provider android:authorities="com.facebook.katana.provider.PlatformProvider" />
     </queries>
     <application
-        android:label="luanvan"
+        android:label="ShopApp"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:requestLegacyExternalStorage="true"
         android:preserveLegacyExternalStorage="true">
          <!-- android:configChanges="orientation|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" -->

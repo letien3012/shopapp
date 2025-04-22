@@ -53,6 +53,7 @@ class _AddLocationShopScreenState extends State<AddLocationShopScreen> {
 
     // Kiểm tra nếu user.addresses là mảng rỗng
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      shop = ModalRoute.of(context)!.settings.arguments as Shop;
       if (shop.addresses.isEmpty) {
         setState(() {
           isAddDefault = true; // Luôn đặt mặc định cho địa chỉ đầu tiên

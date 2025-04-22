@@ -89,8 +89,8 @@ class _DeliveryCostScreenState extends State<DeliveryCostScreen> {
       if (authState is AuthAuthenticated) {
         context.read<ShopBloc>().add(FetchShopEvent(authState.user.uid));
       }
+      setState(() {});
     });
-
     super.initState();
   }
 
@@ -507,9 +507,9 @@ class _DeliveryCostScreenState extends State<DeliveryCostScreen> {
                                     Text(
                                       isEconomyEnabledProduct ? price[0] : '',
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.red,
-                                      ),
+                                          fontSize: 14,
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.w700),
                                     ),
                                   ],
                                 ),
@@ -625,9 +625,9 @@ class _DeliveryCostScreenState extends State<DeliveryCostScreen> {
                                     Text(
                                       isExpressProduct ? price[2] : '',
                                       style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.red,
-                                      ),
+                                          fontSize: 14,
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.bold),
                                     ),
                                   ],
                                 ),

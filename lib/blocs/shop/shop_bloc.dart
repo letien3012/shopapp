@@ -12,6 +12,7 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
     on<FetchShopEventByShopId>(_onFetchShopByShopId);
     on<UpdateShopEvent>(_onUpdateShop);
     on<HideShopEvent>(_onHideShop);
+    on<GetShopEvent>(_onGetShop);
     on<ResetShopEvent>((event, emit) => emit(ShopInitial()));
   }
   Future<void> _onFetchShop(
@@ -42,6 +43,16 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
     try {
       await _shopService.updateShop(event.shop);
       final shop = await _shopService.fetchShopByShopId(event.shop.shopId!);
+      emit(ShopLoaded(shop));
+    } catch (e) {
+      emit(ShopError(e.toString()));
+    }
+  }
+
+  Future<void> _onGetShop(GetShopEvent event, Emitter<ShopState> emit) async {
+    emit(ShopLoading());
+    try {
+      final Shop shop = await _shopService.getShop();
       emit(ShopLoaded(shop));
     } catch (e) {
       emit(ShopError(e.toString()));

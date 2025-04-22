@@ -84,28 +84,28 @@ class ImageFeatureService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> detectObjects(File imageFile) async {
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('http://192.168.33.8:5000/api/detect'),
-    );
-    request.files
-        .add(await http.MultipartFile.fromPath('image', imageFile.path));
+  // Future<List<Map<String, dynamic>>> detectObjects(File imageFile) async {
+  //   var request = http.MultipartRequest(
+  //     'POST',
+  //     Uri.parse('http://192.168.33.8:5000/api/detect'),
+  //   );
+  //   request.files
+  //       .add(await http.MultipartFile.fromPath('image', imageFile.path));
 
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      final responseData = await http.Response.fromStream(response);
-      final data = json.decode(responseData.body);
-      print(data);
-      return List<Map<String, dynamic>>.from(data['detections']);
-    } else {
-      throw Exception('Failed to detect objects');
-    }
-  }
+  //   var response = await request.send();
+  //   if (response.statusCode == 200) {
+  //     final responseData = await http.Response.fromStream(response);
+  //     final data = json.decode(responseData.body);
+  //     print(data);
+  //     return List<Map<String, dynamic>>.from(data['detections']);
+  //   } else {
+  //     throw Exception('Failed to detect objects');
+  //   }
+  // }
 
   Future<List<ImageFeature>> searchSimilarImages(String queryImagePath) async {
-    List<Map<String, dynamic>> objects =
-        await detectObjects(File(queryImagePath));
+    // List<Map<String, dynamic>> objects =
+    //     await detectObjects(File(queryImagePath));
     final queryFeatures = await extractImageFeatures(queryImagePath);
     final allDocs =
         await FirebaseFirestore.instance.collection('imageFeatures').get();

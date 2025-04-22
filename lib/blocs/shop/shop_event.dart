@@ -12,6 +12,8 @@ class FetchShopEventByShopId extends ShopEvent {
   FetchShopEventByShopId(this.shopId);
 }
 
+class GetShopEvent extends ShopEvent {}
+
 class UpdateShopEvent extends ShopEvent {
   final Shop shop;
   UpdateShopEvent(this.shop);

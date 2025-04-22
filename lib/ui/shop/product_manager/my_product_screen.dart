@@ -152,6 +152,23 @@ class _MyProductScreenState extends State<MyProductScreen>
 
   Widget _buildShopContent(BuildContext context, List<Product> listProduct) {
     // Filter products based on search query first
+    // final filteredProducts = _searchQuery.isEmpty
+    //     ? listProduct
+    //     : listProduct
+    //         .where(
+    //             (product) => product.name.toLowerCase().contains(_searchQuery))
+    //         .toList();
+
+    // final inStockProducts = filteredProducts
+    //     .where(
+    //         (product) => !product.isHidden && product.getMaxOptionStock() > 0)
+    //     .toList();
+    // final outOfStockProducts = filteredProducts
+    //     .where(
+    //         (product) => !product.isHidden && product.getMaxOptionStock() == 0)
+    //     .toList();
+    // final hiddenProducts =
+    //     filteredProducts.where((product) => product.isHidden).toList();
     final filteredProducts = _searchQuery.isEmpty
         ? listProduct
         : listProduct
@@ -159,16 +176,22 @@ class _MyProductScreenState extends State<MyProductScreen>
                 (product) => product.name.toLowerCase().contains(_searchQuery))
             .toList();
 
-    final inStockProducts = filteredProducts
-        .where(
-            (product) => !product.isHidden && product.getMaxOptionStock() > 0)
-        .toList();
-    final outOfStockProducts = filteredProducts
-        .where(
-            (product) => !product.isHidden && product.getMaxOptionStock() == 0)
-        .toList();
-    final hiddenProducts =
-        filteredProducts.where((product) => product.isHidden).toList();
+    final List<Product> inStockProducts = [];
+    final List<Product> outOfStockProducts = [];
+    final List<Product> hiddenProducts = [];
+
+    for (final product in filteredProducts) {
+      if (product.isHidden) {
+        hiddenProducts.add(product);
+      } else {
+        final stock = product.getMaxOptionStock();
+        if (stock > 0) {
+          inStockProducts.add(product);
+        } else {
+          outOfStockProducts.add(product);
+        }
+      }
+    }
 
     return Stack(
       children: [

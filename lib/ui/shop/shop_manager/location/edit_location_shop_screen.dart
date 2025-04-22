@@ -32,7 +32,7 @@ class _EditLocationShopScreenState extends State<EditLocationShopScreen> {
   final FocusNode _focusPhone = FocusNode();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formShopKey = GlobalKey<FormState>();
   bool isAddDefault = true;
   bool isCompleted = false;
   bool isButtonPressed = false;
@@ -101,7 +101,7 @@ class _EditLocationShopScreenState extends State<EditLocationShopScreen> {
   }
 
   void _submitForm() {
-    if (_formKey.currentState!.validate() &&
+    if (_formShopKey.currentState!.validate() &&
         _selectedLocation != "Tỉnh/Thành phố, Quận/Huyện, Phường/Xã" &&
         _addressLine != "Tên đường, Tòa nhà, Số nhà") {
       // Cập nhật thông tin địa chỉ
@@ -282,7 +282,7 @@ class _EditLocationShopScreenState extends State<EditLocationShopScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Form(
-                      key: _formKey,
+                      key: _formShopKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

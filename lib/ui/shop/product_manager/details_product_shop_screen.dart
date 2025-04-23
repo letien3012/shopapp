@@ -932,7 +932,7 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
                       const SizedBox(width: 10),
                       Icon(Icons.search, color: _searchIconColor),
                       const SizedBox(width: 10),
-                      Text("Nội dung đề xuất",
+                      Text("Nhập để tìm kiếm",
                           style:
                               TextStyle(fontSize: 14, color: _textSearchColor)),
                     ],
@@ -1142,23 +1142,10 @@ class _DetailsProductShopScreenState extends State<DetailsProductShopScreen> {
                 ],
               ),
             ),
-            // 7. AppBar (Tải từ CartBloc, luôn hiển thị)
             _buildAppBar(),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildLoading() {
-    return const Center(child: CircularProgressIndicator());
-  }
-
-  Widget _buildError(String message) {
-    return Center(child: Text('Error: $message'));
-  }
-
-  Widget _buildInitializing() {
-    return const Center(child: Text('Đang khởi tạo'));
   }
 }

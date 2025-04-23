@@ -22,6 +22,7 @@ import 'package:luanvan/blocs/listproductbloc/listproduct_bloc.dart';
 import 'package:luanvan/blocs/listproductbycategory/listproductbycategory_bloc.dart';
 import 'package:luanvan/blocs/listproductinshopbloc/listproductinshop_bloc.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
+import 'package:luanvan/blocs/order_detail/order_detail_bloc.dart';
 import 'package:luanvan/blocs/product/product_bloc.dart';
 import 'package:luanvan/blocs/product_in_cart/product_cart_bloc.dart';
 import 'package:luanvan/blocs/productcomment/product_comment_bloc.dart';
@@ -209,6 +210,9 @@ class ShopApp extends StatelessWidget {
         ),
         BlocProvider<RecommendationBloc>(
           create: (context) => RecommendationBloc(RecommendationService()),
+        ),
+        BlocProvider<OrderDetailBloc>(
+          create: (context) => OrderDetailBloc(OrderService()),
         ),
       ],
       child: MaterialApp(

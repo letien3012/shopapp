@@ -233,7 +233,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Widget _buildOrderInfoSection(Order order) {
     return Container(
-      margin: EdgeInsets.only(top: 10, left: 10, right: 10),
+      margin: EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 20),
       padding: EdgeInsets.all(10),
       width: double.infinity,
       decoration: BoxDecoration(
@@ -289,17 +289,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ? (order.status == OrderStatus.delivered ||
                         order.status == OrderStatus.reviewed)
                     ? 125
-                    : (order.statusHistory.isNotEmpty &&
-                            order.statusHistory.any((element) =>
-                                element.status == OrderStatus.shipped)
-                        ? 105
+                    : (order.status == OrderStatus.returned)
+                        ? 145
                         : (order.statusHistory.isNotEmpty &&
                                 order.statusHistory.any((element) =>
-                                    element.status == OrderStatus.processing)
-                            ? 85
-                            : (order.status == OrderStatus.cancelled)
-                                ? 105
-                                : 65))
+                                    element.status == OrderStatus.shipped)
+                            ? 105
+                            : (order.statusHistory.isNotEmpty &&
+                                    order.statusHistory.any((element) =>
+                                        element.status ==
+                                        OrderStatus.processing)
+                                ? 85
+                                : (order.status == OrderStatus.cancelled)
+                                    ? 105
+                                    : 65))
                 : 0,
             child: SingleChildScrollView(
               child: Column(
@@ -348,13 +351,26 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       ],
                     ),
                   if (order.status == OrderStatus.delivered ||
-                      order.status == OrderStatus.reviewed)
+                      order.status == OrderStatus.reviewed ||
+                      order.status == OrderStatus.returned)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Giao hàng thành công:'),
                         Text(formatDate(
                             order.actualDeliveryDate ?? DateTime.now())),
+                      ],
+                    ),
+                  if (order.status == OrderStatus.returned)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Lý do trả hàng:'),
+                        Text(order.statusHistory
+                                .firstWhere((element) =>
+                                    element.status == OrderStatus.returned)
+                                .note ??
+                            'Không có lý do'),
                       ],
                     ),
                   if (order.status == OrderStatus.cancelled)

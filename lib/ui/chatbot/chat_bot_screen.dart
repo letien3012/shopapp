@@ -17,6 +17,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<Map<String, dynamic>> messages = [];
   List<Map<String, String>> chatHistory = [];
+  final FocusNode _chatbotSearch = FocusNode();
+
+  @override
+  initState() {
+    super.initState();
+  }
 
   List<ProductChatbot> parseProductsFromLLM(String content) {
     try {
@@ -213,7 +219,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Center(child: Text('Chatbot')),
@@ -376,42 +381,49 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 },
               ),
             ),
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: TextField(
-                        controller: _controller,
-                        decoration: InputDecoration(
-                          hintText: 'Gửi đến chatbot...',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+            SingleChildScrollView(
+              physics: NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Container(
+                color: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        maxLines: null,
-                        textInputAction: TextInputAction.newline,
+                        child: TextField(
+                          focusNode: _chatbotSearch,
+                          controller: _controller,
+                          decoration: InputDecoration(
+                            hintText: 'Gửi đến chatbot...',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          maxLines: null,
+                          textInputAction: TextInputAction.newline,
+                          onTapOutside: (event) => _chatbotSearch.unfocus(),
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(width: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.blue[500],
-                      shape: BoxShape.circle,
+                    SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue[500],
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.send, color: Colors.white),
+                        onPressed: _sendMessage,
+                      ),
                     ),
-                    child: IconButton(
-                      icon: Icon(Icons.send, color: Colors.white),
-                      onPressed: _sendMessage,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

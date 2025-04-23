@@ -34,6 +34,8 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
     return SingleChildScrollView(
       child: Container(
         width: MediaQuery.of(context).size.width,
+        constraints:
+            BoxConstraints(minHeight: MediaQuery.of(context).size.height),
         color: Colors.grey[100],
         padding: const EdgeInsets.only(top: 90, bottom: 20),
         child: Column(

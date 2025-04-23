@@ -37,8 +37,8 @@ class _ProductInCategoryScreenState extends State<ProductInCategoryScreen> {
   bool _isRelate = true;
   bool _isNewest = false;
   bool _isBestSelling = false;
-  FocusNode _searchFocusNode = FocusNode();
-  int _isPrice = 0; // 0: không sắp xếp, 1: tăng dần, 2: giảm dần
+  final FocusNode _searchFocusNode = FocusNode();
+  int _isPrice = 0;
   int _selectedRating = -1;
   int _selectedPrice = -1;
   Set<int> _selectedFiltersPlace = {};
@@ -79,7 +79,7 @@ class _ProductInCategoryScreenState extends State<ProductInCategoryScreen> {
     _tempRating = _selectedRating;
     _tempPrice = _selectedPrice;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, String>;
       final categoryId = args['id'];
@@ -88,18 +88,17 @@ class _ProductInCategoryScreenState extends State<ProductInCategoryScreen> {
         context
             .read<ListProductByCategoryBloc>()
             .add(FetchListProductByCategoryEventByCategoryId(categoryId));
-        final listProductState =
-            context.read<ListProductByCategoryBloc>().state;
+        context
+            .read<ListShopSearchBloc>()
+            .add(FetchListShopSearchEventByShopId([]));
+        await context
+            .read<ListProductByCategoryBloc>()
+            .stream
+            .firstWhere((state) => state is ListProductByCategoryLoaded);
+
         setState(() {
           _categoryLabel = categoryLabel!;
         });
-
-        if (listProductState is ListProductByCategoryLoaded) {
-          final shopId = listProductState.listProduct.first.shopId;
-          context
-              .read<ListShopSearchBloc>()
-              .add(FetchListShopSearchEventByShopId([shopId]));
-        }
       }
     });
   }
@@ -114,15 +113,11 @@ class _ProductInCategoryScreenState extends State<ProductInCategoryScreen> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
     _minPriceController.dispose();
     _maxPriceController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -149,6 +144,7 @@ class _ProductInCategoryScreenState extends State<ProductInCategoryScreen> {
       alignment: const Alignment(1, 0.6),
       child: IconButton(
         onPressed: () {
+          _searchFocusNode.unfocus();
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
           } else {

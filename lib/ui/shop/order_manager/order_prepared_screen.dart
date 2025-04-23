@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:luanvan/blocs/order/order_bloc.dart';
-import 'package:luanvan/blocs/order/order_event.dart';
-import 'package:luanvan/blocs/order/order_state.dart';
+import 'package:luanvan/blocs/order_detail/order_detail_bloc.dart';
+import 'package:luanvan/blocs/order_detail/order_detail_event.dart';
+import 'package:luanvan/blocs/order_detail/order_detail_state.dart';
 import 'package:luanvan/ui/shop/order_manager/packing_slip_screen.dart';
 
 class OrderPreparedScreen extends StatefulWidget {
@@ -15,12 +15,13 @@ class OrderPreparedScreen extends StatefulWidget {
 
 class _OrderPreparedScreenState extends State<OrderPreparedScreen> {
   String orderId = '';
+
   @override
   initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       orderId = ModalRoute.of(context)?.settings.arguments as String;
-      context.read<OrderBloc>().add(FetchOrderById(orderId));
+      context.read<OrderDetailBloc>().add(FetchOrderByOrderId(orderId));
     });
   }
 
@@ -42,7 +43,8 @@ class _OrderPreparedScreenState extends State<OrderPreparedScreen> {
         ),
         elevation: 0,
       ),
-      body: BlocBuilder<OrderBloc, OrderState>(builder: (context, state) {
+      body: BlocBuilder<OrderDetailBloc, OrderDetailState>(
+          builder: (context, state) {
         if (state is OrderDetailLoaded) {
           final order = state.order;
           return Container(

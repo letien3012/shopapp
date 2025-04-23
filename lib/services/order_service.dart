@@ -337,7 +337,10 @@ class OrderService {
         'statusHistory':
             updatedOrder.statusHistory.map((e) => e.toMap()).toList(),
       });
-      if (newStatus == OrderStatus.delivered) {
+      if (newStatus == OrderStatus.delivered &&
+          !currentOrder.statusHistory.any(
+            (element) => element.status == OrderStatus.delivered,
+          )) {
         await orderRef.update({
           'actualDeliveryDate': firestore.Timestamp.fromDate(DateTime.now()),
         });

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+import 'package:luanvan/blocs/auth/auth_bloc.dart';
+import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_bloc.dart';
 import 'package:luanvan/blocs/list_shop/list_shop_state.dart';
 import 'package:luanvan/blocs/order/order_bloc.dart';
@@ -12,11 +14,13 @@ import 'package:luanvan/blocs/productorder/product_order_state.dart';
 import 'package:luanvan/blocs/user/user_bloc.dart';
 import 'package:luanvan/blocs/user/user_state.dart';
 import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/order_history.dart';
 import 'package:luanvan/models/shop.dart';
 import 'package:luanvan/ui/helper/icon_helper.dart';
 import 'package:luanvan/ui/item/add_review_screen.dart';
 import 'package:luanvan/ui/order/order_detail_screen.dart';
 import 'package:luanvan/ui/order/product_order_widget.dart';
+import 'package:luanvan/ui/widgets/confirm_diablog.dart';
 
 class ShopOrderItem extends StatefulWidget {
   Order order;
@@ -105,7 +109,6 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
 
   Future<void> _showReturnDialog() async {
     _selectedReason = null;
-
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -216,8 +219,158 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
     );
   }
 
+  Future<void> _showConfirmShipSuccessOrderDialog() async {
+    await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          actionsPadding: EdgeInsets.zero,
+          titlePadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(0),
+          ),
+          title: const Text(
+            "Nhấn đã nhận được hàng đồng nghĩa với việc bạn không hài lòng và không thể trả hàng sau khi xác nhận?",
+            style: TextStyle(fontSize: 14, color: Colors.black),
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    alignment: Alignment.center,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(width: 0.2, color: Colors.grey),
+                        right: BorderSide(width: 0.2, color: Colors.grey),
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(false),
+                      child: const Text(
+                        "Hủy",
+                        style: TextStyle(fontSize: 16, color: Colors.black),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    alignment: Alignment.center,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(width: 0.2, color: Colors.grey),
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onTap: () async {
+                        context.read<OrderBloc>().add(
+                              UpdateOrderStatus(
+                                widget.order.id,
+                                OrderStatus.delivered,
+                                note: "Người mua xác nhận nhận hàng thành công",
+                              ),
+                            );
+                        try {
+                          await for (final state
+                              in context.read<OrderBloc>().stream) {
+                            if (state is OrderDetailLoaded) {
+                              final userState = context.read<UserBloc>().state;
+                              if (userState is UserLoaded) {
+                                context.read<OrderBloc>().add(
+                                    FetchOrdersByUserId(userState.user.id));
+                              }
+
+                              // Show success message
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Xác nhận giao hàng thành công'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                              break;
+                            } else if (state is OrderError) {
+                              // Show error message
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content:
+                                        Text('Lỗi trả hàng: ${state.message}'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                              break;
+                            }
+                          }
+                        } catch (e) {
+                          // Show error message
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Lỗi xác nhận đơn hàng: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } finally {
+                          // Hide loading indicator
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        }
+                      },
+                      child: const Text(
+                        "Xác nhận",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.brown,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  OrderStatusHistory? deliveredEntry;
   @override
   Widget build(BuildContext context) {
+    deliveredEntry = widget.order.statusHistory
+        .where(
+          (element) => element.status == OrderStatus.delivered,
+        )
+        .firstOrNull;
+
+    final canConfirmReceived = widget.order.status == OrderStatus.delivered &&
+        !widget.order.statusHistory.any(
+          (element) =>
+              element.note == 'Người mua xác nhận nhận hàng thành công',
+        ) &&
+        deliveredEntry != null &&
+        DateTime.now().difference(deliveredEntry!.timestamp).inDays < 7;
+    final hasConfirmed = widget.order.statusHistory.any(
+      (element) => element.note == 'Người mua xác nhận nhận hàng thành công',
+    );
+
+    final canReviewOrder = widget.order.status == OrderStatus.delivered &&
+        (hasConfirmed ||
+            (deliveredEntry != null &&
+                DateTime.now().difference(deliveredEntry!.timestamp).inDays >=
+                    7));
     return BlocBuilder<ListShopBloc, ListShopState>(
       builder: (context, listShopState) {
         if (listShopState is ListShopLoading) {
@@ -342,10 +495,41 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
                                 ],
                               ),
                             ),
-                            (widget.order.status == OrderStatus.delivered)
+                            canConfirmReceived
                                 ? Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
+                                      Container(
+                                        height: 60,
+                                        alignment: Alignment.center,
+                                        child: Material(
+                                          color: Colors.white,
+                                          child: InkWell(
+                                            onTap:
+                                                _showConfirmShipSuccessOrderDialog,
+                                            child: Container(
+                                              height: 40,
+                                              width: 120,
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'Đã nhận được hàng',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: Colors.brown,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 10,
+                                      ),
                                       Container(
                                         height: 60,
                                         alignment: Alignment.centerRight,
@@ -372,6 +556,39 @@ class _ShopOrderItemState extends State<ShopOrderItem> {
                                           ),
                                         ),
                                       ),
+                                    ],
+                                  )
+                                : SizedBox.shrink(),
+                            canReviewOrder
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      // Container(
+                                      //   height: 60,
+                                      //   alignment: Alignment.centerRight,
+                                      //   child: Material(
+                                      //     color: Colors.brown,
+                                      //     child: InkWell(
+                                      //       onTap: _showReturnDialog,
+                                      //       child: Container(
+                                      //         height: 40,
+                                      //         width: 120,
+                                      //         alignment: Alignment.center,
+                                      //         decoration: BoxDecoration(
+                                      //           border: Border.all(
+                                      //             color: Colors.brown,
+                                      //           ),
+                                      //         ),
+                                      //         child: Text(
+                                      //           'Trả hàng',
+                                      //           style: TextStyle(
+                                      //             color: Colors.white,
+                                      //           ),
+                                      //         ),
+                                      //       ),
+                                      //     ),
+                                      //   ),
+                                      // ),
                                       const SizedBox(
                                         width: 10,
                                       ),

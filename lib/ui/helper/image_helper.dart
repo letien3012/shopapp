@@ -8,4 +8,5 @@ class ImageHelper {
   static const String no_cart = "${imagePath}no_cart_item.png";
   static const String smartphone_with_speech_bubble =
       "${imagePath}smartphone_with_speech_bubble.jpg";
+  static const String logo = "${imagePath}LogoApp.jpg";
 }

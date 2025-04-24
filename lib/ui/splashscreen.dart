@@ -6,6 +6,7 @@ import 'package:luanvan/blocs/auth/auth_bloc.dart';
 import 'package:luanvan/blocs/auth/auth_event.dart';
 import 'package:luanvan/blocs/auth/auth_state.dart';
 import 'package:luanvan/ui/admin_mainscreen.dart';
+import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/mainscreen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _SplashscreenState extends State<SplashScreen> {
     WidgetsBinding.instance.addPostFrameCallback(
       (_) async {
         context.read<AuthBloc>().add(CheckLoginStatus());
+
         await context.read<AuthBloc>().stream.firstWhere((state) =>
             state is AdminAuthenticated ||
             state is AuthAuthenticated ||
@@ -39,42 +41,37 @@ class _SplashscreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AdminAuthenticated) {
-          setState(() {
-            isAdmin = true;
-          });
-        }
-      },
-      builder: (BuildContext context, AuthState state) {
-        if (state is AuthLoading) {
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-        return Container(
+    return BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) async {
+          if (state is AdminAuthenticated) {
+            await Future.delayed(Duration(milliseconds: 500));
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AdminMainScreen(),
+                ));
+          }
+          if (state is AuthAuthenticated || state is AuthUnauthenticated) {
+            await Future.delayed(Duration(milliseconds: 500));
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MainScreen(),
+                ));
+          }
+        },
+        child: Container(
           color: Colors.white,
-          child: GestureDetector(
-            child: Center(child: Text('welcome')),
-            onTap: () {
-              if (isAdmin) {
-                Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AdminMainScreen(),
-                    ));
-              } else {
-                Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MainScreen(),
-                    ));
-              }
-            },
+          child: Container(
+            height: 150,
+            width: 150,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+            ),
+            child: Image.asset(
+              ImageHelper.logo,
+            ),
           ),
-        );
-      },
-    );
+        ));
   }
 }

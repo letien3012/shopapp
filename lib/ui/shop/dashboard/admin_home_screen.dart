@@ -328,8 +328,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       totalUsers = userState.users.length;
       if (orderState is OrderShopLoaded) {
         totalOrders = orderState.orders.length;
-        totalRevenue =
-            orderState.orders.fold(0, (sum, order) => sum + (order.totalPrice));
+        for (var order in orderState.orders) {
+          if (order.status != OrderStatus.cancelled &&
+              order.status != OrderStatus.returned) {
+            totalRevenue += order.totalPrice;
+          }
+        }
       }
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -377,7 +381,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   ),
                   _buildStatisticItem(
                     icon: Icons.attach_money,
-                    title: 'Tổng doanh thu',
+                    title: 'Doanh thu ước tính',
                     value: formatPrice(totalRevenue),
                     color: Colors.orange,
                   ),

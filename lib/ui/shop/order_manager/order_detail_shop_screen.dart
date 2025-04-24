@@ -419,13 +419,26 @@ class _OrderDetailShopScreenState extends State<OrderDetailShopScreen> {
                     )
                   : SizedBox.shrink(),
               if (order.status == OrderStatus.delivered ||
-                  order.status == OrderStatus.reviewed)
+                  order.status == OrderStatus.reviewed ||
+                  order.status == OrderStatus.returned)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Giao hàng thành công:'),
                     Text(
                         formatDate(order.actualDeliveryDate ?? DateTime.now())),
+                  ],
+                ),
+              if (order.status == OrderStatus.returned)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Lý do trả hàng:'),
+                    Text(order.statusHistory
+                            .firstWhere((element) =>
+                                element.status == OrderStatus.returned)
+                            .note ??
+                        'Không có lý do'),
                   ],
                 ),
               const SizedBox(height: 5),

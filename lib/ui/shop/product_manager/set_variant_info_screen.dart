@@ -21,7 +21,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
   late List<String?> _stockOptionErrors;
   bool enableImageForVariant = false;
   int groupOptionCount = 0;
-
+  double keyboardSize = 0;
   // Thêm controller cho BottomSheet
   final TextEditingController _batchPriceController = TextEditingController();
   final TextEditingController _batchStockController = TextEditingController();
@@ -105,6 +105,10 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
               product.optionInfos[index].copyWith(price: validatedPrice);
         }
       });
+    } else {
+      setState(() {
+        keyboardSize = 225;
+      });
     }
   }
 
@@ -117,6 +121,10 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
           product.optionInfos[index] =
               product.optionInfos[index].copyWith(stock: validatedStock);
         }
+      });
+    } else {
+      setState(() {
+        keyboardSize = 225;
       });
     }
   }
@@ -134,6 +142,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
               .copyWith(price: validatedPrice, stock: validatedStock);
         }
       }
+      keyboardSize = 0;
     });
   }
 
@@ -227,7 +236,6 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
         product.optionInfos[i] =
             product.optionInfos[i].copyWith(price: price, stock: stock);
       }
-      print(product.optionInfos);
       product = product.copyWith(hasVariantImages: enableImageForVariant);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -257,7 +265,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
       builder: (BuildContext context) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: keyboardSize,
             left: 16,
             right: 16,
             top: 16,
@@ -370,6 +378,7 @@ class _SetVariantInfoScreenState extends State<SetVariantInfoScreen> {
           fit: StackFit.expand,
           children: [
             SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: keyboardSize),
               child: Container(
                 color: Colors.grey[200],
                 padding: const EdgeInsets.only(top: 90, bottom: 80),

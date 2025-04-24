@@ -27,6 +27,7 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
   bool _showSendButton = false;
   String _chatRoomId = '';
   int _lastMessageCount = 0;
+  double keyboardSize = 0;
   final FocusNode focusNode = FocusNode();
   final _scrollController = ScrollController();
   bool _isKeyboardVisible = false;
@@ -46,6 +47,19 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
         _showSendButton = _chatController.text.trim().isNotEmpty;
       });
     });
+    focusNode.addListener(
+      () {
+        if (focusNode.hasFocus) {
+          setState(() {
+            keyboardSize = 225;
+          });
+        } else {
+          setState(() {
+            keyboardSize = 0;
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -328,99 +342,110 @@ class _ShopChatDetailScreenState extends State<ShopChatDetailScreen> {
   }
 
   Widget _buildInputArea(BuildContext context, String shopId) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-      child: Row(
-        children: [
-          // GestureDetector(
-          //   onTap: () {},
-          //   child: const Icon(
-          //     HeroIcons.plus_circle,
-          //     size: 30,
-          //   ),
-          // ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey[400]!),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      focusNode: focusNode,
-                      controller: _chatController,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Soạn tin...',
-                        contentPadding: EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      onTap: () {
-                        FocusScope.of(context).requestFocus(focusNode);
-                      },
-                      onSubmitted: (value) {
-                        context.read<ChatBloc>().add(
-                              SendMessageEvent(
-                                chatRoomId: _chatRoomId,
-                                senderId: shopId,
-                                content: value.trim(),
-                              ),
-                            );
+    return Column(
+      children: [
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+          child: Row(
+            children: [
+              // GestureDetector(
+              //   onTap: () {},
+              //   child: const Icon(
+              //     HeroIcons.plus_circle,
+              //     size: 30,
+              //   ),
+              // ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey[400]!),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          focusNode: focusNode,
+                          controller: _chatController,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Soạn tin...',
+                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onTap: () {
+                            FocusScope.of(context).requestFocus(focusNode);
+                          },
+                          onSubmitted: (value) {
+                            context.read<ChatBloc>().add(
+                                  SendMessageEvent(
+                                    chatRoomId: _chatRoomId,
+                                    senderId: shopId,
+                                    content: value.trim(),
+                                  ),
+                                );
 
-                        _chatController.clear();
-                      },
-                    ),
+                            _chatController.clear();
+                            focusNode.unfocus();
+                          },
+                          onTapOutside: (event) {
+                            focusNode.unfocus();
+                          },
+                        ),
+                      ),
+                      // GestureDetector(
+                      //   onTap: () {},
+                      //   child: const Icon(
+                      //     Icons.emoji_emotions,
+                      //     size: 30,
+                      //   ),
+                      // ),
+                      const SizedBox(width: 10),
+                    ],
                   ),
-                  // GestureDetector(
-                  //   onTap: () {},
-                  //   child: const Icon(
-                  //     Icons.emoji_emotions,
-                  //     size: 30,
-                  //   ),
-                  // ),
-                  const SizedBox(width: 10),
-                ],
+                ),
               ),
-            ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  );
+                },
+                child: _showSendButton
+                    ? IconButton(
+                        key: const ValueKey("sendButton"),
+                        icon: const Icon(Icons.send, color: Colors.brown),
+                        onPressed: () {
+                          context.read<ChatBloc>().add(
+                                SendMessageEvent(
+                                  chatRoomId: _chatRoomId,
+                                  senderId: shopId,
+                                  content: _chatController.text.trim(),
+                                ),
+                              );
+                          _chatController.clear();
+                        },
+                      )
+                    : const SizedBox(
+                        key: ValueKey("empty"),
+                        width: 0,
+                      ),
+              ),
+            ],
           ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(1.0, 0.0),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              );
-            },
-            child: _showSendButton
-                ? IconButton(
-                    key: const ValueKey("sendButton"),
-                    icon: const Icon(Icons.send, color: Colors.brown),
-                    onPressed: () {
-                      context.read<ChatBloc>().add(
-                            SendMessageEvent(
-                              chatRoomId: _chatRoomId,
-                              senderId: shopId,
-                              content: _chatController.text.trim(),
-                            ),
-                          );
-                      _chatController.clear();
-                    },
-                  )
-                : const SizedBox(
-                    key: ValueKey("empty"),
-                    width: 0,
-                  ),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(
+          height: keyboardSize > 0 ? keyboardSize + 60 : 0,
+        )
+      ],
     );
   }
 }

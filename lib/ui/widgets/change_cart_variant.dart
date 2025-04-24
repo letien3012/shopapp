@@ -39,6 +39,8 @@ class _ChangeCartVariantState extends State<ChangeCartVariant> {
   int selectedIndexVariant1 = -1;
   int selectedIndexVariant2 = -1;
   TextEditingController _quantityController = TextEditingController();
+  final FocusNode _quantityAdd = FocusNode();
+  double keyboardSize = 0;
   Product product = Product(
       id: '',
       name: '',
@@ -77,6 +79,19 @@ class _ChangeCartVariantState extends State<ChangeCartVariant> {
         }
         _quantityController =
             TextEditingController(text: _quantityAddToCart.toString());
+      },
+    );
+    _quantityAdd.addListener(
+      () {
+        if (_quantityAdd.hasFocus) {
+          setState(() {
+            keyboardSize = 225;
+          });
+        } else {
+          setState(() {
+            keyboardSize = 0;
+          });
+        }
       },
     );
   }
@@ -328,77 +343,85 @@ class _ChangeCartVariantState extends State<ChangeCartVariant> {
               ],
 
               // Quantity selector
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey[300]!),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Số lượng",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+              SingleChildScrollView(
+                physics: NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.only(bottom: keyboardSize),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey[300]!),
                     ),
-                    Container(
-                      height: 36,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Số lượng",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          _buildQuantityButton(
-                            icon: Icons.remove,
-                            onPressed: () {
-                              if (_quantityAddToCart > 1) {
-                                _updateQuantity(_quantityAddToCart - 1);
-                              }
-                            },
-                          ),
-                          Container(
-                            width: 50,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              border: Border(
-                                left: BorderSide(color: Colors.grey[300]!),
-                                right: BorderSide(color: Colors.grey[300]!),
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _quantityController,
-                              textAlign: TextAlign.center,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.only(bottom: 10),
-                              ),
-                              onChanged: (value) {
-                                int? quantity = int.tryParse(value);
-                                if (quantity != null) {
-                                  _updateQuantity(quantity);
+                      Container(
+                        height: 36,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            _buildQuantityButton(
+                              icon: Icons.remove,
+                              onPressed: () {
+                                if (_quantityAddToCart > 1) {
+                                  _updateQuantity(_quantityAddToCart - 1);
                                 }
                               },
                             ),
-                          ),
-                          _buildQuantityButton(
-                            icon: Icons.add,
-                            onPressed: () {
-                              if (_quantityAddToCart < maxStock) {
-                                _updateQuantity(_quantityAddToCart + 1);
-                              }
-                            },
-                          ),
-                        ],
+                            Container(
+                              width: 50,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(color: Colors.grey[300]!),
+                                  right: BorderSide(color: Colors.grey[300]!),
+                                ),
+                              ),
+                              child: TextField(
+                                focusNode: _quantityAdd,
+                                controller: _quantityController,
+                                textAlign: TextAlign.center,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.only(bottom: 10),
+                                ),
+                                onChanged: (value) {
+                                  int? quantity = int.tryParse(value);
+                                  if (quantity != null) {
+                                    _updateQuantity(quantity);
+                                  }
+                                },
+                                onTapOutside: (event) {
+                                  _quantityAdd.unfocus();
+                                },
+                              ),
+                            ),
+                            _buildQuantityButton(
+                              icon: Icons.add,
+                              onPressed: () {
+                                if (_quantityAddToCart < maxStock) {
+                                  _updateQuantity(_quantityAddToCart + 1);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 

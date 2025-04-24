@@ -18,10 +18,23 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final List<Map<String, dynamic>> messages = [];
   List<Map<String, String>> chatHistory = [];
   final FocusNode _chatbotSearch = FocusNode();
-
+  double keyboardSize = 0;
   @override
   initState() {
     super.initState();
+    _chatbotSearch.addListener(
+      () {
+        if (_chatbotSearch.hasFocus) {
+          setState(() {
+            keyboardSize = 225;
+          });
+        } else {
+          setState(() {
+            keyboardSize = 0;
+          });
+        }
+      },
+    );
   }
 
   List<ProductChatbot> parseProductsFromLLM(String content) {
@@ -75,6 +88,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         'json': '[]',
       };
     }
+  }
+
+  @override
+  void dispose() {
+    _chatbotSearch.removeListener(() {});
+    super.dispose();
   }
 
   void _sendMessage() async {
@@ -383,8 +402,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             ),
             SingleChildScrollView(
               physics: NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              padding: EdgeInsets.only(bottom: keyboardSize),
               child: Container(
                 color: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),

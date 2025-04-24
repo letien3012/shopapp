@@ -14,6 +14,7 @@ import 'package:luanvan/blocs/productorder/product_order_state.dart';
 import 'package:luanvan/blocs/shop/shop_bloc.dart';
 import 'package:luanvan/blocs/shop/shop_state.dart';
 import 'package:luanvan/models/order.dart';
+import 'package:luanvan/models/shipping_method.dart';
 import 'package:luanvan/ui/helper/image_helper.dart';
 import 'package:luanvan/ui/shop/order_manager/user_order_item.dart';
 import 'package:luanvan/ui/widgets/confirm_diablog.dart';
@@ -76,15 +77,17 @@ class _OrderShopScreenState extends State<OrderShopScreen>
     // Set initial tab after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)!.settings.arguments;
+      if (args != null) {
+        initialTab = args as int;
+      }
       final authState = context.read<AuthBloc>().state;
       if (authState is AdminAuthenticated) {
         context
             .read<OrderBloc>()
             .add(FetchOrdersByShopId(authState.shop.shopId!));
       }
-      if (initialTab != null) {
-        _tabController.animateTo(initialTab);
-      }
+
+      _tabController.animateTo(initialTab);
     });
   }
 
@@ -679,10 +682,16 @@ class _OrderShopScreenState extends State<OrderShopScreen>
             }
           }).toList();
 
+          // final shippingMethods =
+          //     filteredOrders.map((order) => order.shipMethod).toSet().toList();
           final shippingMethods = filteredOrders
               .map((order) => order.shipMethod)
-              .where((method) => method != null)
-              .toSet()
+              .whereType<ShippingMethod>()
+              .fold<Map<String, ShippingMethod>>({}, (map, method) {
+                map[method.name] = method;
+                return map;
+              })
+              .values
               .toList();
 
           final selectedMethod = _getSelectedShipMethodForTab(status);

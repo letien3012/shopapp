@@ -31,10 +31,12 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
     expectedImportDate: DateTime.now(),
     items: [],
   );
+  double keyboardSize = 0;
   // Thêm controller cho BottomSheet
   final TextEditingController _batchPriceController = TextEditingController();
   final TextEditingController _batchStockController = TextEditingController();
-
+  final FocusNode _batchPrice = FocusNode();
+  final FocusNode _batchStock = FocusNode();
   @override
   void initState() {
     super.initState();
@@ -46,6 +48,34 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
         _initializeControllers();
       });
     });
+    _batchPrice.addListener(
+      () {
+        if (_batchPrice.hasFocus) {
+          setState(() {
+            keyboardSize = 225;
+            print(keyboardSize);
+          });
+        } else {
+          setState(() {
+            keyboardSize = 0;
+            print(keyboardSize);
+          });
+        }
+      },
+    );
+    _batchStock.addListener(
+      () {
+        if (_batchStock.hasFocus) {
+          setState(() {
+            keyboardSize = 225;
+          });
+        } else {
+          setState(() {
+            keyboardSize = 0;
+          });
+        }
+      },
+    );
   }
 
   void _initializeControllers() {
@@ -95,6 +125,8 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
     }
     _batchPriceController.dispose();
     _batchStockController.dispose();
+    _batchPrice.dispose();
+    _batchStock.dispose();
     super.dispose();
   }
 
@@ -108,6 +140,10 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
               selectedOptions[index].copyWith(price: validatedPrice);
         }
       });
+    } else {
+      setState(() {
+        keyboardSize = 225;
+      });
     }
   }
 
@@ -120,6 +156,10 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
           selectedOptions[index] = selectedOptions[index]
               .copyWith(adjustmentQuantities: validatedStock);
         }
+      });
+    } else {
+      setState(() {
+        keyboardSize = 225;
       });
     }
   }
@@ -137,6 +177,7 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
               price: validatedPrice, adjustmentQuantities: validatedStock);
         }
       }
+      keyboardSize = 0;
     });
   }
 
@@ -267,7 +308,7 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
       builder: (BuildContext context) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: keyboardSize,
             left: 16,
             right: 16,
             top: 16,
@@ -281,6 +322,7 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
               ),
               const SizedBox(height: 16),
               TextField(
+                focusNode: _batchPrice,
                 controller: _batchPriceController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -291,6 +333,7 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
               ),
               const SizedBox(height: 16),
               TextField(
+                focusNode: _batchStock,
                 controller: _batchStockController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
@@ -379,6 +422,7 @@ class _EditStockDetailScreenState extends State<EditStockDetailScreen> {
           fit: StackFit.expand,
           children: [
             SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: keyboardSize),
               child: Container(
                 color: Colors.grey[200],
                 padding: const EdgeInsets.only(top: 90, bottom: 80),
